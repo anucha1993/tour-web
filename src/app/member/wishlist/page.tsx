@@ -53,10 +53,15 @@ export default function MemberWishlist() {
     try {
       const response = await wishlistApi.getAll();
       if (response.success) {
-        setWishlists((response as { data?: WishlistItem[] }).data || []);
+        // Handle different response formats
+        const data = (response as { data?: WishlistItem[], wishlists?: WishlistItem[] }).data 
+          || (response as { wishlists?: WishlistItem[] }).wishlists 
+          || [];
+        setWishlists(Array.isArray(data) ? data : []);
       }
     } catch (error) {
       console.error("Failed to fetch wishlists:", error);
+      setWishlists([]);
     } finally {
       setIsLoading(false);
     }

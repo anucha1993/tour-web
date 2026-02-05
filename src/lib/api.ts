@@ -180,7 +180,37 @@ export const wishlistApi = {
   remove: (tourId: number) => api.delete(`/web/wishlist/${tourId}`),
 };
 
+// Member API
+export const memberApi = {
+  // Billing Addresses
+  getBillingAddresses: () => api.get<{ addresses: BillingAddress[] }>('/web/billing-addresses'),
+  createBillingAddress: (data: Partial<BillingAddress>) => 
+    api.post<{ address: BillingAddress }>('/web/billing-addresses', data),
+  updateBillingAddress: (id: number, data: Partial<BillingAddress>) => 
+    api.put<{ address: BillingAddress }>(`/web/billing-addresses/${id}`, data),
+  deleteBillingAddress: (id: number) => api.delete(`/web/billing-addresses/${id}`),
+  setDefaultBillingAddress: (id: number) => 
+    api.put<{ address: BillingAddress }>(`/web/billing-addresses/${id}/default`, {}),
+};
+
 // Types
+export interface BillingAddress {
+  id: number;
+  type: 'personal' | 'company';
+  is_default: boolean;
+  name?: string;
+  company_name?: string;
+  tax_id?: string;
+  branch_name?: string;
+  address: string;
+  sub_district: string;
+  district: string;
+  province: string;
+  postal_code: string;
+  phone: string;
+  email?: string;
+}
+
 export interface Member {
   id: number;
   first_name: string;

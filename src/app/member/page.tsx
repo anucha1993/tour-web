@@ -1,152 +1,177 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { 
-  HeartIcon, 
-  UserIcon, 
-  KeyIcon, 
-  ArrowRightOnRectangleIcon,
+import {
+  HeartIcon,
+  ClipboardDocumentListIcon,
+  UserIcon,
+  MapPinIcon,
   ClockIcon,
-  TicketIcon
+  CheckBadgeIcon,
 } from "@heroicons/react/24/outline";
+import Link from "next/link";
+
+interface QuickLink {
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  description: string;
+  color: string;
+}
+
+const quickLinks: QuickLink[] = [
+  {
+    href: "/member/profile",
+    icon: UserIcon,
+    label: "บัญชีของฉัน",
+    description: "จัดการข้อมูลส่วนตัว",
+    color: "bg-blue-500",
+  },
+  {
+    href: "/member/wishlist",
+    icon: HeartIcon,
+    label: "ทัวร์ที่ถูกใจ",
+    description: "ทัวร์ที่บันทึกไว้",
+    color: "bg-red-500",
+  },
+  {
+    href: "/member/bookings",
+    icon: ClipboardDocumentListIcon,
+    label: "รายการจองทัวร์",
+    description: "ประวัติการจอง",
+    color: "bg-green-500",
+  },
+  {
+    href: "/member/billing-address",
+    icon: MapPinIcon,
+    label: "ที่อยู่ออกใบกำกับภาษี",
+    description: "จัดการที่อยู่",
+    color: "bg-purple-500",
+  },
+];
 
 export default function MemberDashboard() {
-  const router = useRouter();
-  const { member, isLoading, logout } = useAuth();
-
-  useEffect(() => {
-    if (!isLoading && !member) {
-      router.push("/login");
-    }
-  }, [member, isLoading, router]);
-
-  const handleLogout = async () => {
-    await logout();
-    router.push("/");
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
-      </div>
-    );
-  }
+  const { member } = useAuth();
 
   if (!member) {
     return null;
   }
 
-  const menuItems = [
-    {
-      href: "/member/profile",
-      icon: UserIcon,
-      title: "ข้อมูลส่วนตัว",
-      description: "แก้ไขข้อมูลส่วนตัว อีเมล และที่อยู่",
-      color: "bg-blue-500",
-    },
-    {
-      href: "/member/wishlist",
-      icon: HeartIcon,
-      title: "ทัวร์ที่ชอบ",
-      description: "รายการทัวร์ที่คุณบันทึกไว้",
-      color: "bg-red-500",
-    },
-    {
-      href: "/member/bookings",
-      icon: TicketIcon,
-      title: "ประวัติการจอง",
-      description: "ดูรายการจองทัวร์ทั้งหมด",
-      color: "bg-green-500",
-    },
-    {
-      href: "/member/change-password",
-      icon: KeyIcon,
-      title: "เปลี่ยนรหัสผ่าน",
-      description: "เปลี่ยนรหัสผ่านเพื่อความปลอดภัย",
-      color: "bg-purple-500",
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl p-6 md:p-8 mb-8 text-white">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 md:w-20 md:h-20 bg-white/20 rounded-full flex items-center justify-center">
-                <UserIcon className="w-8 h-8 md:w-10 md:h-10 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl md:text-2xl font-bold">
-                  สวัสดี, {member.first_name || "สมาชิก"}!
-                </h1>
-                <p className="text-orange-100 text-sm md:text-base">
-                  {member.phone}
-                </p>
-                {member.email && (
-                  <p className="text-orange-100 text-sm">
-                    {member.email}
-                  </p>
-                )}
-              </div>
+    <div className="p-4 lg:p-8">
+      {/* Welcome Header */}
+      <div className="bg-gradient-to-r from-[var(--color-primary)] to-orange-600 rounded-2xl p-6 lg:p-8 mb-8 text-white">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 lg:w-20 lg:h-20 bg-white/20 rounded-full flex items-center justify-center">
+              <UserIcon className="w-8 h-8 lg:w-10 lg:h-10 text-white" />
             </div>
-            <div className="flex items-center gap-2 text-orange-100 text-sm">
-              <ClockIcon className="w-4 h-4" />
-              <span>
-                สมาชิกตั้งแต่ {new Date(member.created_at).toLocaleDateString("th-TH", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </span>
+            <div>
+              <h1 className="text-xl lg:text-2xl font-bold">
+                สวัสดี, {member.first_name || "สมาชิก"}!
+              </h1>
+              <p className="text-orange-100 text-sm lg:text-base mt-1">
+                ยินดีต้อนรับกลับมา
+              </p>
+              {member.is_verified && (
+                <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 bg-white/20 text-white text-xs rounded-full">
+                  <CheckBadgeIcon className="w-3.5 h-3.5" />
+                  ยืนยันตัวตนแล้ว
+                </span>
+              )}
             </div>
           </div>
+          <div className="flex items-center gap-2 text-orange-100 text-sm">
+            <ClockIcon className="w-4 h-4" />
+            <span>
+              สมาชิกตั้งแต่{" "}
+              {new Date(member.created_at).toLocaleDateString("th-TH", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </span>
+          </div>
         </div>
+      </div>
 
-        {/* Menu Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8">
-          {menuItems.map((item) => (
+      {/* Quick Links */}
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">เมนูลัด</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {quickLinks.map((link) => (
             <Link
-              key={item.href}
-              href={item.href}
-              className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow group"
+              key={link.href}
+              href={link.href}
+              className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all group border border-gray-100"
             >
               <div className="flex items-start gap-4">
-                <div className={`${item.color} p-3 rounded-xl text-white group-hover:scale-110 transition-transform`}>
-                  <item.icon className="w-6 h-6" />
+                <div
+                  className={`${link.color} p-3 rounded-xl text-white group-hover:scale-110 transition-transform`}
+                >
+                  <link.icon className="w-6 h-6" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">
-                    {item.title}
+                  <h3 className="font-semibold text-gray-900 group-hover:text-[var(--color-primary)] transition-colors">
+                    {link.label}
                   </h3>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {item.description}
-                  </p>
+                  <p className="text-sm text-gray-500 mt-1">{link.description}</p>
                 </div>
-                <div className="text-gray-400 group-hover:text-orange-500 transition-colors">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                <div className="text-gray-400 group-hover:text-[var(--color-primary)] transition-colors">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
                   </svg>
                 </div>
               </div>
             </Link>
           ))}
         </div>
+      </div>
 
-        {/* Logout Button */}
-        <div className="flex justify-center">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-6 py-3 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+      {/* Account Summary */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">ข้อมูลบัญชี</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <div className="flex justify-between py-2 border-b border-gray-100">
+              <span className="text-gray-500">ชื่อ-นามสกุล</span>
+              <span className="font-medium text-gray-900">
+                {member.first_name} {member.last_name || "-"}
+              </span>
+            </div>
+            <div className="flex justify-between py-2 border-b border-gray-100">
+              <span className="text-gray-500">เบอร์โทรศัพท์</span>
+              <span className="font-medium text-gray-900">{member.phone}</span>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div className="flex justify-between py-2 border-b border-gray-100">
+              <span className="text-gray-500">อีเมล</span>
+              <span className="font-medium text-gray-900">{member.email || "-"}</span>
+            </div>
+            <div className="flex justify-between py-2 border-b border-gray-100">
+              <span className="text-gray-500">Line ID</span>
+              <span className="font-medium text-gray-900">{member.line_id || "-"}</span>
+            </div>
+          </div>
+        </div>
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <Link
+            href="/member/profile"
+            className="text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] text-sm font-medium"
           >
-            <ArrowRightOnRectangleIcon className="w-5 h-5" />
-            <span>ออกจากระบบ</span>
-          </button>
+            แก้ไขข้อมูลส่วนตัว →
+          </Link>
         </div>
       </div>
     </div>

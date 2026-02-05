@@ -104,29 +104,29 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-[calc(100vh-200px)] flex">
       {/* Left Side - Image */}
-           <div className="hidden lg:flex lg:w-1/2 items-center justify-center  p-8">
-             <Image
-               src="https://imagedelivery.net/yixdo-GXTcyjkoSkBzfBcA/gallery-69845602c9a64-1770280450/public"
-               alt="Travel"
-               width={900}
-               height={900}
-               quality={100}
-               className="object-cover rounded-2xl max-h-[90vh] w-auto"
-               priority
-             />
-           </div>
+      <div className="hidden lg:flex lg:w-1/2 items-start justify-center pt-8 p-1">
+        <Image
+          src="https://imagedelivery.net/yixdo-GXTcyjkoSkBzfBcA/gallery-69845602c9a64-1770280450/public"
+          alt="Travel"
+          width={600}
+          height={700}
+          quality={100}
+          className="object-cover rounded-2xl max-h-[75vh] w-auto"
+          priority
+        />
+      </div>
 
       {/* Right Side - Login Form */}
       <div className="w-full lg:w-1/2 flex flex-col bg-gray-50">
-        <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 xl:px-12">
+        <div className="flex-1 flex items-start justify-center pt-16 pb-12 px-4 sm:px-6 lg:px-8 xl:px-12">
           <div className="w-full max-w-md">
-            <div className="mb-6">
+            <div className="mb-4">
               <h2 className="text-2xl lg:text-3xl font-bold text-gray-900">
                 เข้าสู่ระบบ
               </h2>
-              <p className="mt-2 text-sm text-gray-600">
+              <p className="mt-1 text-sm text-gray-600">
                 หรือ{' '}
                 <Link href="/register" className="font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)]">
                   สมัครสมาชิกใหม่
@@ -258,7 +258,7 @@ function LoginContent() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
                   >
                     {isLoading ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
@@ -298,7 +298,7 @@ function LoginContent() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
                   >
                     {isLoading ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
@@ -339,7 +339,7 @@ function LoginContent() {
                   <button
                     type="submit"
                     disabled={isLoading || otp.length !== 6}
-                    className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
                   >
                     {isLoading ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
