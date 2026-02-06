@@ -1,5 +1,7 @@
 // API Configuration for tour-web
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
+import { API_URL } from './config';
+
+const API_BASE_URL = API_URL;
 
 // API Response type - backend returns data directly in response, not in 'data' property
 interface ApiResponse {

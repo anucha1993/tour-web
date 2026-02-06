@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { CreditCardIcon } from "@heroicons/react/24/outline";
+import { API_URL } from "@/lib/config";
 
 interface PageContent {
   key: string;
@@ -10,8 +11,6 @@ interface PageContent {
   content: string;
   updated_at: string | null;
 }
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.nexttrip.asia/api";
 
 export default function PaymentChannelsPage() {
   const [content, setContent] = useState<string>("");

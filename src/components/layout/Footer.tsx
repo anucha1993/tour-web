@@ -43,11 +43,11 @@ const supportLinks = [
   { label: 'วิธีการจอง', href: '/how-to-book' },
   { label: 'การชำระเงิน', href: '/payment' },
   { label: 'คำถามที่พบบ่อย', href: '/faq' },
-  { label: 'เงื่อนไขการให้บริการ', href: '/member/terms' },
-  { label: 'เงื่อนไขชำระเงิน', href: '/member/payment-terms' },
-  { label: 'ช่องทางการชำระเงิน', href: '/member/payment-channels' },
-  { label: 'นโยบายคุกกี้', href: '/member/cookie-policy' },
-  { label: 'นโยบายความเป็นส่วนตัว', href: '/member/privacy-policy' },
+  { label: 'เงื่อนไขการให้บริการ', href: '/terms' },
+  { label: 'เงื่อนไขชำระเงิน', href: '/payment-terms' },
+  { label: 'ช่องทางการชำระเงิน', href: '/payment-channels' },
+  { label: 'นโยบายคุกกี้', href: '/cookie-policy' },
+  { label: 'นโยบายความเป็นส่วนตัว', href: '/privacy-policy' },
 ];
 
 const features = [

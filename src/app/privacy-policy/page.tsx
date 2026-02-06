@@ -1,16 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ShieldCheckIcon } from "@heroicons/react/24/outline";
+import { ShieldExclamationIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
 import { API_URL } from "@/lib/config";
-
-interface PageContent {
-  key: string;
-  title: string;
-  description: string;
-  content: string;
-  updated_at: string | null;
-}
 
 export default function PrivacyPolicyPage() {
   const [content, setContent] = useState<string>("");
@@ -83,47 +76,106 @@ export default function PrivacyPolicyPage() {
 
   if (loading) {
     return (
-      <div className="p-4 lg:p-8">
-        <div className="flex items-center justify-center min-h-[300px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="container-custom py-12 lg:py-16">
+          <div className="max-w-4xl mx-auto">
+            {/* Header Skeleton */}
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-16 h-16 bg-gray-200 rounded-xl animate-pulse" />
+              <div className="space-y-2">
+                <div className="h-8 w-64 bg-gray-200 rounded-lg animate-pulse" />
+                <div className="h-4 w-48 bg-gray-200 rounded animate-pulse" />
+              </div>
+            </div>
+            {/* Content Skeleton */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 lg:p-10">
+              <div className="space-y-6">
+                <div className="h-6 w-48 bg-gray-200 rounded animate-pulse" />
+                <div className="space-y-3">
+                  <div className="h-4 w-full bg-gray-200 rounded animate-pulse" />
+                  <div className="h-4 w-full bg-gray-200 rounded animate-pulse" />
+                  <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse" />
+                </div>
+                <div className="h-6 w-56 bg-gray-200 rounded animate-pulse" />
+                <div className="space-y-3">
+                  <div className="h-4 w-full bg-gray-200 rounded animate-pulse" />
+                  <div className="h-4 w-full bg-gray-200 rounded animate-pulse" />
+                  <div className="h-4 w-2/3 bg-gray-200 rounded animate-pulse" />
+                </div>
+                <div className="h-6 w-40 bg-gray-200 rounded animate-pulse" />
+                <div className="space-y-3">
+                  <div className="h-4 w-full bg-gray-200 rounded animate-pulse" />
+                  <div className="h-4 w-5/6 bg-gray-200 rounded animate-pulse" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 lg:p-8">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-3 bg-blue-100 rounded-xl">
-          <ShieldCheckIcon className="w-6 h-6 text-blue-600" />
+    <div className="min-h-screen bg-gray-50">
+      {/* Breadcrumb */}
+      {/* <div className="bg-white border-b border-gray-200">
+        <div className="container-custom py-4">
+          <nav className="flex items-center gap-2 text-sm">
+            <Link href="/" className="text-gray-500 hover:text-blue-600">
+              หน้าแรก
+            </Link>
+            <span className="text-gray-400">/</span>
+            <span className="text-gray-900">นโยบายความเป็นส่วนตัว</span>
+          </nav>
         </div>
-        <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
-            นโยบายความเป็นส่วนตัว
-          </h1>
-          <p className="text-gray-500 text-sm mt-1">
-            การเก็บรวบรวมและใช้ข้อมูลส่วนบุคคล
-          </p>
-        </div>
-      </div>
+      </div> */}
 
-      {/* Content */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 lg:p-8">
-        <div 
-          className="prose prose-gray max-w-none"
-          dangerouslySetInnerHTML={{ __html: content }}
-        />
-
-        {updatedAt && (
-          <div className="mt-8 pt-6 border-t border-gray-200 text-sm text-gray-500">
-            <p>อัพเดทล่าสุด: {new Date(updatedAt).toLocaleDateString("th-TH", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}</p>
+      <div className="container-custom py-12 lg:py-16">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="flex items-center gap-4 mb-8">
+            <div className="p-4 bg-purple-100 rounded-xl">
+              <ShieldExclamationIcon className="w-8 h-8 text-purple-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
+                นโยบายความเป็นส่วนตัว
+              </h1>
+              <p className="text-gray-500 mt-1">
+                การคุ้มครองข้อมูลส่วนบุคคลของท่าน
+              </p>
+            </div>
           </div>
-        )}
+
+          {/* Content */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 lg:p-10">
+            <div 
+              className="prose prose-gray max-w-none"
+              dangerouslySetInnerHTML={{ __html: content }}
+            />
+
+            {updatedAt && (
+              <div className="mt-10 pt-6 border-t border-gray-200 text-sm text-gray-500">
+                <p>อัพเดทล่าสุด: {new Date(updatedAt).toLocaleDateString("th-TH", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Back link */}
+          <div className="mt-8">
+            <Link 
+              href="/" 
+              className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
+            >
+              <ArrowLeftIcon className="w-4 h-4" />
+              กลับหน้าแรก
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );
