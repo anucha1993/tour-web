@@ -180,6 +180,19 @@ export const wishlistApi = {
   remove: (tourId: number) => api.delete(`/web/wishlist/${tourId}`),
 };
 
+// Page Content API
+export const pageContentApi = {
+  get: (key: string) => api.get<{ data: PageContent }>(`/web/page-content/${key}`),
+};
+
+export interface PageContent {
+  key: string;
+  title: string;
+  description: string;
+  content: string;
+  updated_at: string;
+}
+
 // Member API
 export const memberApi = {
   // Billing Addresses

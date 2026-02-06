@@ -8,8 +8,42 @@ import {
   MapPinIcon,
   ClockIcon,
   CheckBadgeIcon,
+  CalendarIcon,
 } from "@heroicons/react/24/outline";
+import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
+import Image from "next/image";
+
+// Mockup favorite tours
+const mockFavoriteTours = [
+  {
+    id: 1,
+    name: "ทัวร์ญี่ปุ่น โตเกียว ฟูจิ 6 วัน 4 คืน",
+    slug: "japan-tokyo-fuji-6d4n",
+    thumbnail: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400",
+    price: 45900,
+    duration: "6 วัน 4 คืน",
+    destination: "ญี่ปุ่น",
+  },
+  {
+    id: 2,
+    name: "ทัวร์เกาหลี โซล เกาะนามิ 5 วัน 3 คืน",
+    slug: "korea-seoul-nami-5d3n",
+    thumbnail: "https://images.unsplash.com/photo-1517154421773-0529f29ea451?w=400",
+    price: 25900,
+    duration: "5 วัน 3 คืน",
+    destination: "เกาหลีใต้",
+  },
+  {
+    id: 3,
+    name: "ทัวร์เวียดนาม ดานัง ฮอยอัน 4 วัน 3 คืน",
+    slug: "vietnam-danang-hoian-4d3n",
+    thumbnail: "https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=400",
+    price: 12900,
+    duration: "4 วัน 3 คืน",
+    destination: "เวียดนาม",
+  },
+];
 
 interface QuickLink {
   href: string;
@@ -93,6 +127,81 @@ export default function MemberDashboard() {
             </span>
           </div>
         </div>
+      </div>
+
+      {/* Favorite Tours Section */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-gray-900">ทัวร์ที่ถูกใจ</h2>
+            <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">Mockup</span>
+          </div>
+          <Link 
+            href="/member/wishlist" 
+            className="text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] text-sm font-medium"
+          >
+            ดูทั้งหมด →
+          </Link>
+        </div>
+        {mockFavoriteTours.length === 0 ? (
+          <div className="bg-white rounded-xl p-8 text-center border border-gray-100">
+            <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <HeartIcon className="w-8 h-8 text-gray-400" />
+            </div>
+            <p className="text-gray-500">ยังไม่มีทัวร์ที่ถูกใจ</p>
+            <Link 
+              href="/tours" 
+              className="inline-block mt-4 text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] text-sm font-medium"
+            >
+              ค้นหาทัวร์ที่คุณชอบ →
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {mockFavoriteTours.map((tour) => (
+              <Link
+                key={tour.id}
+                href={`/tours/${tour.slug}`}
+                className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group border border-gray-100"
+              >
+                <div className="relative aspect-[4/3]">
+                  <Image
+                    src={tour.thumbnail}
+                    alt={tour.name}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <button 
+                    className="absolute top-3 right-3 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-sm"
+                    onClick={(e) => e.preventDefault()}
+                  >
+                    <HeartSolidIcon className="w-5 h-5 text-red-500" />
+                  </button>
+                  <div className="absolute bottom-3 left-3">
+                    <span className="bg-white/90 backdrop-blur-sm text-gray-700 text-xs px-2 py-1 rounded-full">
+                      {tour.destination}
+                    </span>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 group-hover:text-[var(--color-primary)] transition-colors">
+                    {tour.name}
+                  </h3>
+                  <div className="flex items-center gap-1 mt-2 text-gray-500 text-xs">
+                    <CalendarIcon className="w-3.5 h-3.5" />
+                    <span>{tour.duration}</span>
+                  </div>
+                  <div className="mt-3 flex items-baseline gap-1">
+                    <span className="text-[var(--color-primary)] font-bold text-lg">
+                      ฿{tour.price.toLocaleString()}
+                    </span>
+                    <span className="text-gray-400 text-xs">/ท่าน</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Quick Links */}

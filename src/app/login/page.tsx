@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, Mail, Lock, Phone, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { authApi } from '@/lib/api';
+import { authApi, pageContentApi } from '@/lib/api';
 
 type LoginMethod = 'password' | 'otp';
 
@@ -25,8 +25,37 @@ function LoginContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  
+  // Custom Background State
+  const [bgImage, setBgImage] = useState('https://imagedelivery.net/yixdo-GXTcyjkoSkBzfBcA/gallery-69845602c9a64-1770280450/public');
+  const [bgAlt, setBgAlt] = useState('Travel');
+  const [bgTitle, setBgTitle] = useState('');
 
   const redirectTo = searchParams.get('redirect') || '/member';
+
+  // Fetch Page Content
+  useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        const response = await pageContentApi.get('login_page');
+        if (response.success && response.data?.content) {
+          try {
+            const content = JSON.parse(response.data.content);
+            if (content.image_url) {
+              setBgImage(content.image_url);
+              setBgAlt(content.alt || 'Login Background');
+              setBgTitle(content.title || '');
+            }
+          } catch (e) {
+            console.error('Error parsing login page content:', e);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching login page content:', err);
+      }
+    };
+    fetchContent();
+  }, []);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -108,10 +137,11 @@ function LoginContent() {
       {/* Left Side - Image */}
       <div className="hidden lg:flex lg:w-1/2 items-start justify-center pt-8 p-1">
         <Image
-          src="https://imagedelivery.net/yixdo-GXTcyjkoSkBzfBcA/gallery-69845602c9a64-1770280450/public"
-          alt="Travel"
+          src={bgImage}
+          alt={bgAlt}
+          title={bgTitle || bgAlt}
           width={600}
-          height={700}
+          height={600}
           quality={100}
           className="object-cover rounded-2xl max-h-[75vh] w-auto"
           priority

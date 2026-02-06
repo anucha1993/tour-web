@@ -12,10 +12,12 @@ import {
   MapPinIcon,
   DocumentCheckIcon,
   CreditCardIcon,
+  BanknotesIcon,
   ArrowRightOnRectangleIcon,
   Bars3Icon,
   XMarkIcon,
   ChevronRightIcon,
+  ShieldCheckIcon,
 } from "@heroicons/react/24/outline";
 
 interface MenuItem {
@@ -37,6 +39,7 @@ const menuGroups: MenuGroup[] = [
       { href: "/member/wishlist", icon: HeartIcon, label: "ทัวร์ที่ถูกใจ", isMockup: true },
       { href: "/member/bookings", icon: ClipboardDocumentListIcon, label: "รายการจอง", isMockup: true },
       { href: "/member/quotations", icon: DocumentTextIcon, label: "ใบเสนอราคา", isMockup: true },
+      { href: "/member/payment-history", icon: BanknotesIcon, label: "ประวัติการชำระเงิน", isMockup: true },
     ],
   },
   {
@@ -51,6 +54,9 @@ const menuGroups: MenuGroup[] = [
     items: [
       { href: "/member/terms", icon: DocumentCheckIcon, label: "เงื่อนไขการให้บริการ" },
       { href: "/member/payment-terms", icon: CreditCardIcon, label: "เงื่อนไขชำระเงิน" },
+      { href: "/member/payment-channels", icon: CreditCardIcon, label: "ช่องทางการชำระเงิน" },
+      { href: "/member/cookie-policy", icon: ShieldCheckIcon, label: "นโยบายคุกกี้" },
+      { href: "/member/privacy-policy", icon: ShieldCheckIcon, label: "นโยบายความเป็นส่วนตัว" },
     ],
   },
 ];
@@ -124,7 +130,7 @@ export default function MemberLayout({
           <aside
             className={`
               fixed lg:relative top-0 left-0 z-50 lg:z-0
-              w-72 h-screen lg:h-auto
+              w-80 h-screen lg:h-auto
               bg-white border-r lg:border border-gray-200 lg:rounded-xl lg:shadow-sm
               transform transition-transform duration-300 ease-in-out
               ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}

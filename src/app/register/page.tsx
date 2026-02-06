@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Mail, Phone, Loader2, Check, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { api, authApi } from '@/lib/api';
+import { api, authApi, pageContentApi } from '@/lib/api';
 
 // Password requirement check component (outside main component)
 const PasswordCheck = ({ valid, text }: { valid: boolean; text: string }) => (
@@ -35,6 +35,11 @@ export default function RegisterPage() {
   const [consentPrivacy, setConsentPrivacy] = useState(false);
   const [consentMarketing, setConsentMarketing] = useState(false);
   
+  // Custom Background State
+  const [bgImage, setBgImage] = useState('https://imagedelivery.net/yixdo-GXTcyjkoSkBzfBcA/gallery-69845602c9a64-1770280450/public');
+  const [bgAlt, setBgAlt] = useState('Travel');
+  const [bgTitle, setBgTitle] = useState('');
+  
   // OTP Modal
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otp, setOtp] = useState('');
@@ -51,6 +56,30 @@ export default function RegisterPage() {
       router.push('/member');
     }
   }, [isAuthenticated, router]);
+
+  // Fetch Page Content
+  useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        const response = await pageContentApi.get('register_page');
+        if (response.success && response.data?.content) {
+          try {
+            const content = JSON.parse(response.data.content);
+            if (content.image_url) {
+              setBgImage(content.image_url);
+              setBgAlt(content.alt || 'Register Background');
+              setBgTitle(content.title || '');
+            }
+          } catch (e) {
+            console.error('Error parsing register page content:', e);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching register page content:', err);
+      }
+    };
+    fetchContent();
+  }, []);
 
   // OTP countdown timer
   useEffect(() => {
@@ -165,8 +194,9 @@ export default function RegisterPage() {
       {/* Left Side - Image */}
       <div className="hidden lg:flex lg:w-1/2 items-start justify-center pt-8 p-1">
         <Image
-          src="https://imagedelivery.net/yixdo-GXTcyjkoSkBzfBcA/gallery-69845602c9a64-1770280450/public"
-          alt="Travel"
+          src={bgImage}
+          alt={bgAlt}
+          title={bgTitle || bgAlt}
           width={600}
           height={700}
           quality={100}
