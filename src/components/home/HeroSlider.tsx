@@ -79,14 +79,16 @@ export default function HeroSlider() {
                 index === currentSlide ? "opacity-100" : "opacity-1"
               }`}
             >
+              
               <Image
                 src={slide.url}
                 alt={slide.alt || "Hero image"}
                 fill
                 priority={index === 0}
-                className="object-cover"
+                className="object-cover object-top"
                 sizes="100vw"
               />
+
               {/* Overlay */}
               <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
             </div>
@@ -131,16 +133,11 @@ export default function HeroSlider() {
           )}
         </>
       ) : (
-        /* Fallback Gradient Background */
-        <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-primary)] via-[var(--color-primary-dark)] to-[var(--color-secondary-700)]">
-          <div className="absolute inset-0 opacity-10">
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-              }}
-            />
-          </div>
+        /* Skeleton Loading */
+        <div className="absolute inset-0 bg-orange-700 animate-pulse">
+          <div className="absolute inset-0 bg-gradient-to-r from-orange-900 via-orange-200 to-orange-300" />
+          {/* Skeleton overlay for text area */}
+          <div className="absolute inset-0 bg-gradient-to-r from-gray-400/50 via-transparent to-transparent" />
         </div>
       )}
 
@@ -148,7 +145,15 @@ export default function HeroSlider() {
       <div className="container-custom relative z-10 py-16 lg:py-24">
         <div className="max-w-3xl">
           {/* Dynamic title from current slide or default */}
-          {hasSlides && slides[currentSlide]?.title ? (
+          {isLoading ? (
+            /* Skeleton for Title */
+            <div className="animate-pulse">
+              <div className="h-12 lg:h-16 bg-white/30 rounded-lg w-3/4 mb-4" />
+              <div className="h-12 lg:h-16 bg-white/30 rounded-lg w-1/2 mb-6" />
+              <div className="h-6 bg-white/20 rounded w-full max-w-md mb-2" />
+              <div className="h-6 bg-white/20 rounded w-3/4 max-w-md mb-8" />
+            </div>
+          ) : hasSlides && slides[currentSlide]?.title ? (
             <>
               <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 leading-tight drop-shadow-lg">
                 {slides[currentSlide].title}
@@ -182,63 +187,88 @@ export default function HeroSlider() {
         </div>
 
         {/* Search Box */}
-        <div className="bg-white rounded-2xl shadow-2xl p-4 lg:p-6 max-w-4xl">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Destination */}
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-[var(--color-gray-700)] mb-1.5">
-                จุดหมายปลายทาง
-              </label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-gray-400)]" />
-                <input
-                  type="text"
-                  placeholder="ค้นหาประเทศ, เมือง หรือสถานที่"
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-100)] text-[var(--color-gray-800)] placeholder-[var(--color-gray-400)] transition-colors"
-                />
+        {isLoading ? (
+          /* Skeleton for Search Box */
+          <div className="bg-white/80 rounded-2xl shadow-2xl p-4 lg:p-6 max-w-4xl animate-pulse">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="md:col-span-2">
+                <div className="h-4 bg-gray-200 rounded w-24 mb-2" />
+                <div className="h-12 bg-gray-200 rounded-lg" />
+              </div>
+              <div>
+                <div className="h-4 bg-gray-200 rounded w-32 mb-2" />
+                <div className="h-12 bg-gray-200 rounded-lg" />
+              </div>
+              <div className="flex items-end">
+                <div className="h-12 bg-gray-300 rounded-lg w-full" />
+              </div>
+            </div>
+            <div className="mt-4 pt-4 border-t border-gray-100 flex gap-2">
+              <div className="h-4 bg-gray-200 rounded w-16" />
+              <div className="h-4 bg-gray-200 rounded w-12" />
+              <div className="h-4 bg-gray-200 rounded w-12" />
+              <div className="h-4 bg-gray-200 rounded w-12" />
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl shadow-2xl p-4 lg:p-6 max-w-4xl">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Destination */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-[var(--color-gray-700)] mb-1.5">
+                  จุดหมายปลายทาง
+                </label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-gray-400)]" />
+                  <input
+                    type="text"
+                    placeholder="ค้นหาประเทศ, เมือง หรือสถานที่"
+                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-100)] text-[var(--color-gray-800)] placeholder-[var(--color-gray-400)] transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* Date */}
+              <div>
+                <label className="block text-sm font-medium text-[var(--color-gray-700)] mb-1.5">
+                  เดือนที่ต้องการเดินทาง
+                </label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-gray-400)]" />
+                  <select className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-100)] text-[var(--color-gray-800)] appearance-none bg-white transition-colors">
+                    <option value="">ทุกช่วงเวลา</option>
+                    <option value="2026-02">กุมภาพันธ์ 2026</option>
+                    <option value="2026-03">มีนาคม 2026</option>
+                    <option value="2026-04">เมษายน 2026</option>
+                    <option value="2026-05">พฤษภาคม 2026</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Search Button */}
+              <div className="flex items-end">
+                <button className="w-full btn-primary flex items-center justify-center gap-2 py-3">
+                  <Search className="w-5 h-5" />
+                  <span>ค้นหาทัวร์</span>
+                </button>
               </div>
             </div>
 
-            {/* Date */}
-            <div>
-              <label className="block text-sm font-medium text-[var(--color-gray-700)] mb-1.5">
-                เดือนที่ต้องการเดินทาง
-              </label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-gray-400)]" />
-                <select className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-100)] text-[var(--color-gray-800)] appearance-none bg-white transition-colors">
-                  <option value="">ทุกช่วงเวลา</option>
-                  <option value="2026-02">กุมภาพันธ์ 2026</option>
-                  <option value="2026-03">มีนาคม 2026</option>
-                  <option value="2026-04">เมษายน 2026</option>
-                  <option value="2026-05">พฤษภาคม 2026</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Search Button */}
-            <div className="flex items-end">
-              <button className="w-full btn-primary flex items-center justify-center gap-2 py-3">
-                <Search className="w-5 h-5" />
-                <span>ค้นหาทัวร์</span>
-              </button>
+            {/* Quick links */}
+            <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap gap-2">
+              <span className="text-sm text-[var(--color-gray-500)]">ยอดนิยม:</span>
+              {["ญี่ปุ่น", "เกาหลี", "ยุโรป", "ไต้หวัน"].map((item) => (
+                <Link
+                  key={item}
+                  href={`/tours?q=${item}`}
+                  className="text-sm text-[var(--color-primary)] hover:text-[var(--color-secondary)] transition-colors"
+                >
+                  {item}
+                </Link>
+              ))}
             </div>
           </div>
-
-          {/* Quick links */}
-          <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap gap-2">
-            <span className="text-sm text-[var(--color-gray-500)]">ยอดนิยม:</span>
-            {["ญี่ปุ่น", "เกาหลี", "ยุโรป", "ไต้หวัน"].map((item) => (
-              <Link
-                key={item}
-                href={`/tours?q=${item}`}
-                className="text-sm text-[var(--color-primary)] hover:text-[var(--color-secondary)] transition-colors"
-              >
-                {item}
-              </Link>
-            ))}
-          </div>
-        </div>
+        )}
       </div>
     </section>
   );
