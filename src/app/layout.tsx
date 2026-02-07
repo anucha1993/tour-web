@@ -46,6 +46,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="th">
+      <head>
+        <link rel="preconnect" href="http://127.0.0.1:8000" />
+        <link rel="preconnect" href="https://imagedelivery.net" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="http://127.0.0.1:8000" />
+        <link rel="dns-prefetch" href="https://imagedelivery.net" />
+      </head>
       <body className={`${notoSansThai.variable} antialiased`}>
         <AuthProvider>
           <Header />

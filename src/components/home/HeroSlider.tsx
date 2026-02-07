@@ -46,7 +46,7 @@ export default function HeroSlider() {
     
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [slides.length]);
@@ -85,8 +85,9 @@ export default function HeroSlider() {
                 alt={slide.alt || "Hero image"}
                 fill
                 priority={index === 0}
+                fetchPriority={index === 0 ? "high" : "low"}
                 className="object-cover object-top"
-                sizes="100vw"
+            
               />
 
               {/* Overlay */}

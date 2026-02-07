@@ -12,6 +12,8 @@ import {
   Search,
 } from "lucide-react";
 import HeroSlider from "@/components/home/HeroSlider";
+import PopularCountries from "@/components/home/PopularCountries";
+import Promotions from "@/components/home/Promotions";
 
 // Sample featured tours data (hardcoded for performance)
 const featuredTours = [
@@ -69,16 +71,6 @@ const featuredTours = [
   },
 ];
 
-// Popular destinations
-const destinations = [
-  { name: "ญี่ปุ่น", nameEn: "Japan", count: 45, image: "/images/destinations/japan.jpg", slug: "japan" },
-  { name: "เกาหลี", nameEn: "Korea", count: 32, image: "/images/destinations/korea.jpg", slug: "korea" },
-  { name: "ยุโรป", nameEn: "Europe", count: 28, image: "/images/destinations/europe.jpg", slug: "europe" },
-  { name: "ไต้หวัน", nameEn: "Taiwan", count: 24, image: "/images/destinations/taiwan.jpg", slug: "taiwan" },
-  { name: "จีน", nameEn: "China", count: 18, image: "/images/destinations/china.jpg", slug: "china" },
-  { name: "เวียดนาม", nameEn: "Vietnam", count: 15, image: "/images/destinations/vietnam.jpg", slug: "vietnam" },
-];
-
 // Why choose us features
 const features = [
   {
@@ -108,6 +100,12 @@ export default function HomePage() {
     <>
       {/* Hero Section with Slider */}
       <HeroSlider />
+
+      {/* Promotions Carousel */}
+      <Promotions />
+
+      {/* Popular Destinations - Dynamic from API */}
+      <PopularCountries slug="homepage" />
 
       {/* Featured Tours */}
       <section className="py-16 lg:py-20 bg-[var(--color-gray-50)]">
@@ -190,47 +188,6 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Popular Destinations */}
-      <section className="py-16 lg:py-20">
-        <div className="container-custom">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl lg:text-3xl font-bold text-[var(--color-gray-800)]">
-              จุดหมายปลายทางยอดนิยม
-            </h2>
-            <p className="text-[var(--color-gray-500)] mt-2">
-              เลือกดูทัวร์ตามประเทศที่คุณสนใจ
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {destinations.map((dest) => (
-              <Link
-                key={dest.slug}
-                href={`/tours/${dest.slug}`}
-                className="group relative aspect-[3/4] rounded-xl overflow-hidden bg-[var(--color-gray-200)]"
-              >
-                {/* Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent z-10" />
-                
-                {/* Placeholder */}
-                <div className="absolute inset-0 flex items-center justify-center text-[var(--color-gray-400)]">
-                  <MapPin className="w-10 h-10" />
-                </div>
-
-                {/* Content */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 z-20 text-white">
-                  <h3 className="text-lg font-bold">{dest.name}</h3>
-                  <p className="text-sm text-white/80">{dest.count} ทัวร์</p>
-                </div>
-
-                {/* Hover effect */}
-                <div className="absolute inset-0 bg-[var(--color-primary)]/0 group-hover:bg-[var(--color-primary)]/20 transition-colors z-10" />
               </Link>
             ))}
           </div>
