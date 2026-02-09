@@ -357,6 +357,7 @@ export interface TourDetail {
   cover_image_url: string | null;
   cover_image_alt: string | null;
   gallery: TourDetailGallery[];
+  gallery_images: TourDetailGallery[];
   pdf_url: string | null;
   hashtags: string[] | null;
   themes: string[] | null;
