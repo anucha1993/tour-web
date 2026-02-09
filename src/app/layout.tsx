@@ -3,6 +3,8 @@ import { Noto_Sans_Thai } from "next/font/google";
 import "./globals.css";
 import { Header, Footer } from "@/components/layout";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { FavoritesProvider } from "@/contexts/FavoritesContext";
+import FavoritesDrawer from "@/components/home/FavoritesDrawer";
 
 const notoSansThai = Noto_Sans_Thai({
   variable: "--font-noto-sans-thai",
@@ -54,11 +56,14 @@ export default function RootLayout({
       </head>
       <body className={`${notoSansThai.variable} antialiased`}>
         <AuthProvider>
-          <Header />
-          <main className="min-h-screen pt-[80px] lg:pt-[160px]">
-            {children}
-          </main>
-          <Footer />
+          <FavoritesProvider>
+            <Header />
+            <main className="min-h-screen pt-[80px] lg:pt-[160px]">
+              {children}
+            </main>
+            <Footer />
+            <FavoritesDrawer />
+          </FavoritesProvider>
         </AuthProvider>
       </body>
     </html>

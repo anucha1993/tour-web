@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Menu, X, ChevronDown, Phone, Search, Clock, MessageCircle, Facebook, Instagram, Youtube, Heart, User, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useFavorites } from '@/contexts/FavoritesContext';
 
 // TikTok icon (not in lucide-react)
 const TikTokIcon = ({ className }: { className?: string }) => (
@@ -81,6 +82,7 @@ export default function Header() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   
   const { member, isLoading: authLoading, logout } = useAuth();
+  const { count: favoritesCount, openDrawer: openFavoritesDrawer } = useFavorites();
 
   // Handle scroll effect
   useEffect(() => {
@@ -270,17 +272,19 @@ export default function Header() {
             </button>
 
             {/* Wishlist button */}
-            <Link 
-              href="/member/wishlist"
+            <button 
+              onClick={openFavoritesDrawer}
               className="relative p-2 lg:p-2.5 rounded-lg text-[var(--color-gray-500)] hover:text-red-500 hover:bg-red-50 transition-colors"
               aria-label="ทัวร์ที่ชอบ"
             >
               <Heart className="w-5 h-5 lg:w-5 lg:h-5" />
               {/* Badge - จำนวนทัวร์ในรายการโปรด */}
-              <span className="absolute -top-0.5 -right-0.5 lg:-top-1 lg:-right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 lg:w-5 lg:h-5 flex items-center justify-center">
-                0
-              </span>
-            </Link>
+              {favoritesCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 lg:-top-1 lg:-right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 lg:w-5 lg:h-5 flex items-center justify-center">
+                  {favoritesCount > 99 ? '99+' : favoritesCount}
+                </span>
+              )}
+            </button>
 
             {/* User/Login button */}
             {!authLoading && (
@@ -314,14 +318,21 @@ export default function Header() {
                         <User className="w-4 h-4" />
                         หน้าสมาชิก
                       </Link>
-                      <Link
-                        href="/member/wishlist"
-                        onClick={() => setShowUserMenu(false)}
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-50)] transition-colors"
+                      <button
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          openFavoritesDrawer();
+                        }}
+                        className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-50)] transition-colors"
                       >
                         <Heart className="w-4 h-4" />
                         ทัวร์ที่ชอบ
-                      </Link>
+                        {favoritesCount > 0 && (
+                          <span className="ml-auto bg-red-100 text-red-600 text-xs font-bold px-1.5 py-0.5 rounded-full">
+                            {favoritesCount}
+                          </span>
+                        )}
+                      </button>
                       <hr className="my-1" />
                       <button
                         onClick={() => {

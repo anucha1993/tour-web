@@ -195,6 +195,202 @@ export interface PageContent {
   updated_at: string;
 }
 
+// Tour Tabs API
+export interface TourTabTour {
+  id: number;
+  slug: string;
+  title: string;
+  tour_code: string;
+  country: {
+    id: number;
+    name: string;
+    iso2?: string;
+  };
+  days: number;
+  nights: number;
+  price: number | null;
+  original_price: number | null;
+  discount_adult: number | null;
+  discount_percent: number | null;
+  departure_date: string | null;
+  max_departure_date: string | null;
+  airline?: string;
+  image_url: string | null;
+  badge?: string;
+  rating?: number;
+  review_count?: number;
+}
+
+export interface TourTabData {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string;
+  icon?: string;
+  badge_text?: string;
+  badge_color?: string;
+  tours: TourTabTour[];
+}
+
+export const tourTabsApi = {
+  // Get all tour tabs with tours for public display
+  list: () => api.get<{ data: TourTabData[] }>('/tour-tabs/public'),
+  
+  // Get single tab by slug
+  getBySlug: (slug: string) => api.get<{ data: { tab: TourTabData; tours: TourTabTour[] } }>(`/tour-tabs/public/${slug}`),
+};
+
+// Recommended Tours types
+export interface RecommendedToursData {
+  title: string;
+  subtitle: string | null;
+  section_name: string;
+  tours: TourTabTour[];
+}
+
+export const recommendedToursApi = {
+  // Get recommended tours for public display (returns single section)
+  get: () => api.get<{ data: RecommendedToursData | null }>('/recommended-tours/public'),
+};
+
+// Tour Detail types
+export interface TourDetailOffer {
+  price_adult: number;
+  discount_adult: number;
+  net_price_adult: number;
+  price_child: number | null;
+  discount_child_bed: number;
+  price_child_nobed: number | null;
+  discount_child_nobed: number;
+  price_infant: number | null;
+  price_joinland: number | null;
+  price_single: number | null;
+  discount_single: number;
+  deposit: number | null;
+  promo_name: string | null;
+}
+
+export interface TourDetailPeriod {
+  id: number;
+  start_date: string;
+  end_date: string;
+  capacity: number;
+  booked: number;
+  available: number;
+  status: string;
+  sale_status: string;
+  guarantee_status: string;
+  offer: TourDetailOffer | null;
+}
+
+export interface TourDetailItinerary {
+  day_number: number;
+  title: string;
+  description: string | null;
+  places: string[] | null;
+  accommodation: string | null;
+  hotel_star: number | null;
+  has_breakfast: boolean;
+  has_lunch: boolean;
+  has_dinner: boolean;
+  meals_note: string | null;
+  images: string[] | null;
+}
+
+export interface TourDetailTransport {
+  transport_code: string | null;
+  transport_name: string | null;
+  flight_no: string | null;
+  route_from: string | null;
+  route_to: string | null;
+  depart_time: string | null;
+  arrive_time: string | null;
+  transport_type: string;
+  day_no: number | null;
+  airline: {
+    code: string;
+    name: string;
+    image: string | null;
+  } | null;
+}
+
+export interface TourDetailGallery {
+  url: string;
+  thumbnail_url: string | null;
+  alt: string | null;
+  caption: string | null;
+}
+
+export interface TourDetailCountry {
+  id: number;
+  name: string;
+  name_en: string;
+  iso2: string;
+  flag_emoji: string | null;
+}
+
+export interface TourDetail {
+  id: number;
+  slug: string;
+  tour_code: string;
+  title: string;
+  tour_type: string;
+  description: string | null;
+  primary_country: TourDetailCountry | null;
+  countries: TourDetailCountry[];
+  cities: { id: number; name: string; name_en: string; country_id: number }[];
+  locations: { name: string; name_en: string | null; city: string | null }[];
+  region: string | null;
+  sub_region: string | null;
+  duration_days: number;
+  duration_nights: number;
+  highlights: string[] | null;
+  shopping_highlights: string[] | null;
+  food_highlights: string[] | null;
+  special_highlights: string[] | null;
+  hotel_star: number | null;
+  hotel_star_min: number | null;
+  hotel_star_max: number | null;
+  inclusions: string | null;
+  exclusions: string | null;
+  conditions: string | null;
+  cover_image_url: string | null;
+  cover_image_alt: string | null;
+  gallery: TourDetailGallery[];
+  pdf_url: string | null;
+  hashtags: string[] | null;
+  themes: string[] | null;
+  suitable_for: string[] | null;
+  keywords: string[] | null;
+  badge: string | null;
+  tour_category: string | null;
+  min_price: number | null;
+  display_price: number | null;
+  price_adult: number | null;
+  discount_adult: number | null;
+  discount_amount: number | null;
+  max_discount_percent: number | null;
+  promotion_type: string;
+  discount_label: string | null;
+  departure_airports: string[] | null;
+  transports: TourDetailTransport[];
+  next_departure_date: string | null;
+  total_departures: number;
+  available_seats: number;
+  periods: TourDetailPeriod[];
+  itineraries: TourDetailItinerary[];
+  view_count: number;
+  popularity_score: number;
+  meta_title: string | null;
+  meta_description: string | null;
+}
+
+export const tourDetailApi = {
+  get: (slug: string) => api.get<{ data: TourDetail }>(`/tours/detail/${slug}`),
+  recordView: (slug: string, data?: { referrer?: string; utm_source?: string; utm_medium?: string; utm_campaign?: string; session_id?: string }) =>
+    api.post<{ success: boolean }>(`/tours/detail/${slug}/view`, data),
+};
+
 // Member API
 export const memberApi = {
   // Billing Addresses
