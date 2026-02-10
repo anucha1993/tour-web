@@ -220,6 +220,7 @@ export interface TourTabTour {
   rating?: number;
   review_count?: number;
   available_seats?: number;
+  view_count?: number;
 }
 
 export interface TourTabData {

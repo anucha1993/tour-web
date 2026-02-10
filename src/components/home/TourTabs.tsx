@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
@@ -9,6 +9,9 @@ import {
   Calendar,
   Star,
   Plane,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
 } from 'lucide-react';
 import { tourTabsApi, TourTabData, TourTabTour } from '@/lib/api';
 import FavoriteButton from './FavoriteButton';
@@ -30,6 +33,12 @@ function TourCard({ tour }: { tour: TourTabTour }) {
   const originalPrice = discountAdult > 0 ? price + discountAdult : null;
   const discountPercent = originalPrice ? Math.round((discountAdult / originalPrice) * 100) : 0;
   const isSoldOut = tour.available_seats === 0;
+
+  // Format view count
+  const formatViewCount = (count: number) => {
+    if (count >= 1000) return `${(count / 1000).toFixed(1)}k`;
+    return count.toString();
+  };
 
   return (
     <Link
@@ -82,41 +91,43 @@ function TourCard({ tour }: { tour: TourTabTour }) {
           </div>
         )}
         
-        {/* Destination */}
-        <div className="absolute bottom-3 left-3 z-20 flex items-center gap-1 text-white text-sm">
-          <MapPin className="w-4 h-4" />
-          {tour.country.name}
+        {/* Bottom info overlay */}
+        <div className="absolute bottom-3 left-3 right-3 z-20 flex items-center justify-between">
+          <div className="flex items-center gap-1 text-white text-sm">
+            <MapPin className="w-4 h-4" />
+            {tour.country.name}
+          </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-3">
         <p className="text-xs font-mono text-[var(--color-gray-400)] mb-1">{tour.tour_code}</p>
-        <h3 className="font-semibold text-[var(--color-gray-800)] group-hover:text-[var(--color-primary)] transition-colors line-clamp-2 min-h-[48px]">
+        <h3 className="font-semibold text-sm text-[var(--color-gray-800)] group-hover:text-[var(--color-primary)] transition-colors line-clamp-2 min-h-[40px]">
           {tour.title}
         </h3>
         
-        <div className="flex items-center gap-4 mt-2 text-sm text-[var(--color-gray-500)]">
+        <div className="flex items-center gap-3 mt-2 text-xs text-[var(--color-gray-500)]">
           <span className="flex items-center gap-1">
-            <Calendar className="w-4 h-4" />
-            {tour.days} วัน {tour.nights} คืน
+            <Calendar className="w-3.5 h-3.5" />
+            {tour.days}วัน {tour.nights}คืน
           </span>
           {tour.airline && (
             <span className="flex items-center gap-1">
-              <Plane className="w-4 h-4" />
+              <Plane className="w-3.5 h-3.5" />
               {tour.airline}
             </span>
           )}
           {tour.rating && (
             <span className="flex items-center gap-1">
-              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+              <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
               {tour.rating}
             </span>
           )}
         </div>
 
         {tour.departure_date && (
-          <div className="mt-2 text-xs text-[var(--color-gray-500)]">
+          <div className="mt-1.5 text-xs text-[var(--color-gray-500)]">
             <span>📅 {new Date(tour.departure_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}</span>
             {tour.max_departure_date && tour.max_departure_date !== tour.departure_date && (
               <span> - {new Date(tour.max_departure_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}</span>
@@ -124,29 +135,31 @@ function TourCard({ tour }: { tour: TourTabTour }) {
           </div>
         )}
 
-        <div className="mt-3 pt-3 border-t border-gray-100">
-          <p className="text-xs text-[var(--color-gray-500)]">เริ่มต้น</p>
-          {originalPrice && discountAdult > 0 ? (
-            <>
-              <span className="text-sm text-[var(--color-gray-400)] line-through">
-                ฿{originalPrice.toLocaleString()}
-              </span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-xl font-bold text-red-500">
+        <div className="mt-2 pt-2 border-t border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-[var(--color-gray-500)]">เริ่มต้น</p>
+              {originalPrice && discountAdult > 0 ? (
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xs text-[var(--color-gray-400)] line-through">
+                    ฿{originalPrice.toLocaleString()}
+                  </span>
+                  <span className="text-lg font-bold text-red-500">
+                    ฿{price.toLocaleString()}
+                  </span>
+                </div>
+              ) : (
+                <span className="text-lg font-bold text-[var(--color-primary)]">
                   ฿{price.toLocaleString()}
                 </span>
-                {discountPercent > 0 && (
-                  <span className="text-xs font-semibold text-red-500">
-                    -{discountPercent}%
-                  </span>
-                )}
-              </div>
-            </>
-          ) : (
-            <span className="text-xl font-bold text-[var(--color-primary)]">
-              ฿{price.toLocaleString()}
-            </span>
-          )}
+              )}
+            </div>
+            {/* View count - แสดงเสมอ */}
+            <div className="flex items-center gap-1 text-[var(--color-gray-500)] text-xs bg-gray-100 rounded-full px-2.5 py-1">
+              <Eye className="w-3.5 h-3.5" />
+              <span className="font-medium">{formatViewCount(tour.view_count ?? 0)}</span>
+            </div>
+          </div>
         </div>
       </div>
     </Link>
@@ -157,6 +170,34 @@ export default function TourTabs() {
   const [tabs, setTabs] = useState<TourTabData[]>([]);
   const [activeTab, setActiveTab] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(8); // 4 columns × 2 rows
+  const [colsPerRow, setColsPerRow] = useState(4);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Responsive: update columns and items per page based on screen width
+  useEffect(() => {
+    const updateLayout = () => {
+      if (window.innerWidth < 640) {
+        setColsPerRow(1);
+        setItemsPerPage(2); // 1 col × 2 rows
+      } else if (window.innerWidth < 1024) {
+        setColsPerRow(2);
+        setItemsPerPage(4); // 2 cols × 2 rows
+      } else {
+        setColsPerRow(4);
+        setItemsPerPage(8); // 4 cols × 2 rows
+      }
+    };
+    updateLayout();
+    window.addEventListener('resize', updateLayout);
+    return () => window.removeEventListener('resize', updateLayout);
+  }, []);
+
+  // Reset page when tab changes
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [activeTab]);
 
   useEffect(() => {
     async function fetchTabs() {
@@ -174,6 +215,19 @@ export default function TourTabs() {
 
     fetchTabs();
   }, []);
+
+  const currentTab = !loading && tabs.length > 0 ? tabs[activeTab] : null;
+  const tours = currentTab?.tours ?? [];
+  const totalPages = Math.ceil(tours.length / itemsPerPage);
+  const maxPage = Math.max(0, totalPages - 1);
+
+  const prevPage = useCallback(() => {
+    setCurrentPage((prev) => (prev <= 0 ? maxPage : prev - 1));
+  }, [maxPage]);
+
+  const nextPage = useCallback(() => {
+    setCurrentPage((prev) => (prev >= maxPage ? 0 : prev + 1));
+  }, [maxPage]);
 
   if (loading) {
     return (
@@ -195,24 +249,24 @@ export default function TourTabs() {
             ))}
           </div>
 
-          {/* Cards skeleton */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
+          {/* Cards skeleton - 2 rows × 4 cols */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[...Array(8)].map((_, i) => (
               <div key={i} className="bg-white rounded-xl overflow-hidden shadow-sm">
                 <div className="aspect-square bg-gray-200 animate-pulse" />
-                <div className="p-4 space-y-3">
+                <div className="p-3 space-y-2">
                   <div className="h-3 w-16 bg-gray-200 rounded animate-pulse" />
                   <div className="space-y-1.5">
                     <div className="h-4 w-full bg-gray-200 rounded animate-pulse" />
                     <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse" />
                   </div>
                   <div className="flex gap-3">
-                    <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
-                    <div className="h-4 w-12 bg-gray-200 rounded animate-pulse" />
+                    <div className="h-3 w-20 bg-gray-200 rounded animate-pulse" />
+                    <div className="h-3 w-12 bg-gray-200 rounded animate-pulse" />
                   </div>
-                  <div className="pt-3 border-t border-gray-100">
+                  <div className="pt-2 border-t border-gray-100">
                     <div className="h-3 w-10 bg-gray-200 rounded animate-pulse" />
-                    <div className="h-6 w-28 bg-gray-200 rounded animate-pulse mt-1" />
+                    <div className="h-5 w-28 bg-gray-200 rounded animate-pulse mt-1" />
                   </div>
                 </div>
               </div>
@@ -226,8 +280,6 @@ export default function TourTabs() {
   if (tabs.length === 0) {
     return null;
   }
-
-  const currentTab = tabs[activeTab];
 
   return (
     <section className="py-16 lg:py-20 bg-[var(--color-gray-50)]">
@@ -284,12 +336,74 @@ export default function TourTabs() {
           </p>
         )}
 
-        {/* Tour Grid */}
-        {currentTab?.tours && currentTab.tours.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {currentTab.tours.map((tour) => (
-              <TourCard key={tour.id} tour={tour} />
-            ))}
+        {/* Tour Carousel - 2 rows × 4 cols */}
+        {tours.length > 0 ? (
+          <div className="relative" ref={containerRef}>
+            {/* Navigation Arrows */}
+            {totalPages > 1 && (
+              <>
+                <button
+                  onClick={prevPage}
+                  className="absolute -left-4 lg:-left-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-white hover:bg-gray-50 rounded-full flex items-center justify-center shadow-lg transition-all z-10 border border-gray-100"
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft className="w-5 h-5 text-gray-700" />
+                </button>
+                <button
+                  onClick={nextPage}
+                  className="absolute -right-4 lg:-right-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-white hover:bg-gray-50 rounded-full flex items-center justify-center shadow-lg transition-all z-10 border border-gray-100"
+                  aria-label="Next page"
+                >
+                  <ChevronRight className="w-5 h-5 text-gray-700" />
+                </button>
+              </>
+            )}
+
+            {/* Carousel Container */}
+            <div className="overflow-hidden">
+              <div
+                className="flex transition-transform duration-500 ease-out"
+                style={{
+                  transform: `translateX(-${currentPage * 100}%)`,
+                }}
+              >
+                {/* Each page = 2 rows × colsPerRow cards */}
+                {Array.from({ length: totalPages }).map((_, pageIndex) => {
+                  const pageStart = pageIndex * itemsPerPage;
+                  const pageTours = tours.slice(pageStart, pageStart + itemsPerPage);
+                  return (
+                    <div
+                      key={pageIndex}
+                      className="w-full flex-shrink-0"
+                    >
+                      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4`}>
+                        {pageTours.map((tour) => (
+                          <TourCard key={tour.id} tour={tour} />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Dots Indicator */}
+            {totalPages > 1 && (
+              <div className="flex justify-center gap-2 mt-6">
+                {Array.from({ length: totalPages }).map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentPage(index)}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      index === currentPage
+                        ? 'bg-[var(--color-primary)] w-6'
+                        : 'bg-gray-300 hover:bg-gray-400'
+                    }`}
+                    aria-label={`Go to page ${index + 1}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-center py-12 text-[var(--color-gray-500)]">
