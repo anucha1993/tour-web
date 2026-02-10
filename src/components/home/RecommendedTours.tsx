@@ -19,11 +19,12 @@ function RecommendedTourCard({ tour, index }: { tour: TourTabTour; index: number
   const price = Number(tour.price || 0);
   const originalPrice = discountAdult > 0 ? price + discountAdult : null;
   const discountPercent = originalPrice ? Math.round((discountAdult / originalPrice) * 100) : 0;
+  const isSoldOut = tour.available_seats === 0;
 
   return (
     <Link
       href={`/tours/${tour.slug}`}
-      className="cursor-pointer group relative flex flex-col sm:flex-row bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-amber-200 shadow-sm hover:shadow-lg transition-all duration-300"
+      className={`cursor-pointer group relative flex flex-col sm:flex-row bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-amber-200 shadow-sm hover:shadow-lg transition-all duration-300 ${isSoldOut ? 'opacity-75' : ''}`}
     >
       {/* Rank badge */}
       <div className="absolute top-3 left-3 z-30 w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-white text-xs font-bold flex items-center justify-center shadow-md">
@@ -31,18 +32,27 @@ function RecommendedTourCard({ tour, index }: { tour: TourTabTour; index: number
       </div>
 
       {/* Favorite button */}
-      <div className="absolute top-3 right-3 z-30 sm:hidden">
-        <FavoriteButton tour={{ id: tour.id, title: tour.title, slug: tour.slug, image_url: tour.image_url, price: tour.price, country_name: tour.country.name, days: tour.days, nights: tour.nights, tour_code: tour.tour_code }} size="sm" />
-      </div>
+      {!isSoldOut && (
+        <div className="absolute top-3 right-3 z-30 sm:hidden">
+          <FavoriteButton tour={{ id: tour.id, title: tour.title, slug: tour.slug, image_url: tour.image_url, price: tour.price, country_name: tour.country.name, days: tour.days, nights: tour.nights, tour_code: tour.tour_code }} size="sm" />
+        </div>
+      )}
 
       {/* Image - landscape on desktop */}
       <div className="relative sm:w-[220px] lg:w-[260px] flex-shrink-0 aspect-[4/3] sm:aspect-auto overflow-hidden">
+        {/* SOLD OUT Stamp */}
+        {isSoldOut && (
+          <div className="absolute -right-10 top-6 rotate-45 bg-red-500 text-white text-xs font-bold px-12 py-1.5 shadow-lg z-30">
+            SOLD OUT
+          </div>
+        )}
+        
         {tour.image_url ? (
           <Image
             src={tour.image_url}
             alt={tour.title}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
+            className={`object-cover group-hover:scale-105 transition-transform duration-500 ${isSoldOut ? 'grayscale-[30%]' : ''}`}
             sizes="(max-width: 640px) 100vw, 260px"
           />
         ) : (
@@ -52,7 +62,7 @@ function RecommendedTourCard({ tour, index }: { tour: TourTabTour; index: number
         )}
 
         {/* Discount badge */}
-        {discountPercent > 0 && (
+        {discountPercent > 0 && !isSoldOut && (
           <div className="absolute top-3 right-3 z-20 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow">
             -{discountPercent}%
           </div>
@@ -136,9 +146,11 @@ function RecommendedTourCard({ tour, index }: { tour: TourTabTour; index: number
             )}
           </div>
           <div className="flex items-center gap-2">
-            <div className="hidden sm:block">
-              <FavoriteButton tour={{ id: tour.id, title: tour.title, slug: tour.slug, image_url: tour.image_url, price: tour.price, country_name: tour.country.name, days: tour.days, nights: tour.nights, tour_code: tour.tour_code }} size="sm" />
-            </div>
+            {!isSoldOut && (
+              <div className="hidden sm:block">
+                <FavoriteButton tour={{ id: tour.id, title: tour.title, slug: tour.slug, image_url: tour.image_url, price: tour.price, country_name: tour.country.name, days: tour.days, nights: tour.nights, tour_code: tour.tour_code }} size="sm" />
+              </div>
+            )}
             <span className="text-xs text-amber-500 font-medium group-hover:translate-x-1 transition-transform flex items-center gap-1">
               ดูรายละเอียด
               <ArrowRight className="w-3.5 h-3.5" />

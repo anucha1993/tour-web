@@ -219,6 +219,7 @@ export interface TourTabTour {
   badge?: string;
   rating?: number;
   review_count?: number;
+  available_seats?: number;
 }
 
 export interface TourTabData {
@@ -440,5 +441,35 @@ export interface Member {
   consent_marketing: boolean;
   created_at: string;
 }
+
+// Booking API
+export const bookingApi = {
+  // Request OTP for booking (guest only)
+  requestOtp: (phone: string) =>
+    api.post<{ otp_request_id: number; expires_in: number; debug_otp?: string }>('/web/booking/request-otp', { phone }),
+
+  // Verify OTP for booking (guest only)
+  verifyOtp: (otp_request_id: number, otp: string) =>
+    api.post<{ phone_msisdn: string }>('/web/booking/verify-otp', { otp_request_id, otp }),
+
+  // Submit booking (debug mode)
+  submit: (data: {
+    tour_id: number;
+    period_id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone: string;
+    qty_adult: number;
+    qty_adult_single: number;
+    qty_child_bed: number;
+    qty_child_nobed: number;
+    sale_code?: string;
+    special_request?: string;
+    consent_terms: boolean;
+    otp_request_id?: number;
+    otp_verified?: boolean;
+  }) => api.post<{ debug: boolean; booking_data: Record<string, unknown> }>('/web/booking/submit', data),
+};
 
 export default api;

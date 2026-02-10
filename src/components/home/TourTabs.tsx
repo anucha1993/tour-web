@@ -29,22 +29,30 @@ function TourCard({ tour }: { tour: TourTabTour }) {
   const price = Number(tour.price || 0);
   const originalPrice = discountAdult > 0 ? price + discountAdult : null;
   const discountPercent = originalPrice ? Math.round((discountAdult / originalPrice) * 100) : 0;
+  const isSoldOut = tour.available_seats === 0;
 
   return (
     <Link
       href={`/tours/${tour.slug}`}
-      className="cursor-pointer group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
+      className={`cursor-pointer group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 ${isSoldOut ? 'opacity-75' : ''}`}
     >
       {/* Image */}
       <div className="relative aspect-square bg-[var(--color-gray-200)] overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10" />
+        
+        {/* SOLD OUT Stamp */}
+        {isSoldOut && (
+          <div className="absolute -right-10 top-6 rotate-45 bg-red-500 text-white text-xs font-bold px-12 py-1.5 shadow-lg z-30">
+            SOLD OUT
+          </div>
+        )}
         
         {tour.image_url ? (
           <Image
             src={tour.image_url}
             alt={tour.title}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            className={`object-cover group-hover:scale-105 transition-transform duration-300 ${isSoldOut ? 'grayscale-[30%]' : ''}`}
             sizes="(max-width: 640px) 100vw, (max-width: 800px) 50vw, 25vw"
           />
         ) : (
@@ -54,23 +62,25 @@ function TourCard({ tour }: { tour: TourTabTour }) {
         )}
         
         {/* Discount badge */}
-        {discountPercent > 0 && (
+        {discountPercent > 0 && !isSoldOut && (
           <div className="absolute top-3 left-3 z-20 bg-[var(--color-primary)] text-white text-xs font-bold px-2 py-1 rounded">
             ลด {discountPercent}%
           </div>
         )}
         
         {/* Tour badge */}
-        {tour.badge && (
+        {tour.badge && !isSoldOut && (
           <div className="absolute top-3 right-3 z-20 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded">
             {tour.badge}
           </div>
         )}
 
         {/* Favorite button */}
-        <div className="absolute top-3 right-3 z-30" style={tour.badge ? { top: '2.75rem' } : undefined}>
-          <FavoriteButton tour={{ id: tour.id, title: tour.title, slug: tour.slug, image_url: tour.image_url, price: tour.price, country_name: tour.country.name, days: tour.days, nights: tour.nights, tour_code: tour.tour_code }} size="sm" />
-        </div>
+        {!isSoldOut && (
+          <div className="absolute top-3 right-3 z-30" style={tour.badge ? { top: '2.75rem' } : undefined}>
+            <FavoriteButton tour={{ id: tour.id, title: tour.title, slug: tour.slug, image_url: tour.image_url, price: tour.price, country_name: tour.country.name, days: tour.days, nights: tour.nights, tour_code: tour.tour_code }} size="sm" />
+          </div>
+        )}
         
         {/* Destination */}
         <div className="absolute bottom-3 left-3 z-20 flex items-center gap-1 text-white text-sm">

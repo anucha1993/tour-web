@@ -20,6 +20,7 @@ import {
   TourDetailItinerary,
 } from '@/lib/api';
 import FavoriteButton from '@/components/home/FavoriteButton';
+import BookingModal from '@/components/tours/BookingModal';
 
 // ===== Helper Components =====
 
@@ -58,7 +59,7 @@ const BADGE_LABELS: Record<string, { text: string; color: string }> = {
 };
 
 // ===== Gallery Component (Viator-style: thumbnails left + main image) =====
-const THUMBNAIL_SLOTS = 9; // Always show 6 thumbnail slots including main image
+const THUMBNAIL_SLOTS = 5; // Always show 6 thumbnail slots including main image
 
 function ViatorGallery({ images, galleryImages, coverUrl, coverAlt, title }: {
   images: TourDetail['gallery'];
@@ -87,9 +88,9 @@ function ViatorGallery({ images, galleryImages, coverUrl, coverAlt, title }: {
 
   return (
     <>
-      <div className="flex bg-gray-100 overflow-hidden rounded-lg sm:rounded-none">
+      <div className="flex bg-gray-100 overflow-hidden rounded-2xl">
         {/* Thumbnails - left side (always show 6 slots) */}
-        <div className="hidden sm:flex flex-col gap-0.5 p-1 bg-gray-50 w-[76px] flex-shrink-0">
+        <div className="hidden sm:flex flex-col gap-0.5 p-1 bg-gray-50 w-[130px] flex-shrink-0">
           {/* Actual images */}
           {allImages.slice(0, THUMBNAIL_SLOTS).map((img, idx) => (
             <button
@@ -102,8 +103,8 @@ function ViatorGallery({ images, galleryImages, coverUrl, coverAlt, title }: {
               <Image
                 src={img.thumbnail_url || img.url}
                 alt={img.alt || `Image ${idx + 1}`}
-                width={150}
-                height={150}
+                width={200}
+                height={200}
                 className="w-full h-full object-cover"
                 quality={85}
               />
@@ -133,7 +134,7 @@ function ViatorGallery({ images, galleryImages, coverUrl, coverAlt, title }: {
 
         {/* Main Image - shows full image without cropping */}
         <div
-          className="relative flex-1 min-h-[350px] sm:min-h-[450px] lg:min-h-[520px] cursor-pointer bg-white"
+          className="relative flex-1 min-h-[350px] sm:min-h-[450px] lg:min-h-[520px] cursor-pointer bg-white "
           onClick={() => allImages.length > 0 && setLightbox(true)}
         >
           {allImages.length > 0 ? (
@@ -141,7 +142,7 @@ function ViatorGallery({ images, galleryImages, coverUrl, coverAlt, title }: {
               src={allImages[current].url}
               alt={allImages[current].alt || title}
               fill
-              className="object-contain"
+              className="object-contain "
               sizes="(max-width: 768px) 100vw, (max-width: 1024px) 55vw, 700px"
               quality={90}
               priority={current === 0}
@@ -261,7 +262,7 @@ function ViatorGallery({ images, galleryImages, coverUrl, coverAlt, title }: {
 }
 
 // ===== Period / Price Table =====
-function PeriodTable({ periods }: { periods: TourDetailPeriod[] }) {
+function PeriodTable({ periods, onBookPeriod }: { periods: TourDetailPeriod[]; onBookPeriod?: (period: TourDetailPeriod) => void }) {
   const [expanded, setExpanded] = useState(false);
   const display = expanded ? periods : periods.slice(0, 6);
 
@@ -282,13 +283,9 @@ function PeriodTable({ periods }: { periods: TourDetailPeriod[] }) {
   const statusLabels: Record<string, string> = {
     available: 'ว่าง',
     booking: 'จองได้',
-    sold_out: 'เต็ม',
+    sold_out: 'Sold Out',
   };
-  const guaranteeLabels: Record<string, { label: string; color: string }> = {
-    guaranteed: { label: 'การันตี', color: 'text-green-600' },
-    pending: { label: 'รอยืนยัน', color: 'text-yellow-600' },
-    cancelled: { label: 'ยกเลิก', color: 'text-red-600' },
-  };
+  
 
   return (
     <div>
@@ -303,7 +300,8 @@ function PeriodTable({ periods }: { periods: TourDetailPeriod[] }) {
               <th className="text-right px-4 py-3 font-semibold">พักเดี่ยว</th>
               <th className="text-center px-4 py-3 font-semibold">ที่นั่ง</th>
               <th className="text-center px-4 py-3 font-semibold">สถานะ</th>
-              <th className="text-center px-4 py-3 font-semibold rounded-tr-lg">การันตี</th>
+            
+              <th className="text-center px-4 py-3 font-semibold rounded-tr-lg w-20"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -311,10 +309,12 @@ function PeriodTable({ periods }: { periods: TourDetailPeriod[] }) {
               const offer = period.offer;
               const startD = new Date(period.start_date);
               const endD = new Date(period.end_date);
+              // Compute effective status: if available = 0, treat as sold_out
+              const effectiveStatus = period.available === 0 ? 'sold_out' : period.sale_status;
               return (
-                <tr key={period.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={period.id} className={`transition-colors ${effectiveStatus === 'sold_out' ? 'bg-gray-50 opacity-70' : 'hover:bg-gray-50'}`}>
                   <td className="px-4 py-3">
-                    <div className="font-medium text-gray-800">
+                    <div className={`font-medium ${effectiveStatus === 'sold_out' ? 'text-gray-500' : 'text-gray-800'}`}>
                       {startD.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}
                       {' - '}
                       {endD.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}
@@ -330,30 +330,36 @@ function PeriodTable({ periods }: { periods: TourDetailPeriod[] }) {
                           ฿{offer.net_price_adult.toLocaleString()}
                         </span>
                       </div>
-                    ) : <span className="text-gray-400">-</span>}
+                    ) : <span className="text-xs text-orange-500">ติดต่อฝ่ายขาย</span>}
                   </td>
                   <td className="px-4 py-3 text-right">
                     {offer?.price_child ? (
                       <span className="text-gray-700">฿{(offer.price_child - offer.discount_child_bed).toLocaleString()}</span>
-                    ) : <span className="text-gray-400">-</span>}
+                    ) : <span className="text-xs text-orange-500">ติดต่อฝ่ายขาย</span>}
                   </td>
                   <td className="px-4 py-3 text-right">
                     {offer?.price_single ? (
                       <span className="text-gray-700">+฿{(offer.price_single - offer.discount_single).toLocaleString()}</span>
-                    ) : <span className="text-gray-400">-</span>}
+                    ) : <span className="text-xs text-orange-500">ติดต่อฝ่ายขาย</span>}
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span className="text-gray-600">{period.available}/{period.capacity}</span>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[period.sale_status] || 'text-gray-600 bg-gray-50'}`}>
-                      {statusLabels[period.sale_status] || period.sale_status}
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[effectiveStatus] || 'text-gray-600 bg-gray-50'}`}>
+                      {statusLabels[effectiveStatus] || effectiveStatus}
                     </span>
                   </td>
+                  
                   <td className="px-4 py-3 text-center">
-                    <span className={`text-xs font-medium ${guaranteeLabels[period.guarantee_status]?.color || 'text-gray-500'}`}>
-                      {guaranteeLabels[period.guarantee_status]?.label || period.guarantee_status}
-                    </span>
+                    {effectiveStatus !== 'sold_out' && onBookPeriod && (
+                      <button
+                        onClick={() => onBookPeriod(period)}
+                        className="px-3 py-1.5 bg-orange-500 text-white text-xs font-semibold rounded-lg hover:bg-orange-600 transition cursor-pointer"
+                      >
+                        จอง
+                      </button>
+                    )}
                   </td>
                 </tr>
               );
@@ -368,17 +374,25 @@ function PeriodTable({ periods }: { periods: TourDetailPeriod[] }) {
           const offer = period.offer;
           const startD = new Date(period.start_date);
           const endD = new Date(period.end_date);
+          // Compute effective status: if available = 0, treat as sold_out
+          const effectiveStatus = period.available === 0 ? 'sold_out' : period.sale_status;
           return (
-            <div key={period.id} className="border border-gray-100 rounded-xl p-4 hover:border-orange-200 transition-colors">
+            <div key={period.id} className={`relative border rounded-xl p-4 transition-colors overflow-hidden ${effectiveStatus === 'sold_out' ? 'border-gray-200 bg-gray-50' : 'border-gray-100 hover:border-orange-200'}`}>
+              {/* Sold Out Stamp */}
+              {effectiveStatus === 'sold_out' && (
+                <div className="absolute -right-8 top-3 rotate-45 bg-red-500 text-white text-xs font-bold px-10 py-1 shadow-md">
+                  SOLD OUT
+                </div>
+              )}
               <div className="flex items-center justify-between mb-2">
                 <span className="font-semibold text-gray-800">
                   {startD.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })} - {endD.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}
                 </span>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[period.sale_status] || ''}`}>
-                  {statusLabels[period.sale_status] || period.sale_status}
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[effectiveStatus] || ''}`}>
+                  {statusLabels[effectiveStatus] || effectiveStatus}
                 </span>
               </div>
-              {offer && (
+              {offer ? (
                 <div className="flex items-end justify-between">
                   <div>
                     {offer.discount_adult > 0 && (
@@ -388,7 +402,29 @@ function PeriodTable({ periods }: { periods: TourDetailPeriod[] }) {
                       ฿{offer.net_price_adult.toLocaleString()}
                     </span>
                   </div>
-                  <span className="text-xs text-gray-500">ว่าง {period.available} ที่</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">ว่าง {period.available} ที่</span>
+                    {effectiveStatus !== 'sold_out' && onBookPeriod && (
+                      <button
+                        onClick={() => onBookPeriod(period)}
+                        className="px-3 py-1.5 bg-orange-500 text-white text-xs font-semibold rounded-lg hover:bg-orange-600 transition cursor-pointer"
+                      >
+                        จอง
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-orange-500">ติดต่อฝ่ายขาย</span>
+                  {effectiveStatus !== 'sold_out' && onBookPeriod && (
+                    <button
+                      onClick={() => onBookPeriod(period)}
+                      className="px-3 py-1.5 bg-orange-500 text-white text-xs font-semibold rounded-lg hover:bg-orange-600 transition cursor-pointer"
+                    >
+                      จอง
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -412,85 +448,225 @@ function PeriodTable({ periods }: { periods: TourDetailPeriod[] }) {
   );
 }
 
-// ===== Itinerary Component =====
+// ===== Itinerary Component (Table) =====
 function ItinerarySection({ itineraries }: { itineraries: TourDetailItinerary[] }) {
-  const [openDay, setOpenDay] = useState<number | null>(itineraries.length > 0 ? itineraries[0].day_number : null);
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
   if (itineraries.length === 0) return null;
 
+  const selected = itineraries.find(d => d.day_number === selectedDay);
+
   return (
-    <div className="space-y-3">
-      {itineraries.map((day) => (
-        <div key={day.day_number} className="border border-gray-100 rounded-xl overflow-hidden">
+    <div>
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-4">
+        <MapPin className="w-5 h-5 text-orange-500" />
+        <h3 className="text-base font-bold text-gray-800">แผนการเดินทาง {itineraries.length} วัน</h3>
+      </div>
+
+      {/* Desktop Table */}
+      <div className="hidden md:block overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-gray-50 text-gray-600">
+              <th className="text-center px-3 py-3 font-semibold rounded-tl-lg w-16">วัน</th>
+              <th className="text-left px-3 py-3 font-semibold">กิจกรรม</th>
+              <th className="text-left px-3 py-3 font-semibold w-48">สถานที่</th>
+              <th className="text-center px-3 py-3 font-semibold w-12" title="เช้า"><Coffee className="w-4 h-4 mx-auto text-gray-500" /></th>
+              <th className="text-center px-3 py-3 font-semibold w-12" title="กลางวัน"><Sun className="w-4 h-4 mx-auto text-gray-500" /></th>
+              <th className="text-center px-3 py-3 font-semibold w-12" title="เย็น"><Moon className="w-4 h-4 mx-auto text-gray-500" /></th>
+              <th className="text-left px-3 py-3 font-semibold rounded-tr-lg w-44">ที่พัก</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {itineraries.map((day) => (
+              <tr
+                key={day.day_number}
+                onClick={() => setSelectedDay(selectedDay === day.day_number ? null : day.day_number)}
+                className="hover:bg-orange-50/50 transition-colors cursor-pointer group"
+              >
+                <td className="px-3 py-3 text-center">
+                  <span className="inline-flex items-center justify-center w-8 h-8 bg-orange-500 text-white rounded-lg text-sm font-bold">
+                    {day.day_number}
+                  </span>
+                </td>
+                <td className="px-3 py-3">
+                  <div className="font-medium text-gray-800 group-hover:text-orange-600 transition-colors">{day.title}</div>
+                  {day.description && (
+                    <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{day.description}</p>
+                  )}
+                </td>
+                <td className="px-3 py-3">
+                  {day.places && day.places.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {day.places.slice(0, 2).map((p, i) => (
+                        <span key={i} className="text-xs bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded font-medium">{p}</span>
+                      ))}
+                      {day.places.length > 2 && (
+                        <span className="text-xs text-gray-400">+{day.places.length - 2}</span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-gray-300">-</span>
+                  )}
+                </td>
+                <td className="px-3 py-3 text-center">
+                  {day.has_breakfast
+                    ? <Check className="w-4 h-4 text-green-500 mx-auto" />
+                    : <Minus className="w-4 h-4 text-gray-200 mx-auto" />
+                  }
+                </td>
+                <td className="px-3 py-3 text-center">
+                  {day.has_lunch
+                    ? <Check className="w-4 h-4 text-green-500 mx-auto" />
+                    : <Minus className="w-4 h-4 text-gray-200 mx-auto" />
+                  }
+                </td>
+                <td className="px-3 py-3 text-center">
+                  {day.has_dinner
+                    ? <Check className="w-4 h-4 text-green-500 mx-auto" />
+                    : <Minus className="w-4 h-4 text-gray-200 mx-auto" />
+                  }
+                </td>
+                <td className="px-3 py-3">
+                  {day.accommodation ? (
+                    <div className="flex items-center gap-1">
+                      <Hotel className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+                      <span className="text-xs text-gray-700 truncate">{day.accommodation}</span>
+                      {day.hotel_star && (
+                        <span className="flex items-center gap-0.5 ml-1">
+                          {Array.from({ length: day.hotel_star }).map((_, i) => (
+                            <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                          ))}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-gray-300">-</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="md:hidden space-y-2">
+        {itineraries.map((day) => (
           <button
-            onClick={() => setOpenDay(openDay === day.day_number ? null : day.day_number)}
-            className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition cursor-pointer"
+            key={day.day_number}
+            onClick={() => setSelectedDay(selectedDay === day.day_number ? null : day.day_number)}
+            className={`w-full text-left p-3 rounded-xl border transition-all cursor-pointer ${
+              selectedDay === day.day_number ? 'border-orange-300 bg-orange-50/50' : 'border-gray-100 hover:border-gray-200'
+            }`}
           >
             <div className="flex items-center gap-3">
               <span className="flex-shrink-0 w-9 h-9 bg-orange-500 text-white rounded-lg flex items-center justify-center text-sm font-bold">
                 {day.day_number}
               </span>
-              <span className="font-semibold text-gray-800 text-left text-sm sm:text-base">{day.title}</span>
-            </div>
-            {openDay === day.day_number ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
-          </button>
-
-          {openDay === day.day_number && (
-            <div className="px-4 pb-4 pt-1">
-              {day.description && (
-                <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line mb-3">{day.description}</p>
-              )}
-
-              <div className="flex flex-wrap gap-2 mb-3">
-                <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${day.has_breakfast ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-400'}`}>
-                  <Coffee className="w-3 h-3" /> เช้า
-                </span>
-                <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${day.has_lunch ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-400'}`}>
-                  <Sun className="w-3 h-3" /> กลางวัน
-                </span>
-                <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${day.has_dinner ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-400'}`}>
-                  <Moon className="w-3 h-3" /> เย็น
-                </span>
-                {day.meals_note && <span className="text-xs text-gray-500 self-center">({day.meals_note})</span>}
-              </div>
-
-              {day.accommodation && (
-                <div className="flex items-center gap-2 text-xs text-gray-600 mb-3 bg-blue-50 px-3 py-2 rounded-lg">
-                  <Hotel className="w-3.5 h-3.5 text-blue-500" />
-                  <span className="font-medium">{day.accommodation}</span>
-                  {day.hotel_star && (
-                    <span className="flex items-center gap-0.5">
-                      {Array.from({ length: day.hotel_star }).map((_, i) => (
-                        <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                      ))}
-                    </span>
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-gray-800 text-sm truncate">{day.title}</div>
+                <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-400">
+                  <span className="flex gap-0.5">
+                    {day.has_breakfast && <Coffee className="w-3 h-3 text-green-500" />}
+                    {day.has_lunch && <Sun className="w-3 h-3 text-green-500" />}
+                    {day.has_dinner && <Moon className="w-3 h-3 text-green-500" />}
+                  </span>
+                  {day.places && day.places.length > 0 && (
+                    <span className="truncate"><MapPin className="w-3 h-3 inline" /> {day.places[0]}{day.places.length > 1 ? ` +${day.places.length - 1}` : ''}</span>
                   )}
                 </div>
-              )}
+              </div>
+              {selectedDay === day.day_number ? <ChevronUp className="w-4 h-4 text-orange-400" /> : <ChevronDown className="w-4 h-4 text-gray-300" />}
+            </div>
+          </button>
+        ))}
+      </div>
 
-              {day.places && day.places.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {day.places.map((place, i) => (
-                    <span key={i} className="text-xs bg-orange-50 text-orange-700 px-2 py-1 rounded-full">
-                      <MapPin className="w-3 h-3 inline mr-0.5" />{place}
+      {/* Detail Panel (shown when row/card clicked) */}
+      {selected && (
+        <div className="mt-4 p-4 bg-white border border-orange-200 rounded-xl shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="w-8 h-8 bg-orange-500 text-white rounded-lg flex items-center justify-center text-sm font-bold">{selected.day_number}</span>
+            <h4 className="font-bold text-gray-800">{selected.title}</h4>
+          </div>
+
+          {selected.description && (
+            <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line mb-4">{selected.description}</p>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+            {/* Meals */}
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <div className="text-xs text-gray-500 font-medium mb-1.5">อาหาร</div>
+              <div className="flex gap-3">
+                <span className={`flex items-center gap-1 text-xs font-medium ${selected.has_breakfast ? 'text-green-600' : 'text-gray-300'}`}>
+                  <Coffee className="w-3.5 h-3.5" /> เช้า
+                </span>
+                <span className={`flex items-center gap-1 text-xs font-medium ${selected.has_lunch ? 'text-green-600' : 'text-gray-300'}`}>
+                  <Sun className="w-3.5 h-3.5" /> เที่ยง
+                </span>
+                <span className={`flex items-center gap-1 text-xs font-medium ${selected.has_dinner ? 'text-green-600' : 'text-gray-300'}`}>
+                  <Moon className="w-3.5 h-3.5" /> เย็น
+                </span>
+              </div>
+              {selected.meals_note && <div className="text-xs text-gray-400 mt-1">{selected.meals_note}</div>}
+            </div>
+
+            {/* Accommodation */}
+            {selected.accommodation && (
+              <div className="p-3 bg-blue-50/50 rounded-lg">
+                <div className="text-xs text-gray-500 font-medium mb-1.5">ที่พัก</div>
+                <div className="flex items-center gap-1.5">
+                  <Hotel className="w-3.5 h-3.5 text-blue-500" />
+                  <span className="text-xs font-medium text-gray-800">{selected.accommodation}</span>
+                </div>
+                {selected.hotel_star && (
+                  <div className="flex gap-0.5 mt-1">
+                    {Array.from({ length: selected.hotel_star }).map((_, i) => (
+                      <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Places */}
+            {selected.places && selected.places.length > 0 && (
+              <div className="p-3 bg-orange-50/50 rounded-lg">
+                <div className="text-xs text-gray-500 font-medium mb-1.5">สถานที่เที่ยว</div>
+                <div className="flex flex-wrap gap-1">
+                  {selected.places.map((p, i) => (
+                    <span key={i} className="inline-flex items-center gap-0.5 text-xs bg-white text-orange-700 px-2 py-1 rounded font-medium">
+                      <MapPin className="w-3 h-3 text-orange-400" />{p}
                     </span>
                   ))}
                 </div>
-              )}
+              </div>
+            )}
+          </div>
 
-              {day.images && day.images.length > 0 && (
-                <div className="flex gap-2 mt-3 overflow-x-auto">
-                  {day.images.map((img, i) => (
-                    <div key={i} className="relative w-32 h-20 flex-shrink-0 rounded-lg overflow-hidden">
-                      <Image src={img} alt={`Day ${day.day_number} - ${i + 1}`} fill className="object-cover" sizes="128px" />
-                    </div>
-                  ))}
+          {/* Images */}
+          {selected.images && selected.images.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {selected.images.map((img, i) => (
+                <div key={i} className="relative w-36 h-24 flex-shrink-0 rounded-lg overflow-hidden">
+                  <Image src={img} alt={`Day ${selected.day_number} - ${i + 1}`} fill className="object-cover" sizes="144px" />
                 </div>
-              )}
+              ))}
             </div>
           )}
         </div>
-      ))}
+      )}
+
+      {/* Summary bar */}
+      <div className="mt-4 p-3 bg-orange-50 rounded-xl flex flex-wrap items-center gap-4 text-xs text-orange-700">
+        <span className="font-semibold">สรุป {itineraries.length} วัน:</span>
+        <span>🍽️ รวม {itineraries.reduce((s, d) => s + (d.has_breakfast ? 1 : 0) + (d.has_lunch ? 1 : 0) + (d.has_dinner ? 1 : 0), 0)} มื้อ</span>
+        <span>🏨 {itineraries.filter(d => d.accommodation).length} คืน</span>
+        <span>📍 {itineraries.reduce((s, d) => s + (d.places?.length || 0), 0)} สถานที่</span>
+      </div>
     </div>
   );
 }
@@ -563,6 +739,9 @@ export default function TourDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<DetailTab>('detail');
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [bookingPeriod, setBookingPeriod] = useState<TourDetailPeriod | null>(null);
+  const [highlightSlideIndex, setHighlightSlideIndex] = useState(0);
   const viewRecorded = useRef(false);
 
   // Fetch tour data
@@ -573,6 +752,7 @@ export default function TourDetailPage() {
       return;
     }
     setLoading(true);
+    setHighlightSlideIndex(0); // Reset slider when loading new tour
     tourDetailApi.get(slug).then(res => {
       if (res.success && res.data) {
         setTour(res.data);
@@ -650,6 +830,9 @@ export default function TourDetailPage() {
       }, new Date(tour.periods[0].start_date))
     : null;
 
+  // Check if all periods are sold out (available = 0 or sale_status = 'sold_out')
+  const isAllSoldOut = tour.periods.length === 0 || tour.periods.every(p => p.available === 0 || p.sale_status === 'sold_out');
+
   const TABS: { id: DetailTab; label: string; icon: React.ElementType; count?: number }[] = [
     { id: 'detail', label: 'รายละเอียดทัวร์', icon: FileText },
     { id: 'periods', label: 'ช่วงเวลาการเดินทาง', icon: Calendar, count: tour.periods.length || undefined },
@@ -666,7 +849,13 @@ export default function TourDetailPage() {
           <span>/</span>
           {tour.primary_country && (
             <>
-              <span>{tour.primary_country.flag_emoji} {tour.primary_country.name}</span>
+              <span className="flex items-center gap-1">
+                {tour.primary_country.iso2 && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={`https://flagcdn.com/w20/${tour.primary_country.iso2.toLowerCase()}.png`} alt={tour.primary_country.name} className="w-5 h-3.5 object-cover rounded-sm" />
+                )}
+                {tour.primary_country.name}
+              </span>
               <span>/</span>
             </>
           )}
@@ -677,7 +866,7 @@ export default function TourDetailPage() {
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
 
           {/* ---- Title Section ---- */}
-          <div className="p-4 sm:p-5 border-b border-gray-100">
+          <div className="p-4 sm:p-5">
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <span className="text-xs font-mono text-gray-400 bg-gray-50 px-2 py-0.5 rounded">{tour.tour_code}</span>
               {badgeInfo && <Badge color={badgeInfo.color}>{badgeInfo.text}</Badge>}
@@ -709,9 +898,15 @@ export default function TourDetailPage() {
 
               <span className="text-gray-300 hidden sm:inline">|</span>
 
-              <span className="flex items-center gap-1 text-gray-600">
+              <span className="flex items-center gap-1.5 text-gray-600">
                 <MapPin className="w-3.5 h-3.5 text-orange-500" />
-                {tour.countries.map(c => `${c.flag_emoji || ''} ${c.name}`).join(', ') || 'ประเทศ'}
+                {tour.countries.map((c, i) => (
+                  <span key={c.id} className="inline-flex items-center gap-1">
+                   
+                    {c.name}{i < tour.countries.length - 1 ? ',' : ''}
+                  </span>
+                ))}
+                {tour.countries.length === 0 && 'ประเทศ'}
               </span>
 
               {tour.cities.length > 0 && (
@@ -729,10 +924,10 @@ export default function TourDetailPage() {
 
               <span className={`ml-auto px-2 py-0.5 text-xs font-medium rounded hidden sm:inline-block ${
                 tour.tour_category === 'premium'
-                  ? 'bg-purple-100 text-purple-700 border border-purple-300'
+                  ? 'bg-purple-100 text-purple-700 '
                   : tour.tour_category === 'budget'
-                    ? 'bg-emerald-100 text-emerald-700 border border-emerald-300'
-                    : 'bg-gray-100 text-gray-600 border border-gray-300'
+                    ? 'bg-emerald-100 text-emerald-700 '
+                    : 'bg-gray-100 text-gray-600'
               }`}>
                 {tour.tour_category === 'premium' ? '✨ พรีเมียม' : tour.tour_category === 'budget' ? '💰 ราคาดี' : 'ทั่วไป'}
               </span>
@@ -742,7 +937,13 @@ export default function TourDetailPage() {
           {/* ---- Gallery + Price Panel ---- */}
           <div className="flex flex-col lg:flex-row">
             {/* Gallery - Square image with thumbnails */}
-            <div className="lg:w-[55%] lg:flex-shrink-0">
+            <div className="lg:w-[65%] lg:flex-shrink-0 relative overflow-hidden">
+              {/* SOLD OUT Stamp on Gallery */}
+              {isAllSoldOut && (
+                <div className="absolute -right-16 top-8 rotate-45 bg-red-500 text-white text-lg font-bold px-20 py-2.5 shadow-lg z-20">
+                  SOLD OUT
+                </div>
+              )}
               <ViatorGallery
                 images={tour.gallery}
                 galleryImages={tour.gallery_images || []}
@@ -753,15 +954,22 @@ export default function TourDetailPage() {
             </div>
 
             {/* Price & Booking Panel */}
-            <div className="flex-1 p-4 sm:p-5 lg:border-l border-t lg:border-t-0 border-gray-100">
+            <div className="flex-1 p-4 sm:p-5 relative overflow-hidden">
+              {/* SOLD OUT Stamp */}
+              {isAllSoldOut && (
+                <div className="absolute -right-12 top-6 rotate-45 bg-red-500 text-white text-sm font-bold px-14 py-2 shadow-lg z-10">
+                  SOLD OUT
+                </div>
+              )}
+              
               {/* Promo badge */}
-              {tour.promotion_type === 'fire_sale' && (
+              {tour.promotion_type === 'fire_sale' && !isAllSoldOut && (
                 <div className="inline-flex items-center gap-1 px-2 py-1 bg-red-50 text-red-600 text-xs rounded mb-3">
                   <Clock className="w-3 h-3" />
                   🔥 โปรไฟไหม้
                 </div>
               )}
-              {discountPercent > 0 && tour.promotion_type !== 'fire_sale' && (
+              {discountPercent > 0 && tour.promotion_type !== 'fire_sale' && !isAllSoldOut && (
                 <div className="inline-flex items-center gap-1 px-2 py-1 bg-red-50 text-red-600 text-xs rounded mb-3">
                   <Sparkles className="w-3 h-3" />
                   ส่วนลด {discountPercent}%
@@ -815,12 +1023,18 @@ export default function TourDetailPage() {
 
               {/* CTA */}
               <div className="space-y-2 mb-4">
-                <button
-                  onClick={() => setActiveTab('periods')}
-                  className="block w-full text-center py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors shadow-md cursor-pointer"
-                >
-                  ตรวจสอบที่ว่าง
-                </button>
+                {isAllSoldOut ? (
+                  <div className="block w-full text-center py-3 bg-gray-300 text-gray-500 font-semibold rounded-xl cursor-not-allowed">
+                    ที่นั่งเต็มแล้ว
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => { setBookingPeriod(null); setBookingOpen(true); }}
+                    className="block w-full text-center py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors shadow-md cursor-pointer"
+                  >
+                    จองทัวร์นี้
+                  </button>
+                )}
                 {tour.pdf_url && (
                   <a
                     href={tour.pdf_url}
@@ -834,23 +1048,56 @@ export default function TourDetailPage() {
                 )}
               </div>
 
-              {/* Benefits */}
-              <div className="space-y-2 text-sm">
-                <div className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <span className="font-medium">ยกเลิกฟรี</span>
-                    <span className="text-gray-600"> ล่วงหน้า 24 ชม.</span>
+              {/* Conditions / Benefits */}
+              {(tour.inclusions || tour.conditions) ? (
+                <div className="space-y-2 text-sm">
+                  {tour.inclusions && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                        <Check className="w-3.5 h-3.5 text-green-500" />
+                        รวมในราคาทัวร์
+                      </h4>
+                      <div className="text-xs text-gray-600 leading-relaxed line-clamp-4 whitespace-pre-line">
+                        {tour.inclusions}
+                      </div>
+                    </div>
+                  )}
+                  {tour.conditions && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 flex items-center gap-1 mt-2">
+                        <Shield className="w-3.5 h-3.5 text-blue-500" />
+                        เงื่อนไข
+                      </h4>
+                      <div className="text-xs text-gray-600 leading-relaxed line-clamp-3 whitespace-pre-line">
+                        {tour.conditions}
+                      </div>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setActiveTab('conditions')}
+                    className="text-xs text-orange-500 hover:text-orange-600 font-medium cursor-pointer"
+                  >
+                    ดูเงื่อนไขทั้งหมด →
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <span className="font-medium">ยกเลิกฟรี</span>
+                      <span className="text-gray-600"> ล่วงหน้า 24 ชม.</span>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <span className="font-medium">จองก่อน จ่ายทีหลัง</span>
+                      <span className="text-gray-600"> - พร้อมความยืดหยุ่น</span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <span className="font-medium">จองก่อน จ่ายทีหลัง</span>
-                    <span className="text-gray-600"> - พร้อมความยืดหยุ่น</span>
-                  </div>
-                </div>
-              </div>
+              )}
 
               {/* Book ahead */}
               {nextDeparture && (
@@ -922,6 +1169,54 @@ export default function TourDetailPage() {
             </div>
           </div>
 
+          {/* ---- Highlights Slider ---- */}
+          {tour.highlights && tour.highlights.length > 0 && (
+            <div className="px-4 sm:px-5 py-3 border-t border-gray-100">
+              <div className="flex items-center gap-2 mb-2">
+                <Star className="w-4 h-4 text-yellow-500" />
+                <h4 className="text-sm font-semibold text-gray-800">ไฮไลท์ทัวร์</h4>
+              </div>
+              <div className="relative">
+                {/* Left Arrow */}
+                {highlightSlideIndex > 0 && (
+                  <button
+                    onClick={() => setHighlightSlideIndex(prev => Math.max(0, prev - 1))}
+                    className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 w-7 h-7 bg-white/90 hover:bg-white shadow-md rounded-full flex items-center justify-center border border-gray-200 cursor-pointer transition"
+                    aria-label="Previous highlight"
+                  >
+                    <ChevronLeft className="w-4 h-4 text-gray-600" />
+                  </button>
+                )}
+                
+                {/* Highlights Container */}
+                <div className="overflow-hidden">
+                  <div
+                    className="flex gap-2 transition-transform duration-300 ease-in-out"
+                    style={{ transform: `translateX(-${highlightSlideIndex * 120}px)` }}
+                  >
+                    {tour.highlights.map((item, idx) => (
+                      <span key={idx} className="flex-shrink-0 inline-flex items-center gap-1.5 text-xs bg-orange-50 text-orange-700 px-3 py-2 rounded-full font-medium whitespace-nowrap">
+                        <Check className="w-3.5 h-3.5 text-orange-500" />
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Right Arrow */}
+                {tour.highlights.length > 3 && highlightSlideIndex < tour.highlights.length - 3 && (
+                  <button
+                    onClick={() => setHighlightSlideIndex(prev => Math.min(tour.highlights!.length - 3, prev + 1))}
+                    className="absolute -right-2 top-1/2 -translate-y-1/2 z-10 w-7 h-7 bg-white/90 hover:bg-white shadow-md rounded-full flex items-center justify-center border border-gray-200 cursor-pointer transition"
+                    aria-label="Next highlight"
+                  >
+                    <ChevronRight className="w-4 h-4 text-gray-600" />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* ---- Detail Tabs ---- */}
           <div className="border-t border-gray-200">
             {/* Tab Navigation */}
@@ -962,23 +1257,7 @@ export default function TourDetailPage() {
                     </div>
                   )}
 
-                  {/* Highlights */}
-                  {tour.highlights && tour.highlights.length > 0 && (
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <Star className="w-5 h-5 text-yellow-500" />
-                        ไฮไลท์ทัวร์
-                      </h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {tour.highlights.map((item, idx) => (
-                          <div key={idx} className="flex items-start gap-2 text-gray-700">
-                            <Check className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
-                            <span className="text-sm">{item}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                
 
                   {/* Shopping & Food */}
                   {((tour.shopping_highlights && tour.shopping_highlights.length > 0) || (tour.food_highlights && tour.food_highlights.length > 0)) && (
@@ -1035,17 +1314,7 @@ export default function TourDetailPage() {
                     </div>
                   )}
 
-                  {/* Transports */}
-                  {tour.transports.length > 0 && (
-                    <div className="pt-4 border-t border-gray-100">
-                      <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                        <Plane className="w-4 h-4 text-blue-500" />
-                        สายการบิน
-                      </h4>
-                      <TransportSection transports={tour.transports} />
-                    </div>
-                  )}
-
+                 
                   {/* Tags */}
                   {((tour.themes && tour.themes.length > 0) || (tour.suitable_for && tour.suitable_for.length > 0)) && (
                     <div className="pt-4 border-t border-gray-100">
@@ -1093,7 +1362,7 @@ export default function TourDetailPage() {
 
               {/* ---- Periods Tab ---- */}
               {activeTab === 'periods' && (
-                <PeriodTable periods={tour.periods} />
+                <PeriodTable periods={tour.periods} onBookPeriod={(period) => { setBookingPeriod(period); setBookingOpen(true); }} />
               )}
 
               {/* ---- Itinerary Tab ---- */}
@@ -1154,6 +1423,16 @@ export default function TourDetailPage() {
 
         </div>
       </div>
+
+      {/* Booking Modal */}
+      {tour && (
+        <BookingModal
+          tour={tour}
+          isOpen={bookingOpen}
+          onClose={() => setBookingOpen(false)}
+          selectedPeriod={bookingPeriod}
+        />
+      )}
     </div>
   );
 }
