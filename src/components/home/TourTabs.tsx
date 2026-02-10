@@ -12,6 +12,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
+  Flame,
+  Crown,
+  Hotel,
 } from 'lucide-react';
 import { tourTabsApi, TourTabData, TourTabTour } from '@/lib/api';
 import FavoriteButton from './FavoriteButton';
@@ -69,24 +72,10 @@ function TourCard({ tour }: { tour: TourTabTour }) {
             <Plane className="w-12 h-12" />
           </div>
         )}
-        
-        {/* Discount badge */}
-        {discountPercent > 0 && !isSoldOut && (
-          <div className="absolute top-3 left-3 z-20 bg-[var(--color-primary)] text-white text-xs font-bold px-2 py-1 rounded">
-            ลด {discountPercent}%
-          </div>
-        )}
-        
-        {/* Tour badge */}
-        {tour.badge && !isSoldOut && (
-          <div className="absolute top-3 right-3 z-20 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded">
-            {tour.badge}
-          </div>
-        )}
 
         {/* Favorite button */}
         {!isSoldOut && (
-          <div className="absolute top-3 right-3 z-30" style={tour.badge ? { top: '2.75rem' } : undefined}>
+          <div className="absolute top-3 right-3 z-30">
             <FavoriteButton tour={{ id: tour.id, title: tour.title, slug: tour.slug, image_url: tour.image_url, price: tour.price, country_name: tour.country.name, days: tour.days, nights: tour.nights, tour_code: tour.tour_code }} size="sm" />
           </div>
         )}
@@ -102,7 +91,36 @@ function TourCard({ tour }: { tour: TourTabTour }) {
 
       {/* Content */}
       <div className="p-3">
-        <p className="text-xs font-mono text-[var(--color-gray-400)] mb-1">{tour.tour_code}</p>
+        {/* Tour code + badges row */}
+        <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+          <span className="text-xs font-mono text-[var(--color-gray-400)]">{tour.tour_code}</span>
+          {discountPercent > 0 && !isSoldOut && (
+            <span className="text-[10px] font-bold text-white bg-[var(--color-primary)] px-1.5 py-0.5 rounded">
+              ลด {discountPercent}%
+            </span>
+          )}
+          {tour.promotion_type === 'fire_sale' && !isSoldOut && (
+            <span className="text-[10px] font-bold text-white bg-gradient-to-r from-red-600 to-orange-500 px-1.5 py-0.5 rounded flex items-center gap-0.5 animate-pulse">
+              <Flame className="w-2.5 h-2.5" /> โปรไฟไหม้
+            </span>
+          )}
+          {tour.promotion_type === 'normal' && !isSoldOut && (
+            <span className="text-[10px] font-bold text-white bg-gradient-to-r from-orange-500 to-yellow-400 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+              <Flame className="w-2.5 h-2.5" /> โปรโมชั่น
+            </span>
+          )}
+          {tour.tour_category === 'premium' && !isSoldOut && (
+            <span className="text-[10px] font-bold text-yellow-900 bg-gradient-to-r from-amber-400 to-yellow-300 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+              <Crown className="w-2.5 h-2.5" /> พรีเมียม
+            </span>
+          )}
+          {tour.badge && !isSoldOut && (
+            <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">
+              {tour.badge}
+            </span>
+          )}
+        </div>
+
         <h3 className="font-semibold text-sm text-[var(--color-gray-800)] group-hover:text-[var(--color-primary)] transition-colors line-clamp-2 min-h-[40px]">
           {tour.title}
         </h3>
@@ -126,12 +144,23 @@ function TourCard({ tour }: { tour: TourTabTour }) {
           )}
         </div>
 
+        {/* Departure */}
         {tour.departure_date && (
           <div className="mt-1.5 text-xs text-[var(--color-gray-500)]">
-            <span>📅 {new Date(tour.departure_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}</span>
+            📅 {new Date(tour.departure_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}
             {tour.max_departure_date && tour.max_departure_date !== tour.departure_date && (
-              <span> - {new Date(tour.max_departure_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}</span>
+              <> - {new Date(tour.max_departure_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}</>
             )}
+          </div>
+        )}
+
+        {/* Hotel star */}
+        {tour.hotel_star && tour.hotel_star > 0 && (
+          <div className="flex items-center gap-1 mt-1 text-xs text-[var(--color-gray-500)]">
+            <Hotel className="w-3.5 h-3.5 text-amber-500" />
+            {Array.from({ length: tour.hotel_star }, (_, i) => (
+              <Star key={i} className="w-3 h-3 text-amber-400 fill-amber-400" />
+            ))}
           </div>
         )}
 
@@ -174,6 +203,23 @@ export default function TourTabs() {
   const [itemsPerPage, setItemsPerPage] = useState(8); // 4 columns × 2 rows
   const [colsPerRow, setColsPerRow] = useState(4);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [arrowTop, setArrowTop] = useState<string>('50%');
+
+  // Calculate arrow position based on first card height
+  useEffect(() => {
+    const calcArrowPos = () => {
+      if (!containerRef.current) return;
+      const firstCard = containerRef.current.querySelector('.tour-grid > a');
+      if (firstCard) {
+        const cardHeight = (firstCard as HTMLElement).offsetHeight;
+        // ตำแหน่ง = ความสูง card แถว 1 + ครึ่ง gap (gap=16px → 8px)
+        setArrowTop(`${cardHeight + 5}px`);
+      }
+    };
+    calcArrowPos();
+    window.addEventListener('resize', calcArrowPos);
+    return () => window.removeEventListener('resize', calcArrowPos);
+  }, [currentPage, activeTab, loading, tabs]);
 
   // Responsive: update columns and items per page based on screen width
   useEffect(() => {
@@ -344,17 +390,19 @@ export default function TourTabs() {
               <>
                 <button
                   onClick={prevPage}
-                  className="absolute -left-4 lg:-left-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-white hover:bg-gray-50 rounded-full flex items-center justify-center shadow-lg transition-all z-10 border border-gray-100"
+                  className="cursor-pointer absolute -left-4 lg:-left-6 -translate-y-1/2 w-10 h-10 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] rounded-full flex items-center justify-center shadow-lg transition-all z-10"
+                  style={{ top: arrowTop }}
                   aria-label="Previous page"
                 >
-                  <ChevronLeft className="w-5 h-5 text-gray-700" />
+                  <ChevronLeft className="w-5 h-5 text-white" />
                 </button>
                 <button
                   onClick={nextPage}
-                  className="absolute -right-4 lg:-right-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-white hover:bg-gray-50 rounded-full flex items-center justify-center shadow-lg transition-all z-10 border border-gray-100"
+                  className="cursor-pointer absolute -right-4 lg:-right-6 -translate-y-1/2 w-10 h-10 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] rounded-full flex items-center justify-center shadow-lg transition-all z-10"
+                  style={{ top: arrowTop }}
                   aria-label="Next page"
                 >
-                  <ChevronRight className="w-5 h-5 text-gray-700" />
+                  <ChevronRight className="w-5 h-5 text-white" />
                 </button>
               </>
             )}
@@ -376,7 +424,7 @@ export default function TourTabs() {
                       key={pageIndex}
                       className="w-full flex-shrink-0"
                     >
-                      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4`}>
+                      <div className={`tour-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4`}>
                         {pageTours.map((tour) => (
                           <TourCard key={tour.id} tour={tour} />
                         ))}

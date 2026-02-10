@@ -10,6 +10,10 @@ import {
   Star,
   Plane,
   Sparkles,
+  Eye,
+  Flame,
+  Crown,
+  Hotel,
 } from 'lucide-react';
 import { recommendedToursApi, RecommendedToursData, TourTabTour } from '@/lib/api';
 import FavoriteButton from './FavoriteButton';
@@ -21,16 +25,16 @@ function RecommendedTourCard({ tour, index }: { tour: TourTabTour; index: number
   const discountPercent = originalPrice ? Math.round((discountAdult / originalPrice) * 100) : 0;
   const isSoldOut = tour.available_seats === 0;
 
+  const formatViewCount = (count: number) => {
+    if (count >= 1000) return `${(count / 1000).toFixed(1)}k`;
+    return count.toString();
+  };
+
   return (
     <Link
       href={`/tours/${tour.slug}`}
       className={`cursor-pointer group relative flex flex-col sm:flex-row bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-amber-200 shadow-sm hover:shadow-lg transition-all duration-300 ${isSoldOut ? 'opacity-75' : ''}`}
     >
-      {/* Rank badge */}
-      <div className="absolute top-3 left-3 z-30 w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-white text-xs font-bold flex items-center justify-center shadow-md">
-        {index + 1}
-      </div>
-
       {/* Favorite button */}
       {!isSoldOut && (
         <div className="absolute top-3 right-3 z-30 sm:hidden">
@@ -38,8 +42,8 @@ function RecommendedTourCard({ tour, index }: { tour: TourTabTour; index: number
         </div>
       )}
 
-      {/* Image - landscape on desktop */}
-      <div className="relative sm:w-[220px] lg:w-[260px] flex-shrink-0 aspect-[4/3] sm:aspect-auto overflow-hidden">
+      {/* Image - 1:1 square */}
+      <div className="relative sm:w-[220px] lg:w-[260px] flex-shrink-0 aspect-square overflow-hidden">
         {/* SOLD OUT Stamp */}
         {isSoldOut && (
           <div className="absolute -right-10 top-6 rotate-45 bg-red-500 text-white text-xs font-bold px-12 py-1.5 shadow-lg z-30">
@@ -61,13 +65,6 @@ function RecommendedTourCard({ tour, index }: { tour: TourTabTour; index: number
           </div>
         )}
 
-        {/* Discount badge */}
-        {discountPercent > 0 && !isSoldOut && (
-          <div className="absolute top-3 right-3 z-20 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow">
-            -{discountPercent}%
-          </div>
-        )}
-
         {/* Country overlay */}
         <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-3 z-10">
           <div className="flex items-center gap-1 text-white text-xs font-medium">
@@ -80,13 +77,33 @@ function RecommendedTourCard({ tour, index }: { tour: TourTabTour; index: number
       {/* Content */}
       <div className="flex-1 p-4 sm:p-5 flex flex-col justify-between min-w-0">
         <div>
-          {/* Tour code & badge */}
-          <div className="flex items-center gap-2 mb-1.5">
+          {/* Tour code & badges */}
+          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
             {tour.tour_code && (
               <span className="text-[10px] font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{tour.tour_code}</span>
             )}
+            {discountPercent > 0 && !isSoldOut && (
+              <span className="text-[10px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded">
+                ลด {discountPercent}%
+              </span>
+            )}
             {tour.badge && (
               <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">{tour.badge}</span>
+            )}
+            {tour.promotion_type === 'fire_sale' && (
+              <span className="text-[10px] font-bold text-white bg-gradient-to-r from-red-600 to-orange-500 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                <Flame className="w-2.5 h-2.5" /> โปรไฟไหม้
+              </span>
+            )}
+            {tour.promotion_type === 'normal' && (
+              <span className="text-[10px] font-bold text-white bg-gradient-to-r from-orange-500 to-yellow-400 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                <Flame className="w-2.5 h-2.5" /> โปรโมชั่น
+              </span>
+            )}
+            {tour.tour_category === 'premium' && (
+              <span className="text-[10px] font-bold text-yellow-900 bg-gradient-to-r from-amber-400 to-yellow-300 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                <Crown className="w-2.5 h-2.5" /> พรีเมียม
+              </span>
             )}
           </div>
 
@@ -113,15 +130,29 @@ function RecommendedTourCard({ tour, index }: { tour: TourTabTour; index: number
                 <span className="font-medium text-gray-700">{tour.rating.toFixed(1)}</span>
               </span>
             )}
+            <span className="flex items-center gap-1">
+              <Eye className="w-3.5 h-3.5 text-gray-400" />
+              <span>{formatViewCount(tour.view_count ?? 0)}</span>
+            </span>
           </div>
 
           {/* Departure */}
           {tour.departure_date && (
             <div className="mt-1.5 text-[11px] text-gray-400">
-              เดินทาง: {new Date(tour.departure_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}
+              📅 {new Date(tour.departure_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}
               {tour.max_departure_date && tour.max_departure_date !== tour.departure_date && (
                 <> - {new Date(tour.max_departure_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}</>
               )}
+            </div>
+          )}
+
+          {/* Hotel star */}
+          {tour.hotel_star && tour.hotel_star > 0 && (
+            <div className="flex items-center gap-1 mt-1 text-[11px] text-gray-400">
+              <Hotel className="w-3.5 h-3.5 text-amber-500" />
+              {Array.from({ length: tour.hotel_star }, (_, i) => (
+                <Star key={i} className="w-3 h-3 text-amber-400 fill-amber-400" />
+              ))}
             </div>
           )}
         </div>

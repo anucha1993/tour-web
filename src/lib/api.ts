@@ -221,6 +221,9 @@ export interface TourTabTour {
   review_count?: number;
   available_seats?: number;
   view_count?: number;
+  promotion_type?: 'none' | 'normal' | 'fire_sale';
+  tour_category?: string | null;
+  hotel_star?: number | null;
 }
 
 export interface TourTabData {
