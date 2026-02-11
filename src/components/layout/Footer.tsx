@@ -1,3 +1,6 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
@@ -13,6 +16,7 @@ import {
   Headphones,
   MessageCircle
 } from 'lucide-react';
+import { API_URL } from '@/lib/config';
 
 // TikTok icon
 const TikTokIcon = ({ className }: { className?: string }) => (
@@ -21,8 +25,21 @@ const TikTokIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// Footer links
-const tourLinks = [
+interface FooterLink {
+  label: string;
+  href: string;
+}
+
+interface ContactItem {
+  key: string;
+  label: string;
+  value: string;
+  icon?: string;
+  url?: string;
+}
+
+// Fallback footer links
+const fallbackTourLinks: FooterLink[] = [
   { label: 'ทัวร์ต่างประเทศ', href: '/tours/international' },
   { label: 'ทัวร์ในประเทศ', href: '/tours/domestic' },
   { label: 'ทัวร์โปรโมชั่น', href: '/promotions' },
@@ -30,7 +47,7 @@ const tourLinks = [
   { label: 'แพ็คเกจทัวร์', href: '/packages' },
 ];
 
-const companyLinks = [
+const fallbackCompanyLinks: FooterLink[] = [
   { label: 'เกี่ยวกับเรา', href: '/about' },
   { label: 'ติดต่อเรา', href: '/contact' },
   { label: 'รับจัดกรุ๊ปทัวร์', href: '/group-tours' },
@@ -39,7 +56,7 @@ const companyLinks = [
   { label: 'รอบรู้เรื่องเที่ยว', href: '/blog' },
 ];
 
-const supportLinks = [
+const fallbackSupportLinks: FooterLink[] = [
   { label: 'วิธีการจอง', href: '/how-to-book' },
   { label: 'การชำระเงิน', href: '/payment' },
   { label: 'คำถามที่พบบ่อย', href: '/faq' },
@@ -58,6 +75,64 @@ const features = [
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const [tourLinks, setTourLinks] = useState<FooterLink[]>(fallbackTourLinks);
+  const [companyLinks, setCompanyLinks] = useState<FooterLink[]>(fallbackCompanyLinks);
+  const [supportLinks, setSupportLinks] = useState<FooterLink[]>(fallbackSupportLinks);
+  const [contacts, setContacts] = useState<ContactItem[]>([]);
+  const [socials, setSocials] = useState<ContactItem[]>([]);
+  const [businessHours, setBusinessHours] = useState<ContactItem[]>([]);
+  const [dataLoaded, setDataLoaded] = useState(false);
+
+  useEffect(() => {
+    const fetchFooterData = async () => {
+      try {
+        // Fetch footer menus and contacts in parallel
+        const [menusRes, contactsRes] = await Promise.all([
+          fetch(`${API_URL}/menus/public`).then((r) => r.ok ? r.json() : null).catch(() => null),
+          fetch(`${API_URL}/site-contacts/public`).then((r) => r.ok ? r.json() : null).catch(() => null),
+        ]);
+
+        // Process footer menus
+        if (menusRes?.success && menusRes.data) {
+          const toLinks = (items: { title: string; url: string }[]): FooterLink[] =>
+            items.map((item) => ({ label: item.title, href: item.url || '#' }));
+          if (menusRes.data.footer_col1?.length > 0) setTourLinks(toLinks(menusRes.data.footer_col1));
+          if (menusRes.data.footer_col2?.length > 0) setCompanyLinks(toLinks(menusRes.data.footer_col2));
+          if (menusRes.data.footer_col3?.length > 0) setSupportLinks(toLinks(menusRes.data.footer_col3));
+        }
+
+        // Process contacts
+        if (contactsRes?.success && contactsRes.data) {
+          if (contactsRes.data.contact) setContacts(contactsRes.data.contact);
+          if (contactsRes.data.social) setSocials(contactsRes.data.social);
+          if (contactsRes.data.business_hours) setBusinessHours(contactsRes.data.business_hours);
+        }
+      } catch {
+        // Use fallback data
+      } finally {
+        setDataLoaded(true);
+      }
+    };
+    fetchFooterData();
+  }, []);
+
+  // Helper to get contact value by key
+  const getContact = (key: string) => contacts.find((c) => c.key === key);
+  const getSocial = (key: string) => socials.find((s) => s.key === key);
+
+  // Determine display values with fallbacks
+  const phoneContact = getContact('phone');
+  const hotlineContact = getContact('hotline');
+  const lineContact = getContact('line_id');
+  const emailContact = getContact('email');
+  const hoursDisplay = businessHours.length > 0 ? businessHours[0]?.value : 'เปิดทุกวัน 08.00-23.00 น.';
+
+  const socialLinks = [
+    { key: 'facebook', icon: Facebook, fallbackUrl: 'https://facebook.com/nexttripholiday', label: 'Facebook' },
+    { key: 'instagram', icon: Instagram, fallbackUrl: 'https://instagram.com/nexttripholiday', label: 'Instagram' },
+    { key: 'youtube', icon: Youtube, fallbackUrl: 'https://youtube.com/@nexttripholiday', label: 'YouTube' },
+    { key: 'tiktok', icon: TikTokIcon, fallbackUrl: 'https://tiktok.com/@nexttripholiday', label: 'TikTok' },
+  ];
 
   return (
     <footer className="bg-[var(--color-gray-900)] text-white">
@@ -97,84 +172,88 @@ export default function Footer() {
 
             {/* Contact info */}
             <div className="space-y-3">
+              {!dataLoaded ? (
+                /* Skeleton for contact info */
+                <>
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="w-4 h-4 rounded bg-gray-700 animate-pulse flex-shrink-0" />
+                      <div className="space-y-1">
+                        <div className="h-3 w-16 bg-gray-700 rounded animate-pulse" />
+                        <div className="h-4 w-28 bg-gray-700 rounded animate-pulse" />
+                      </div>
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <>
               <div className="flex items-center gap-3 text-gray-300">
                 <Phone className="w-4 h-4 flex-shrink-0" />
                 <div>
-                  <span className="text-gray-400 text-xs">สอบถามทัวร์</span>
-                  <a href="tel:021369144" className="block hover:text-[var(--color-primary)] transition-colors font-semibold">
-                    02-136-9144
+                  <span className="text-gray-400 text-xs">{phoneContact?.label || 'สอบถามทัวร์'}</span>
+                  <a href={`tel:${(phoneContact?.value || '02-136-9144').replace(/[^0-9]/g, '')}`} className="block hover:text-[var(--color-primary)] transition-colors font-semibold">
+                    {phoneContact?.value || '02-136-9144'}
                   </a>
                 </div>
               </div>
               <div className="flex items-center gap-3 text-gray-300">
                 <Headphones className="w-4 h-4 flex-shrink-0" />
                 <div>
-                  <span className="text-gray-400 text-xs">Hotline (ตลอดเวลา)</span>
-                  <a href="tel:0910916364" className="block hover:text-[var(--color-primary)] transition-colors font-semibold">
-                    091-091-6364
+                  <span className="text-gray-400 text-xs">{hotlineContact?.label || 'Hotline (ตลอดเวลา)'}</span>
+                  <a href={`tel:${(hotlineContact?.value || '091-091-6364').replace(/[^0-9]/g, '')}`} className="block hover:text-[var(--color-primary)] transition-colors font-semibold">
+                    {hotlineContact?.value || '091-091-6364'}
                   </a>
                 </div>
               </div>
               <a 
-                href="https://line.me/R/ti/p/@nexttripholiday" 
+                href={lineContact?.url || 'https://line.me/R/ti/p/@nexttripholiday'}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 text-gray-300 hover:text-[var(--color-primary)] transition-colors"
               >
                 <MessageCircle className="w-4 h-4" />
-                <span>LINE: @nexttripholiday</span>
+                <span>{lineContact ? `LINE: ${lineContact.value}` : 'LINE: @nexttripholiday'}</span>
               </a>
               <a 
-                href="mailto:info@nexttripholiday.com" 
+                href={`mailto:${emailContact?.value || 'info@nexttripholiday.com'}`}
                 className="flex items-center gap-3 text-gray-300 hover:text-[var(--color-primary)] transition-colors"
               >
                 <Mail className="w-4 h-4" />
-                <span>info@nexttripholiday.com</span>
+                <span>{emailContact?.value || 'info@nexttripholiday.com'}</span>
               </a>
               <div className="flex items-center gap-3 text-gray-300">
                 <Clock className="w-4 h-4" />
-                <span>เปิดทุกวัน 08.00-23.00 น.</span>
+                <span>{hoursDisplay}</span>
               </div>
+                </>
+              )}
             </div>
 
             {/* Social links */}
             <div className="flex gap-3 mt-6">
-              <a 
-                href="https://facebook.com/nexttripholiday" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-lg bg-[var(--color-gray-800)] hover:bg-[var(--color-primary)] flex items-center justify-center transition-colors"
-                aria-label="Facebook"
-              >
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a 
-                href="https://instagram.com/nexttripholiday" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-lg bg-[var(--color-gray-800)] hover:bg-[var(--color-primary)] flex items-center justify-center transition-colors"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-5 h-5" />
-              </a>
-              <a 
-                href="https://youtube.com/@nexttripholiday" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-lg bg-[var(--color-gray-800)] hover:bg-[var(--color-primary)] flex items-center justify-center transition-colors"
-                aria-label="YouTube"
-              >
-                <Youtube className="w-5 h-5" />
-              </a>
-              <a 
-                href="https://tiktok.com/@nexttripholiday" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-lg bg-[var(--color-gray-800)] hover:bg-[var(--color-primary)] flex items-center justify-center transition-colors"
-                aria-label="TikTok"
-              >
-                <TikTokIcon className="w-5 h-5" />
-              </a>
+              {!dataLoaded ? (
+                [...Array(4)].map((_, i) => (
+                  <div key={i} className="w-10 h-10 rounded-lg bg-gray-700 animate-pulse" />
+                ))
+              ) : (
+                socialLinks.map((social) => {
+                  const data = getSocial(social.key);
+                  const url = data?.url || social.fallbackUrl;
+                  const Icon = social.icon;
+                  return (
+                    <a
+                      key={social.key}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-10 h-10 rounded-lg bg-[var(--color-gray-800)] hover:bg-[var(--color-primary)] flex items-center justify-center transition-colors"
+                      aria-label={social.label}
+                    >
+                      <Icon className="w-5 h-5" />
+                    </a>
+                  );
+                })
+              )}
             </div>
           </div>
 
@@ -182,16 +261,22 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4">ทัวร์ยอดนิยม</h3>
             <ul className="space-y-2.5">
-              {tourLinks.map((link) => (
-                <li key={link.href}>
-                  <Link 
-                    href={link.href}
-                    className="text-gray-400 hover:text-[var(--color-primary)] transition-colors text-sm"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+              {!dataLoaded ? (
+                [...Array(5)].map((_, i) => (
+                  <li key={i}><div className="h-4 bg-gray-700 rounded animate-pulse" style={{ width: `${60 + i * 12}px` }} /></li>
+                ))
+              ) : (
+                tourLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link 
+                      href={link.href}
+                      className="text-gray-400 hover:text-[var(--color-primary)] transition-colors text-sm"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))
+              )}
             </ul>
           </div>
 
@@ -199,16 +284,22 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4">บริษัท</h3>
             <ul className="space-y-2.5">
-              {companyLinks.map((link) => (
-                <li key={link.href}>
-                  <Link 
-                    href={link.href}
-                    className="text-gray-400 hover:text-[var(--color-primary)] transition-colors text-sm"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+              {!dataLoaded ? (
+                [...Array(6)].map((_, i) => (
+                  <li key={i}><div className="h-4 bg-gray-700 rounded animate-pulse" style={{ width: `${55 + i * 10}px` }} /></li>
+                ))
+              ) : (
+                companyLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link 
+                      href={link.href}
+                      className="text-gray-400 hover:text-[var(--color-primary)] transition-colors text-sm"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))
+              )}
             </ul>
           </div>
 
@@ -216,16 +307,22 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4">ช่วยเหลือ</h3>
             <ul className="space-y-2.5">
-              {supportLinks.map((link) => (
-                <li key={link.href}>
-                  <Link 
-                    href={link.href}
-                    className="text-gray-400 hover:text-[var(--color-primary)] transition-colors text-sm"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+              {!dataLoaded ? (
+                [...Array(8)].map((_, i) => (
+                  <li key={i}><div className="h-4 bg-gray-700 rounded animate-pulse" style={{ width: `${50 + i * 11}px` }} /></li>
+                ))
+              ) : (
+                supportLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link 
+                      href={link.href}
+                      className="text-gray-400 hover:text-[var(--color-primary)] transition-colors text-sm"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))
+              )}
             </ul>
           </div>
         </div>

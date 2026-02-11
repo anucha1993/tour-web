@@ -16,6 +16,8 @@ import PopularCountries from "@/components/home/PopularCountries";
 import Promotions from "@/components/home/Promotions";
 import TourTabs from "@/components/home/TourTabs";
 import RecommendedTours from "@/components/home/RecommendedTours";
+import OurClients from "@/components/home/OurClients";
+import PopupModal from "@/components/home/PopupModal";
 
 // Why choose us features
 const features = [
@@ -44,6 +46,9 @@ const features = [
 export default function HomePage() {
   return (
     <>
+      {/* Popup Modal */}
+      <PopupModal />
+
       {/* Hero Section with Slider */}
       <HeroSlider />
 
@@ -58,6 +63,8 @@ export default function HomePage() {
 
       {/* Recommended Tours - Dynamic from API */}
       <RecommendedTours />
+
+     
 
       {/* Why Choose Us */}
       <section className="py-16 lg:py-20 bg-[var(--color-primary-50)]">
@@ -91,6 +98,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+       {/* Our Clients */}
+      <OurClients />
 
       {/* CTA Section */}
       <section className="py-16 lg:py-20 gradient-hero text-white">

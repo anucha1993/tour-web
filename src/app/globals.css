@@ -129,6 +129,12 @@ html {
   animation: slideDown 0.3s ease-out;
 }
 
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 /* Gradient backgrounds */
 .gradient-primary {
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);

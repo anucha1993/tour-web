@@ -476,4 +476,140 @@ export const bookingApi = {
   }) => api.post<{ debug: boolean; booking_data: Record<string, unknown> }>('/web/booking/submit', data),
 };
 
+// ===================== International Tours Listing =====================
+
+export interface InternationalTourOffer {
+  price_adult: number;
+  discount_adult: number;
+  net_price_adult: number;
+  price_child: number | null;
+  price_child_nobed: number | null;
+  price_infant: number | null;
+  price_joinland: number | null;
+  price_single: number | null;
+  discount_single: number;
+  net_price_single: number | null;
+  deposit: number | null;
+  commission_agent?: string;
+  commission_sale?: string;
+}
+
+export interface InternationalTourPeriod {
+  id: number;
+  start_date: string;
+  end_date: string;
+  capacity: number;
+  booked: number;
+  available: number;
+  status: string;
+  sale_status: string;
+  guarantee_status: string;
+  offer: InternationalTourOffer | null;
+}
+
+export interface InternationalTourTransport {
+  flight_no: string | null;
+  route_from: string | null;
+  route_to: string | null;
+  depart_time: string | null;
+  arrive_time: string | null;
+  transport_type: string;
+  airline: { code: string; name: string; image: string | null } | null;
+}
+
+export interface InternationalTourItem {
+  id: number;
+  slug: string;
+  tour_code: string;
+  title: string;
+  tour_type: string;
+  description: string | null;
+  cover_image_url: string | null;
+  cover_image_alt: string | null;
+  duration_days: number;
+  duration_nights: number;
+  min_price: number | null;
+  display_price: number | null;
+  price_adult: number | null;
+  discount_adult: number | null;
+  discount_amount: number | null;
+  max_discount_percent: number | null;
+  promotion_type: string;
+  discount_label: string | null;
+  badge: string | null;
+  tour_category: string | null;
+  available_seats: number;
+  next_departure_date: string | null;
+  total_departures: number;
+  pdf_url: string | null;
+  highlights: string[];
+  departure_airports: string[];
+  country: { id: number; name_th: string; iso2: string } | null;
+  cities: { id: number; name_th: string; slug: string }[];
+  hotel_star?: number | null;
+  hotel_star_min?: number | null;
+  hotel_star_max?: number | null;
+  transports?: InternationalTourTransport[];
+  periods?: InternationalTourPeriod[];
+}
+
+export interface InternationalTourFilters {
+  countries?: { id: number; name_th: string; iso2: string; tour_count: number }[];
+  cities?: { id: number; name_th: string; country_id: number; country_name: string; tour_count: number }[];
+  airlines?: { id: number; code: string; name: string; image: string | null }[];
+  departure_months?: { value: string; label: string }[];
+}
+
+export interface InternationalTourSettings {
+  show_periods: boolean;
+  max_periods_display: number;
+  show_transport: boolean;
+  show_hotel_star: boolean;
+  show_meal_count: boolean;
+  show_commission: boolean;
+  filter_country: boolean;
+  filter_city: boolean;
+  filter_search: boolean;
+  filter_airline: boolean;
+  filter_departure_month: boolean;
+  filter_price_range: boolean;
+  sort_options: Record<string, string>;
+}
+
+export interface InternationalToursResponse {
+  data: InternationalTourItem[];
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
+  filters: InternationalTourFilters;
+  settings: InternationalTourSettings;
+  active_filters?: {
+    country?: { id: number; name_th: string; name_en: string; slug: string; iso2: string } | null;
+    city?: { id: number; name_th: string; name_en: string; slug: string; country_id: number } | null;
+  };
+}
+
+export const internationalToursApi = {
+  // List tours with filters and pagination
+  list: (params?: Record<string, string | number | undefined>) => {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== '' && value !== null) {
+          searchParams.append(key, String(value));
+        }
+      });
+    }
+    const qs = searchParams.toString();
+    return api.get<InternationalToursResponse>(`/tours/international${qs ? `?${qs}` : ''}`);
+  },
+
+  // Get display settings
+  getSettings: () =>
+    api.get<{ data: InternationalTourSettings }>('/tours/international/settings'),
+};
+
 export default api;

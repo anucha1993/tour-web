@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Menu, X, ChevronDown, Phone, Search, Clock, MessageCircle, Facebook, Instagram, Youtube, Heart, User, LogOut } from 'lucide-react';
+import { Menu, X, ChevronDown, Phone, Search, Clock, MessageCircle, Facebook, Instagram, Youtube, Heart, User, LogOut, MapPin } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
+import { API_URL } from '@/lib/config';
 
 // TikTok icon (not in lucide-react)
 const TikTokIcon = ({ className }: { className?: string }) => (
@@ -14,8 +15,35 @@ const TikTokIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// Navigation menu items
-const menuItems = [
+interface NavMenuItem {
+  label: string;
+  href: string;
+  megaMenu?: boolean; // flag for mega menu items (international tours)
+  submenu?: { label: string; href: string }[];
+}
+
+interface IntlCity {
+  id: number;
+  name_th: string;
+  slug: string;
+  tour_count: number;
+}
+
+interface IntlCountry {
+  id: number;
+  name_th: string;
+  slug: string;
+  iso2: string;
+  flag_emoji: string;
+  tour_count: number;
+  cities: IntlCity[];
+}
+
+// Type alias - API now returns flat country list
+type IntlMenuData = IntlCountry[];
+
+// Fallback navigation menu items
+const fallbackMenuItems: NavMenuItem[] = [
   { 
     label: 'หน้าหลัก', 
     href: '/' 
@@ -23,6 +51,7 @@ const menuItems = [
   { 
     label: 'ทัวร์ต่างประเทศ', 
     href: '/tours/international',
+    megaMenu: true,
     submenu: [
       { label: 'ทัวร์ยุโรป', href: '/tours/europe' },
       { label: 'ทัวร์ญี่ปุ่น', href: '/tours/japan' },
@@ -78,11 +107,105 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
+  const submenuTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [mobileSubmenu, setMobileSubmenu] = useState<string | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [menuItems, setMenuItems] = useState<NavMenuItem[]>(fallbackMenuItems);
+  const [intlCountries, setIntlCountries] = useState<IntlMenuData>([]);
+  const [dataLoaded, setDataLoaded] = useState(false);
+  const [contactPhone, setContactPhone] = useState({ label: 'สอบถามทัวร์', value: '02-136-9144', url: 'tel:021369144' });
+  const [contactHotline, setContactHotline] = useState({ label: 'Hotline (ตลอดเวลา)', value: '091-091-6364', url: 'tel:0910916364' });
+  const [contactLine, setContactLine] = useState({ label: 'LINE', value: '@nexttripholiday', url: 'https://line.me/R/ti/p/@nexttripholiday' });
+  const [contactHours, setContactHours] = useState('เปิดทุกวัน 08.00-23.00 น.');
+  const [socialUrls, setSocialUrls] = useState({ facebook: 'https://facebook.com/nexttripholiday', instagram: 'https://instagram.com/nexttripholiday', youtube: 'https://youtube.com/@nexttripholiday', tiktok: 'https://tiktok.com/@nexttripholiday' });
   
   const { member, isLoading: authLoading, logout } = useAuth();
   const { count: favoritesCount, openDrawer: openFavoritesDrawer } = useFavorites();
+
+  // Submenu hover helpers - delay closing so mouse can travel from nav to mega menu panel
+  const openSubmenu = useCallback((href: string) => {
+    if (submenuTimeoutRef.current) {
+      clearTimeout(submenuTimeoutRef.current);
+      submenuTimeoutRef.current = null;
+    }
+    setActiveSubmenu(href);
+  }, []);
+
+  const closeSubmenuDelayed = useCallback(() => {
+    submenuTimeoutRef.current = setTimeout(() => {
+      setActiveSubmenu(null);
+    }, 200);
+  }, []);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (submenuTimeoutRef.current) clearTimeout(submenuTimeoutRef.current);
+    };
+  }, []);
+
+  // Fetch header menus + contacts from API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [menusRes, contactsRes, intlMenuRes] = await Promise.all([
+          fetch(`${API_URL}/menus/public`).then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch(`${API_URL}/site-contacts/public`).then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch(`${API_URL}/tours/international-menu`).then(r => r.ok ? r.json() : null).catch(() => null),
+        ]);
+
+        if (intlMenuRes?.success && Array.isArray(intlMenuRes.data)) {
+          setIntlCountries(intlMenuRes.data);
+        }
+
+        if (menusRes?.success && menusRes.data?.header) {
+          const apiMenus: NavMenuItem[] = menusRes.data.header.map((item: { title: string; url: string; children?: { title: string; url: string }[] }) => ({
+            label: item.title,
+            href: item.url || '#',
+            megaMenu: (item.url || '').includes('international'),
+            submenu: item.children && item.children.length > 0
+              ? item.children.map((child: { title: string; url: string }) => ({
+                  label: child.title,
+                  href: child.url || '#',
+                }))
+              : undefined,
+          }));
+          if (apiMenus.length > 0) setMenuItems(apiMenus);
+        }
+
+        if (contactsRes?.success && contactsRes.data) {
+          const ct = contactsRes.data.contact || [];
+          const sc = contactsRes.data.social || [];
+          const bh = contactsRes.data.business_hours || [];
+          const find = (arr: { key: string; label: string; value: string; url?: string }[], key: string) => arr.find((i: { key: string }) => i.key === key);
+
+          const phone = find(ct, 'phone');
+          if (phone) setContactPhone({ label: phone.label, value: phone.value, url: phone.url || `tel:${phone.value.replace(/[^0-9]/g, '')}` });
+          const hotline = find(ct, 'hotline');
+          if (hotline) setContactHotline({ label: hotline.label, value: hotline.value, url: hotline.url || `tel:${hotline.value.replace(/[^0-9]/g, '')}` });
+          const line = find(ct, 'line_id');
+          if (line) setContactLine({ label: 'LINE', value: line.value, url: line.url || '#' });
+          if (bh.length > 0) setContactHours(bh[0].value);
+
+          const fb = find(sc, 'facebook');
+          const ig = find(sc, 'instagram');
+          const yt = find(sc, 'youtube');
+          const tt = find(sc, 'tiktok');
+          setSocialUrls(prev => ({
+            facebook: fb?.url || prev.facebook,
+            instagram: ig?.url || prev.instagram,
+            youtube: yt?.url || prev.youtube,
+            tiktok: tt?.url || prev.tiktok,
+          }));
+        }
+      } catch {
+        // Use fallback data
+      } finally {
+        setDataLoaded(true);
+      }
+    };
+    fetchData();
+  }, []);
 
   // Handle scroll effect
   useEffect(() => {
@@ -121,82 +244,80 @@ export default function Header() {
       {/* Top bar - Contact info */}
       <div className="hidden lg:block bg-[var(--color-primary)] text-white text-sm">
         <div className="container-custom flex justify-between items-center py-2.5">
-          {/* Left - Contact info */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1.5">
-              <Phone className="w-3.5 h-3.5" />
-              <span>สอบถามทัวร์:</span>
-              <a href="tel:021369144" className="font-semibold hover:text-blue-200 transition-colors">
-                02-136-9144
-              </a>
-            </div>
-            <span className="text-orange-200">|</span>
-            <div className="flex items-center gap-1.5">
-              <span className="bg-white/20 px-1.5 py-0.5 rounded text-xs font-bold">HOTLINE</span>
-              <a href="tel:0910916364" className="font-semibold hover:text-blue-200 transition-colors">
-                091-091-6364
-              </a>
-              <span className="text-orange-200 text-xs">(ตลอดเวลา)</span>
-            </div>
-            <span className="text-orange-200">|</span>
-            <div className="flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5" />
-              <span>เปิดทุกวัน 08.00-23.00 น.</span>
-            </div>
-            <span className="text-orange-200">|</span>
-            <a 
-              href="https://line.me/R/ti/p/@nexttripholiday" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 hover:text-blue-200 transition-colors"
-            >
-              <MessageCircle className="w-3.5 h-3.5" />
-              <span>LINE: @nexttripholiday</span>
-            </a>
-          </div>
-          
-          {/* Right - Social links */}
-          <div className="flex items-center gap-3">
-            <span className="text-orange-200 text-xs">ติดตามเรา:</span>
-            <div className="flex items-center gap-2">
-              <a 
-                href="https://facebook.com/nexttripholiday" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="hover:text-blue-200 transition-colors"
-                aria-label="Facebook"
-              >
-                <Facebook className="w-4 h-4" />
-              </a>
-              <a 
-                href="https://instagram.com/nexttripholiday" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="hover:text-blue-200 transition-colors"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-4 h-4" />
-              </a>
-              <a 
-                href="https://youtube.com/@nexttripholiday" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="hover:text-blue-200 transition-colors"
-                aria-label="YouTube"
-              >
-                <Youtube className="w-4 h-4" />
-              </a>
-              <a 
-                href="https://tiktok.com/@nexttripholiday" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="hover:text-blue-200 transition-colors"
-                aria-label="TikTok"
-              >
-                <TikTokIcon className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
+          {!dataLoaded ? (
+            /* Skeleton for top bar */
+            <>
+              <div className="flex items-center gap-4">
+                <div className="h-4 w-28 bg-white/20 rounded animate-pulse" />
+                <span className="text-white/20">|</span>
+                <div className="h-4 w-32 bg-white/20 rounded animate-pulse" />
+                <span className="text-white/20">|</span>
+                <div className="h-4 w-40 bg-white/20 rounded animate-pulse" />
+                <span className="text-white/20">|</span>
+                <div className="h-4 w-36 bg-white/20 rounded animate-pulse" />
+              </div>
+              <div className="flex items-center gap-2">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="w-4 h-4 bg-white/20 rounded animate-pulse" />
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Left - Contact info */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>{contactPhone.label}:</span>
+                  <a href={contactPhone.url} className="font-semibold hover:text-blue-200 transition-colors">
+                    {contactPhone.value}
+                  </a>
+                </div>
+                <span className="text-orange-200">|</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="bg-white/20 px-1.5 py-0.5 rounded text-xs font-bold">HOTLINE</span>
+                  <a href={contactHotline.url} className="font-semibold hover:text-blue-200 transition-colors">
+                    {contactHotline.value}
+                  </a>
+                  <span className="text-orange-200 text-xs">(ตลอดเวลา)</span>
+                </div>
+                <span className="text-orange-200">|</span>
+                <div className="flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>{contactHours}</span>
+                </div>
+                <span className="text-orange-200">|</span>
+                <a 
+                  href={contactLine.url}
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 hover:text-blue-200 transition-colors"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  <span>LINE: {contactLine.value}</span>
+                </a>
+              </div>
+              
+              {/* Right - Social links */}
+              <div className="flex items-center gap-3">
+                <span className="text-orange-200 text-xs">ติดตามเรา:</span>
+                <div className="flex items-center gap-2">
+                  <a href={socialUrls.facebook} target="_blank" rel="noopener noreferrer" className="hover:text-blue-200 transition-colors" aria-label="Facebook">
+                    <Facebook className="w-4 h-4" />
+                  </a>
+                  <a href={socialUrls.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-blue-200 transition-colors" aria-label="Instagram">
+                    <Instagram className="w-4 h-4" />
+                  </a>
+                  <a href={socialUrls.youtube} target="_blank" rel="noopener noreferrer" className="hover:text-blue-200 transition-colors" aria-label="YouTube">
+                    <Youtube className="w-4 h-4" />
+                  </a>
+                  <a href={socialUrls.tiktok} target="_blank" rel="noopener noreferrer" className="hover:text-blue-200 transition-colors" aria-label="TikTok">
+                    <TikTokIcon className="w-4 h-4" />
+                  </a>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -217,12 +338,20 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-0">
-            {menuItems.map((item) => (
+            {!dataLoaded ? (
+              /* Skeleton for nav */
+              <div className="flex items-center gap-2">
+                {[72, 88, 65, 78, 84, 92, 68, 80].map((w, i) => (
+                  <div key={i} className="h-5 rounded bg-gray-200 animate-pulse" style={{ width: `${w}px` }} />
+                ))}
+              </div>
+            ) : null}
+            {dataLoaded && menuItems.map((item) => (
               <div 
                 key={item.href}
                 className="relative group"
-                onMouseEnter={() => item.submenu && setActiveSubmenu(item.href)}
-                onMouseLeave={() => setActiveSubmenu(null)}
+                onMouseEnter={() => (item.submenu || item.megaMenu) && openSubmenu(item.href)}
+                onMouseLeave={() => closeSubmenuDelayed()}
               >
                 <Link
                   href={item.href}
@@ -234,16 +363,16 @@ export default function Header() {
                   `}
                 >
                   {item.label}
-                  {item.submenu && (
+                  {(item.submenu || item.megaMenu) && (
                     <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${
                       activeSubmenu === item.href ? 'rotate-180' : ''
                     }`} />
                   )}
                 </Link>
 
-                {/* Dropdown submenu */}
-                {item.submenu && activeSubmenu === item.href && (
-                  <div className="absolute top-full left-0 pt-2 animate-slide-down">
+                {/* Regular dropdown submenu (non-mega) */}
+                {item.submenu && !item.megaMenu && activeSubmenu === item.href && (
+                  <div className="absolute top-full left-0 pt-2 animate-slide-down z-50">
                     <div className="bg-white rounded-xl shadow-xl border border-gray-100 py-2 min-w-[200px]">
                       {item.submenu.map((subItem) => (
                         <Link
@@ -374,6 +503,81 @@ export default function Header() {
         </div>
       </div>
 
+      {/* Mega Menu for international tours - rendered at header level for proper centering */}
+      {activeSubmenu && menuItems.some(m => m.megaMenu && m.href === activeSubmenu) && (
+        <div
+          className="hidden lg:block absolute left-0 right-0 z-50 animate-slide-down"
+          onMouseEnter={() => openSubmenu(activeSubmenu!)}
+          onMouseLeave={() => closeSubmenuDelayed()}
+        >
+          <div className="container-custom">
+            <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-5 max-h-[75vh] overflow-y-auto">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
+                <h3 className="text-lg font-bold text-gray-800">🌏 ทัวร์ต่างประเทศ</h3>
+                <Link href="/tours/international" className="text-sm text-[var(--color-primary)] hover:underline font-medium">
+                  ดูทั้งหมด →
+                </Link>
+              </div>
+              {/* Skeleton loading */}
+              {intlCountries.length === 0 ? (
+                <div className="grid grid-cols-3 xl:grid-cols-4 gap-3">
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <div key={i} className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-4 bg-gray-200 rounded animate-pulse" />
+                        <div className="h-4 bg-gray-200 rounded animate-pulse" style={{ width: `${60 + (i % 3) * 20}px` }} />
+                        <div className="h-4 w-6 bg-gray-100 rounded-full animate-pulse ml-auto" />
+                      </div>
+                      <div className="flex flex-wrap gap-1 pl-7">
+                        {Array.from({ length: (i % 3) + 1 }).map((_, j) => (
+                          <div key={j} className="h-5 bg-orange-50 border border-orange-200 rounded-full animate-pulse" style={{ width: `${45 + (j % 2) * 20}px` }} />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-2">
+                  {intlCountries.map((country) => (
+                    <div key={country.id}>
+                      <Link
+                        href={`/tours/country/${country.slug}`}
+                        className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-[var(--color-primary-50)] transition-colors group/country"
+                      >
+                        {country.iso2 && <img src={`https://flagcdn.com/20x15/${country.iso2}.png`} width={20} height={15} alt={country.name_th} className="inline-block shrink-0" />}
+                        <span className="text-base text-gray-700 group-hover/country:text-[var(--color-primary)] font-medium truncate">
+                          {country.name_th}
+                        </span>
+                        <span className="text-xs text-gray-400 bg-gray-100 rounded-full px-1.5 py-0.5 ml-auto shrink-0">
+                          {country.tour_count}
+                        </span>
+                      </Link>
+                      {/* City badges - orange border */}
+                      {country.cities.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-0.5 pl-7">
+                          {country.cities.map((city) => (
+                            <Link
+                              key={city.id}
+                              href={`/tours/city/${city.slug}`}
+                              className="inline-flex items-center gap-1 text-xs text-orange-600 bg-orange-50 border border-orange-200 hover:bg-orange-100 hover:border-orange-400 rounded-full px-2 py-0.5 transition-colors"
+                            >
+                              <MapPin className="w-3 h-3" />
+                              {city.name_th}
+                              <span className="text-orange-400">{city.tour_count}</span>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 bg-white z-[60] overflow-y-auto">
@@ -401,7 +605,82 @@ export default function Header() {
             <div className="space-y-1">
               {menuItems.map((item) => (
                 <div key={item.href}>
-                  {item.submenu ? (
+                  {/* Mega menu (international tours) for mobile */}
+                  {item.megaMenu ? (
+                    <>
+                      <button
+                        onClick={() => toggleMobileSubmenu(item.href)}
+                        className="w-full flex items-center justify-between px-4 py-3 rounded-lg text-[var(--color-gray-700)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-50)] font-medium transition-colors"
+                      >
+                        {item.label}
+                        <ChevronDown className={`w-5 h-5 transition-transform duration-200 ${mobileSubmenu === item.href ? 'rotate-180' : ''}`} />
+                      </button>
+                      
+                      <div className={`overflow-hidden transition-all duration-300 ${mobileSubmenu === item.href ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                        <div className="ml-2 py-2 space-y-1">
+                          {/* Skeleton loading for mobile */}
+                          {intlCountries.length === 0 ? (
+                            <div className="space-y-3 px-3">
+                              {Array.from({ length: 6 }).map((_, i) => (
+                                <div key={i}>
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <div className="w-5 h-4 bg-gray-200 rounded animate-pulse" />
+                                    <div className="h-4 bg-gray-200 rounded animate-pulse" style={{ width: `${60 + (i % 3) * 20}px` }} />
+                                  </div>
+                                  <div className="flex flex-wrap gap-1 pl-7">
+                                    {Array.from({ length: (i % 2) + 1 }).map((_, j) => (
+                                      <div key={j} className="h-5 bg-orange-50 border border-orange-200 rounded-full animate-pulse" style={{ width: `${45 + (j % 2) * 15}px` }} />
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            /* Countries flat list */
+                            <>
+                              {intlCountries.map((country) => (
+                                <div key={country.id}>
+                                  <Link
+                                    href={`/tours/country/${country.slug}`}
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-50)] transition-colors"
+                                  >
+                                    {country.iso2 && <img src={`https://flagcdn.com/20x15/${country.iso2}.png`} width={20} height={15} alt={country.name_th} className="inline-block shrink-0" />}
+                                    <span>{country.name_th}</span>
+                                    <span className="text-[10px] text-gray-400 bg-gray-100 rounded-full px-1.5 py-0.5">{country.tour_count}</span>
+                                  </Link>
+                                  {/* City badges - orange border */}
+                                  {country.cities.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 ml-10 mb-1">
+                                      {country.cities.map((city) => (
+                                        <Link
+                                          key={city.id}
+                                          href={`/tours/city/${city.slug}`}
+                                          onClick={() => setIsMobileMenuOpen(false)}
+                                          className="inline-flex items-center gap-1 text-[11px] text-orange-600 bg-orange-50 border border-orange-200 hover:bg-orange-100 hover:border-orange-400 rounded-full px-2 py-0.5 transition-colors"
+                                        >
+                                          <MapPin className="w-2.5 h-2.5" />
+                                          {city.name_th}
+                                          <span className="text-orange-400">{city.tour_count}</span>
+                                        </Link>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                              <Link
+                                href="/tours/international"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="block px-3 py-2 text-sm text-[var(--color-primary)] font-medium hover:underline"
+                              >
+                                ดูทัวร์ต่างประเทศทั้งหมด →
+                              </Link>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  ) : item.submenu ? (
                     <>
                       <button
                         onClick={() => toggleMobileSubmenu(item.href)}
@@ -507,39 +786,39 @@ export default function Header() {
               <div className="mt-6 space-y-3 text-sm">
                 <div className="flex items-center justify-center gap-2 text-[var(--color-gray-600)]">
                   <Phone className="w-4 h-4 text-[var(--color-primary)]" />
-                  <span>สอบถามทัวร์:</span>
-                  <a href="tel:021369144" className="font-semibold text-[var(--color-primary)]">
-                    02-136-9144
+                  <span>{contactPhone.label}:</span>
+                  <a href={contactPhone.url} className="font-semibold text-[var(--color-primary)]">
+                    {contactPhone.value}
                   </a>
                 </div>
                 <div className="flex items-center justify-center gap-2 text-[var(--color-gray-600)]">
                   <span className="bg-[var(--color-primary)] text-white px-1.5 py-0.5 rounded text-xs font-bold">HOTLINE</span>
-                  <a href="tel:0910916364" className="font-semibold text-[var(--color-primary)]">
-                    091-091-6364
+                  <a href={contactHotline.url} className="font-semibold text-[var(--color-primary)]">
+                    {contactHotline.value}
                   </a>
                   <span className="text-xs text-[var(--color-gray-400)]">(ตลอดเวลา)</span>
                 </div>
                 <a 
-                  href="https://line.me/R/ti/p/@nexttripholiday"
+                  href={contactLine.url}
                   className="flex items-center justify-center gap-2 text-[var(--color-gray-600)] hover:text-[var(--color-primary)]"
                 >
                   <MessageCircle className="w-4 h-4" />
-                  <span>LINE: @nexttripholiday</span>
+                  <span>LINE: {contactLine.value}</span>
                 </a>
               </div>
 
               {/* Social links */}
               <div className="mt-6 flex items-center justify-center gap-4">
-                <a href="https://facebook.com/nexttripholiday" target="_blank" rel="noopener noreferrer" className="text-[var(--color-gray-400)] hover:text-[var(--color-primary)]">
+                <a href={socialUrls.facebook} target="_blank" rel="noopener noreferrer" className="text-[var(--color-gray-400)] hover:text-[var(--color-primary)]">
                   <Facebook className="w-5 h-5" />
                 </a>
-                <a href="https://instagram.com/nexttripholiday" target="_blank" rel="noopener noreferrer" className="text-[var(--color-gray-400)] hover:text-[var(--color-primary)]">
+                <a href={socialUrls.instagram} target="_blank" rel="noopener noreferrer" className="text-[var(--color-gray-400)] hover:text-[var(--color-primary)]">
                   <Instagram className="w-5 h-5" />
                 </a>
-                <a href="https://youtube.com/@nexttripholiday" target="_blank" rel="noopener noreferrer" className="text-[var(--color-gray-400)] hover:text-[var(--color-primary)]">
+                <a href={socialUrls.youtube} target="_blank" rel="noopener noreferrer" className="text-[var(--color-gray-400)] hover:text-[var(--color-primary)]">
                   <Youtube className="w-5 h-5" />
                 </a>
-                <a href="https://tiktok.com/@nexttripholiday" target="_blank" rel="noopener noreferrer" className="text-[var(--color-gray-400)] hover:text-[var(--color-primary)]">
+                <a href={socialUrls.tiktok} target="_blank" rel="noopener noreferrer" className="text-[var(--color-gray-400)] hover:text-[var(--color-primary)]">
                   <TikTokIcon className="w-5 h-5" />
                 </a>
               </div>
