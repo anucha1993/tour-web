@@ -13,6 +13,7 @@ import {
   DocumentCheckIcon,
   CreditCardIcon,
   BanknotesIcon,
+  StarIcon,
   ArrowRightOnRectangleIcon,
   Bars3Icon,
   XMarkIcon,
@@ -40,6 +41,7 @@ const menuGroups: MenuGroup[] = [
       { href: "/member/bookings", icon: ClipboardDocumentListIcon, label: "รายการจอง", isMockup: true },
       { href: "/member/quotations", icon: DocumentTextIcon, label: "ใบเสนอราคา", isMockup: true },
       { href: "/member/payment-history", icon: BanknotesIcon, label: "ประวัติการชำระเงิน", isMockup: true },
+      { href: "/member/reviews", icon: StarIcon, label: "รีวิวของฉัน" },
     ],
   },
   {
