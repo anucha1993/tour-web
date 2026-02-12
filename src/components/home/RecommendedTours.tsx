@@ -11,12 +11,11 @@ import {
   Plane,
   Sparkles,
   Eye,
-  Flame,
-  Crown,
   Hotel,
 } from 'lucide-react';
 import { recommendedToursApi, RecommendedToursData, TourTabTour } from '@/lib/api';
 import FavoriteButton from './FavoriteButton';
+import TourTabBadges from '@/components/shared/TourTabBadges';
 
 function RecommendedTourCard({ tour, index }: { tour: TourTabTour; index: number }) {
   const discountAdult = Number(tour.discount_adult || 0);
@@ -90,21 +89,7 @@ function RecommendedTourCard({ tour, index }: { tour: TourTabTour; index: number
             {tour.badge && (
               <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">{tour.badge}</span>
             )}
-            {tour.promotion_type === 'fire_sale' && (
-              <span className="text-[10px] font-bold text-white bg-gradient-to-r from-red-600 to-orange-500 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                <Flame className="w-2.5 h-2.5" /> โปรไฟไหม้
-              </span>
-            )}
-            {tour.promotion_type === 'normal' && (
-              <span className="text-[10px] font-bold text-white bg-gradient-to-r from-orange-500 to-yellow-400 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                <Flame className="w-2.5 h-2.5" /> โปรโมชั่น
-              </span>
-            )}
-            {tour.tour_category === 'premium' && (
-              <span className="text-[10px] font-bold text-yellow-900 bg-gradient-to-r from-amber-400 to-yellow-300 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                <Crown className="w-2.5 h-2.5" /> พรีเมียม
-              </span>
-            )}
+            <TourTabBadges tourId={tour.id} />
           </div>
 
           {/* Title */}

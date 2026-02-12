@@ -221,8 +221,6 @@ export interface TourTabTour {
   review_count?: number;
   available_seats?: number;
   view_count?: number;
-  promotion_type?: 'none' | 'normal' | 'fire_sale';
-  tour_category?: string | null;
   hotel_star?: number | null;
 }
 
@@ -234,7 +232,20 @@ export interface TourTabData {
   icon?: string;
   badge_text?: string;
   badge_color?: string;
+  display_mode: 'tab' | 'badge' | 'both' | 'period';
+  badge_icon?: string;
   tours: TourTabTour[];
+}
+
+export interface TourTabBadge {
+  id: number;
+  name: string;
+  badge_text: string;
+  badge_color: string;
+  badge_icon?: string;
+  tour_ids: number[];
+  discount_min_amount?: number | null;
+  display_mode?: string;
 }
 
 export const tourTabsApi = {
@@ -243,6 +254,9 @@ export const tourTabsApi = {
   
   // Get single tab by slug
   getBySlug: (slug: string) => api.get<{ data: { tab: TourTabData; tours: TourTabTour[] } }>(`/tour-tabs/public/${slug}`),
+
+  // Get badge-type tabs with tour IDs for global badge display
+  badges: () => api.get<{ data: TourTabBadge[] }>('/tour-tabs/public/badges'),
 };
 
 // Recommended Tours types
@@ -369,14 +383,12 @@ export interface TourDetail {
   suitable_for: string[] | null;
   keywords: string[] | null;
   badge: string | null;
-  tour_category: string | null;
   min_price: number | null;
   display_price: number | null;
   price_adult: number | null;
   discount_adult: number | null;
   discount_amount: number | null;
   max_discount_percent: number | null;
-  promotion_type: string;
   discount_label: string | null;
   departure_airports: string[] | null;
   transports: TourDetailTransport[];
@@ -534,27 +546,29 @@ export interface InternationalTourItem {
   discount_adult: number | null;
   discount_amount: number | null;
   max_discount_percent: number | null;
-  promotion_type: string;
   discount_label: string | null;
   badge: string | null;
-  tour_category: string | null;
   available_seats: number;
   next_departure_date: string | null;
   total_departures: number;
   pdf_url: string | null;
   highlights: string[];
+  shopping_highlights: string[];
+  food_highlights: string[];
+  hashtags: string[];
   departure_airports: string[];
   country: { id: number; name_th: string; iso2: string } | null;
   cities: { id: number; name_th: string; slug: string }[];
   hotel_star?: number | null;
   hotel_star_min?: number | null;
   hotel_star_max?: number | null;
+  meal_count?: { breakfast: number; lunch: number; dinner: number; total: number };
   transports?: InternationalTourTransport[];
   periods?: InternationalTourPeriod[];
 }
 
 export interface InternationalTourFilters {
-  countries?: { id: number; name_th: string; iso2: string; tour_count: number }[];
+  countries?: { id: number; name_th: string; slug: string; iso2: string; tour_count: number }[];
   cities?: { id: number; name_th: string; country_id: number; country_name: string; tour_count: number }[];
   airlines?: { id: number; code: string; name: string; image: string | null }[];
   departure_months?: { value: string; label: string }[];
@@ -574,6 +588,8 @@ export interface InternationalTourSettings {
   filter_departure_month: boolean;
   filter_price_range: boolean;
   sort_options: Record<string, string>;
+  cover_image_url?: string | null;
+  cover_image_position?: string;
 }
 
 export interface InternationalToursResponse {

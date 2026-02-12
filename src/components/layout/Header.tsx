@@ -506,12 +506,14 @@ export default function Header() {
       {/* Mega Menu for international tours - rendered at header level for proper centering */}
       {activeSubmenu && menuItems.some(m => m.megaMenu && m.href === activeSubmenu) && (
         <div
-          className="hidden lg:block absolute left-0 right-0 z-50 animate-slide-down"
-          onMouseEnter={() => openSubmenu(activeSubmenu!)}
-          onMouseLeave={() => closeSubmenuDelayed()}
+          className="hidden lg:block absolute left-0 right-0 z-50 animate-slide-down pointer-events-none"
         >
           <div className="container-custom">
-            <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-5 max-h-[75vh] overflow-y-auto">
+            <div 
+              className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-5 max-h-[75vh] overflow-y-auto pointer-events-auto"
+              onMouseEnter={() => openSubmenu(activeSubmenu!)}
+              onMouseLeave={() => setActiveSubmenu(null)}
+            >
               {/* Header */}
               <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
                 <h3 className="text-lg font-bold text-gray-800">🌏 ทัวร์ต่างประเทศ</h3>

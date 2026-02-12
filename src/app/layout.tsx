@@ -4,6 +4,7 @@ import "./globals.css";
 import { Header, Footer } from "@/components/layout";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
+import { TourBadgesProvider } from "@/contexts/TourBadgesContext";
 import FavoritesDrawer from "@/components/home/FavoritesDrawer";
 
 const notoSansThai = Noto_Sans_Thai({
@@ -57,12 +58,14 @@ export default function RootLayout({
       <body className={`${notoSansThai.variable} antialiased`}>
         <AuthProvider>
           <FavoritesProvider>
+            <TourBadgesProvider>
             <Header />
             <main className="min-h-screen pt-[80px] lg:pt-[160px]">
               {children}
             </main>
             <Footer />
             <FavoritesDrawer />
+            </TourBadgesProvider>
           </FavoritesProvider>
         </AuthProvider>
       </body>

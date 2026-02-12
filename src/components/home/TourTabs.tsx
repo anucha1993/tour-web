@@ -12,12 +12,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
-  Flame,
-  Crown,
   Hotel,
 } from 'lucide-react';
 import { tourTabsApi, TourTabData, TourTabTour } from '@/lib/api';
 import FavoriteButton from './FavoriteButton';
+import TourTabBadges from '@/components/shared/TourTabBadges';
 
 // Badge color mapping
 const BADGE_COLORS: Record<string, string> = {
@@ -99,26 +98,13 @@ function TourCard({ tour }: { tour: TourTabTour }) {
               ลด {discountPercent}%
             </span>
           )}
-          {tour.promotion_type === 'fire_sale' && !isSoldOut && (
-            <span className="text-[10px] font-bold text-white bg-gradient-to-r from-red-600 to-orange-500 px-1.5 py-0.5 rounded flex items-center gap-0.5 animate-pulse">
-              <Flame className="w-2.5 h-2.5" /> โปรไฟไหม้
-            </span>
-          )}
-          {tour.promotion_type === 'normal' && !isSoldOut && (
-            <span className="text-[10px] font-bold text-white bg-gradient-to-r from-orange-500 to-yellow-400 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-              <Flame className="w-2.5 h-2.5" /> โปรโมชั่น
-            </span>
-          )}
-          {tour.tour_category === 'premium' && !isSoldOut && (
-            <span className="text-[10px] font-bold text-yellow-900 bg-gradient-to-r from-amber-400 to-yellow-300 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-              <Crown className="w-2.5 h-2.5" /> พรีเมียม
-            </span>
-          )}
+
           {tour.badge && !isSoldOut && (
             <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">
               {tour.badge}
             </span>
           )}
+          {!isSoldOut && <TourTabBadges tourId={tour.id} />}
         </div>
 
         <h3 className="font-semibold text-sm text-[var(--color-gray-800)] group-hover:text-[var(--color-primary)] transition-colors line-clamp-2 min-h-[40px]">
@@ -250,7 +236,7 @@ export default function TourTabs() {
       try {
         const response = await tourTabsApi.list();
         if (response.success && response.data) {
-          setTabs(response.data);
+          setTabs(response.data.filter((t: TourTabData) => t.display_mode === 'tab' || t.display_mode === 'both'));
         }
       } catch (error) {
         console.error('Failed to fetch tour tabs:', error);

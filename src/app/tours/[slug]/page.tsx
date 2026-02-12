@@ -21,6 +21,7 @@ import {
 } from '@/lib/api';
 import FavoriteButton from '@/components/home/FavoriteButton';
 import BookingModal from '@/components/tours/BookingModal';
+import TourTabBadges from '@/components/shared/TourTabBadges';
 
 // ===== Helper Components =====
 
@@ -871,7 +872,7 @@ export default function TourDetailPage() {
               <span className="text-xs font-mono text-gray-400 bg-gray-50 px-2 py-0.5 rounded">{tour.tour_code}</span>
               {badgeInfo && <Badge color={badgeInfo.color}>{badgeInfo.text}</Badge>}
               {discountPercent > 0 && <Badge color="red">ลด {discountPercent}%</Badge>}
-              {tour.promotion_type === 'fire_sale' && <Badge color="red">🔥 โปรไฟไหม้</Badge>}
+              <TourTabBadges tourId={tour.id} />
             </div>
 
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 leading-snug">
@@ -922,15 +923,7 @@ export default function TourDetailPage() {
                 </div>
               )}
 
-              <span className={`ml-auto px-2 py-0.5 text-xs font-medium rounded hidden sm:inline-block ${
-                tour.tour_category === 'premium'
-                  ? 'bg-purple-100 text-purple-700 '
-                  : tour.tour_category === 'budget'
-                    ? 'bg-emerald-100 text-emerald-700 '
-                    : 'bg-gray-100 text-gray-600'
-              }`}>
-                {tour.tour_category === 'premium' ? '✨ พรีเมียม' : tour.tour_category === 'budget' ? '💰 ราคาดี' : 'ทั่วไป'}
-              </span>
+
             </div>
           </div>
 
@@ -963,13 +956,7 @@ export default function TourDetailPage() {
               )}
               
               {/* Promo badge */}
-              {tour.promotion_type === 'fire_sale' && !isAllSoldOut && (
-                <div className="inline-flex items-center gap-1 px-2 py-1 bg-red-50 text-red-600 text-xs rounded mb-3">
-                  <Clock className="w-3 h-3" />
-                  🔥 โปรไฟไหม้
-                </div>
-              )}
-              {discountPercent > 0 && tour.promotion_type !== 'fire_sale' && !isAllSoldOut && (
+              {discountPercent > 0 && !isAllSoldOut && (
                 <div className="inline-flex items-center gap-1 px-2 py-1 bg-red-50 text-red-600 text-xs rounded mb-3">
                   <Sparkles className="w-3 h-3" />
                   ส่วนลด {discountPercent}%
