@@ -15,13 +15,16 @@ import {
 } from 'lucide-react';
 import {
   tourDetailApi,
+  reviewApi,
   TourDetail,
   TourDetailPeriod,
   TourDetailItinerary,
+  ReviewSummary,
 } from '@/lib/api';
 import FavoriteButton from '@/components/home/FavoriteButton';
 import BookingModal from '@/components/tours/BookingModal';
 import TourTabBadges from '@/components/shared/TourTabBadges';
+import ReviewSection from '@/components/tours/ReviewSection';
 
 // ===== Helper Components =====
 
@@ -729,7 +732,7 @@ function TransportSection({ transports }: { transports: TourDetail['transports']
 }
 
 // ===== Detail Tab Types =====
-type DetailTab = 'detail' | 'periods' | 'itinerary' | 'conditions';
+type DetailTab = 'detail' | 'periods' | 'itinerary' | 'conditions' | 'reviews';
 
 // ===== Main Page =====
 export default function TourDetailPage() {
@@ -743,7 +746,9 @@ export default function TourDetailPage() {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingPeriod, setBookingPeriod] = useState<TourDetailPeriod | null>(null);
   const [highlightSlideIndex, setHighlightSlideIndex] = useState(0);
+  const [reviewSummary, setReviewSummary] = useState<ReviewSummary | null>(null);
   const viewRecorded = useRef(false);
+  const reviewsTabRef = useRef<HTMLButtonElement | null>(null);
 
   // Fetch tour data
   useEffect(() => {
@@ -776,6 +781,16 @@ export default function TourDetailPage() {
       utm_medium: urlParams.get('utm_medium') || undefined,
       utm_campaign: urlParams.get('utm_campaign') || undefined,
     });
+  }, [slug]);
+
+  // Fetch review summary
+  useEffect(() => {
+    if (!slug || slug === 'null' || slug === 'undefined') return;
+    reviewApi.getSummary(slug).then(res => {
+      if (res.success && res.data) {
+        setReviewSummary(res.data.summary);
+      }
+    }).catch(() => { /* ignore */ });
   }, [slug]);
 
   // Loading
@@ -839,6 +854,7 @@ export default function TourDetailPage() {
     { id: 'periods', label: 'ช่วงเวลาการเดินทาง', icon: Calendar, count: tour.periods.length || undefined },
     { id: 'itinerary', label: 'โปรแกรมทัวร์', icon: MapPin, count: tour.itineraries.length || undefined },
     { id: 'conditions', label: 'เงื่อนไข', icon: Shield },
+    { id: 'reviews' as DetailTab, label: 'รีวิว', icon: Star, count: reviewSummary?.total_reviews || undefined },
   ];
 
   return (
@@ -896,6 +912,32 @@ export default function TourDetailPage() {
                 <Eye className="w-4 h-4" />
                 {tour.view_count.toLocaleString()} เข้าชม
               </span>
+
+              {reviewSummary && reviewSummary.total_reviews > 0 && (
+                <>
+                  <span className="text-gray-300 hidden sm:inline">|</span>
+                  <button
+                    onClick={() => {
+                      setActiveTab('reviews');
+                      setTimeout(() => {
+                        reviewsTabRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }, 100);
+                    }}
+                    className="flex items-center gap-1 text-amber-600 hover:text-amber-700 transition cursor-pointer"
+                  >
+                    <div className="flex items-center gap-0.5">
+                      {[1,2,3,4,5].map(i => (
+                        <Star
+                          key={i}
+                          className={`w-3.5 h-3.5 ${i <= Math.round(reviewSummary.average_rating) ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}`}
+                        />
+                      ))}
+                    </div>
+                    <span className="font-medium">{reviewSummary.average_rating.toFixed(1)}</span>
+                    <span className="text-gray-500">({reviewSummary.total_reviews} รีวิว)</span>
+                  </button>
+                </>
+              )}
 
               <span className="text-gray-300 hidden sm:inline">|</span>
 
@@ -1119,6 +1161,65 @@ export default function TourDetailPage() {
                   แชร์
                 </button>
               </div>
+
+              {/* Review Summary Widget */}
+              <div className="mt-4 p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200/60">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                  </div>
+                  <div>
+                    {reviewSummary && reviewSummary.total_reviews > 0 ? (
+                      <>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xl font-bold text-gray-900">{reviewSummary.average_rating.toFixed(1)}</span>
+                          <div className="flex items-center gap-0.5">
+                            {[1,2,3,4,5].map(i => (
+                              <Star
+                                key={i}
+                                className={`w-3.5 h-3.5 ${i <= Math.round(reviewSummary.average_rating) ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-500">จาก {reviewSummary.total_reviews} รีวิว</p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="font-medium text-sm text-gray-700">ยังไม่มีรีวิว</p>
+                        <p className="text-xs text-gray-500">เป็นคนแรกที่รีวิวทัวร์นี้!</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  {reviewSummary && reviewSummary.total_reviews > 0 && (
+                    <button
+                      onClick={() => {
+                        setActiveTab('reviews');
+                        setTimeout(() => {
+                          reviewsTabRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 100);
+                      }}
+                      className="flex-1 text-sm text-orange-600 font-medium bg-white hover:bg-orange-50 border border-orange-200 rounded-lg py-2 px-3 transition cursor-pointer text-center"
+                    >
+                      อ่านรีวิว
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setActiveTab('reviews');
+                      setTimeout(() => {
+                        reviewsTabRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }, 100);
+                    }}
+                    className="flex-1 text-sm text-white font-medium bg-orange-500 hover:bg-orange-600 rounded-lg py-2 px-3 transition cursor-pointer text-center"
+                  >
+                    ✍️ เขียนรีวิว
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1211,6 +1312,7 @@ export default function TourDetailPage() {
               {TABS.map(tab => (
                 <button
                   key={tab.id}
+                  ref={tab.id === 'reviews' ? reviewsTabRef : undefined}
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition whitespace-nowrap cursor-pointer ${
                     activeTab === tab.id
@@ -1221,7 +1323,7 @@ export default function TourDetailPage() {
                   <tab.icon className="w-4 h-4" />
                   <span className="hidden sm:inline">{tab.label}</span>
                   <span className="sm:hidden">
-                    {tab.id === 'detail' ? 'รายละเอียด' : tab.id === 'periods' ? 'เดินทาง' : tab.id === 'itinerary' ? 'โปรแกรม' : 'เงื่อนไข'}
+                    {tab.id === 'detail' ? 'รายละเอียด' : tab.id === 'periods' ? 'เดินทาง' : tab.id === 'itinerary' ? 'โปรแกรม' : tab.id === 'reviews' ? 'รีวิว' : 'เงื่อนไข'}
                   </span>
                   {tab.count && tab.count > 0 && (
                     <span className="ml-1 text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full">
@@ -1404,6 +1506,11 @@ export default function TourDetailPage() {
                     </div>
                   )}
                 </div>
+              )}
+
+              {/* ---- Reviews Tab ---- */}
+              {activeTab === 'reviews' && (
+                <ReviewSection tourSlug={tour.slug} />
               )}
             </div>
           </div>

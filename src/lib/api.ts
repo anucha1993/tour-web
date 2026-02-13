@@ -488,6 +488,128 @@ export const bookingApi = {
   }) => api.post<{ debug: boolean; booking_data: Record<string, unknown> }>('/web/booking/submit', data),
 };
 
+// ===================== Tour Reviews =====================
+
+export interface ReviewTag {
+  id: number;
+  name: string;
+  slug: string;
+  icon: string | null;
+}
+
+export interface CategoryRatings {
+  guide?: number;
+  food?: number;
+  hotel?: number;
+  value?: number;
+  program_accuracy?: number;
+  would_return?: number;
+}
+
+export interface TourReview {
+  id: number;
+  tour_id: number;
+  user_id: number | null;
+  reviewer_name: string;
+  reviewer_avatar_url: string | null;
+  rating: number;
+  category_ratings: CategoryRatings | null;
+  tags: string[] | null;
+  comment: string | null;
+  review_source: 'self' | 'assisted' | 'internal';
+  status: 'pending' | 'approved' | 'rejected';
+  admin_reply: string | null;
+  is_featured: boolean;
+  helpful_count: number;
+  created_at: string;
+  user?: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    avatar: string | null;
+  };
+  tour?: {
+    id: number;
+    tour_name: string;
+    slug: string;
+    cover_image: string | null;
+  };
+}
+
+export interface ReviewSummary {
+  average_rating: number;
+  total_reviews: number;
+  rating_distribution: Record<number, number>;
+  category_averages: Record<string, number>;
+}
+
+export interface ReviewSchemaOrg {
+  '@context': string;
+  '@type': string;
+  name: string;
+  description: string;
+  aggregateRating: {
+    '@type': string;
+    ratingValue: number;
+    reviewCount: number;
+    bestRating: number;
+    worstRating: number;
+  };
+  review?: Array<{
+    '@type': string;
+    author: { '@type': string; name: string };
+    reviewRating: { '@type': string; ratingValue: number; bestRating: number; worstRating: number };
+    reviewBody: string;
+    datePublished: string;
+  }>;
+}
+
+export const reviewApi = {
+  // Public: Get approved reviews for a tour
+  getReviews: (tourSlug: string, params?: { sort?: string; rating?: number; page?: number; per_page?: number }) => {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.append(key, String(value));
+        }
+      });
+    }
+    const qs = searchParams.toString();
+    return api.get<{ data: { summary: ReviewSummary; reviews: { data: TourReview[]; current_page: number; last_page: number; total: number } } }>(`/tours/${tourSlug}/reviews${qs ? `?${qs}` : ''}`);
+  },
+
+  // Public: Get review summary + Schema.org data
+  getSummary: (tourSlug: string) =>
+    api.get<{ data: { summary: ReviewSummary; featured_reviews: TourReview[]; schema: ReviewSchemaOrg | null } }>(`/tours/${tourSlug}/reviews/summary`),
+
+  // Public: Get available tags
+  getTags: () =>
+    api.get<{ data: ReviewTag[] }>('/review-tags'),
+
+  // Public: Mark review as helpful
+  markHelpful: (reviewId: number) =>
+    api.post<{ data: { helpful_count: number } }>(`/reviews/${reviewId}/helpful`, {}),
+
+  // Auth: Submit a review
+  submitReview: (tourSlug: string, data: {
+    rating: number;
+    category_ratings?: CategoryRatings;
+    tags?: string[];
+    comment: string;
+  }) => api.post<{ data: TourReview }>(`/web/reviews/${tourSlug}`, data),
+
+  // Auth: Check if member can review a tour
+  canReview: (tourSlug: string) =>
+    api.get<{ data: { can_review: boolean; existing_review: TourReview | null } }>(`/web/reviews/${tourSlug}/can-review`),
+
+  // Auth: Get member's own reviews
+  myReviews: (page?: number) => {
+    const qs = page ? `?page=${page}` : '';
+    return api.get<{ data: { data: TourReview[]; current_page: number; last_page: number; total: number } }>(`/web/reviews/my${qs}`);
+  },
+};
+
 // ===================== International Tours Listing =====================
 
 export interface InternationalTourOffer {

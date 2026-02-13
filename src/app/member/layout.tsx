@@ -13,12 +13,12 @@ import {
   DocumentCheckIcon,
   CreditCardIcon,
   BanknotesIcon,
+  StarIcon,
   ArrowRightOnRectangleIcon,
   Bars3Icon,
   XMarkIcon,
   ChevronRightIcon,
   ShieldCheckIcon,
-  StarIcon,
 } from "@heroicons/react/24/outline";
 
 interface MenuItem {
