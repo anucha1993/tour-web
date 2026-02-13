@@ -198,6 +198,27 @@ export default function Footer() {
       {footerConfig.newsletter_show && (
       <div className="bg-gradient-to-b from-gray-50 to-gray-100">
         <div className=" max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 ">
+          {!dataLoaded ? (
+            /* Skeleton Loading */
+            <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 animate-pulse">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+                <div className="flex-1 w-full md:w-auto">
+                  <div className="h-6 w-48 bg-gray-200 rounded mb-4" />
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-[42px] bg-gray-200 rounded-lg" />
+                    <div className="h-[42px] w-32 bg-gray-200 rounded-lg" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-5 flex-shrink-0">
+                  <div className="w-[100px] h-[100px] bg-gray-200 rounded-xl" />
+                  <div className="text-center">
+                    <div className="h-10 w-40 bg-gray-200 rounded-full mb-2" />
+                    <div className="h-3 w-28 bg-gray-200 rounded mx-auto" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
           <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100">
             <div className="flex flex-col md:flex-row items-center justify-between gap-8">
               {/* Left: Newsletter */}
@@ -286,6 +307,7 @@ export default function Footer() {
               </div>
             </div>
           </div>
+          )}
 
           {/* Scam warning */}
           {footerConfig.scam_warning_show && (
