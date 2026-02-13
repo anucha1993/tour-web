@@ -108,6 +108,14 @@ export default function TourSearchForm({
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  // Sync country_id from initialValues when it arrives asynchronously
+  useEffect(() => {
+    if (initialValues.country_id && initialValues.country_id !== countryId) {
+      setCountryId(initialValues.country_id);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialValues.country_id]);
+
   // ค้นหาประเทศจากข้อความที่พิมพ์
   const filteredCountries = useMemo(() => {
     const list = filters.countries || [];

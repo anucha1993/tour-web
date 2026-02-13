@@ -18,6 +18,7 @@ import {
   XMarkIcon,
   ChevronRightIcon,
   ShieldCheckIcon,
+  StarIcon,
 } from "@heroicons/react/24/outline";
 
 interface MenuItem {
@@ -40,6 +41,7 @@ const menuGroups: MenuGroup[] = [
       { href: "/member/bookings", icon: ClipboardDocumentListIcon, label: "รายการจอง", isMockup: true },
       { href: "/member/quotations", icon: DocumentTextIcon, label: "ใบเสนอราคา", isMockup: true },
       { href: "/member/payment-history", icon: BanknotesIcon, label: "ประวัติการชำระเงิน", isMockup: true },
+      { href: "/member/reviews", icon: StarIcon, label: "รีวิวของฉัน" },
     ],
   },
   {

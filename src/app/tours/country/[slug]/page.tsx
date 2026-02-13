@@ -376,7 +376,7 @@ export default function CountryToursPage() {
   });
   const [meta, setMeta] = useState({ current_page: 1, last_page: 1, per_page: 10, total: 0 });
   const [loading, setLoading] = useState(true);
-  const [countryInfo, setCountryInfo] = useState<{ name_th: string; name_en: string; iso2: string } | null>(null);
+  const [countryInfo, setCountryInfo] = useState<{ id: number; name_th: string; name_en: string; iso2: string } | null>(null);
 
   const [activeSearchParams, setActiveSearchParams] = useState<SearchParams>({
     search: searchParams.get('search') || undefined,
@@ -532,7 +532,10 @@ export default function CountryToursPage() {
               filters={filters}
               onSearch={handleSearch}
               onClear={clearFilters}
-              initialValues={activeSearchParams}
+              initialValues={{
+                ...activeSearchParams,
+                ...(countryInfo?.id ? { country_id: String(countryInfo.id) } : {}),
+              }}
               showFilters={{
                 search: settings.filter_search,
                 country: settings.filter_country,

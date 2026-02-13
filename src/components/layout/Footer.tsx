@@ -14,7 +14,9 @@ import {
   Shield,
   CreditCard,
   Headphones,
-  MessageCircle
+  MessageCircle,
+  AlertTriangle,
+  Send
 } from 'lucide-react';
 import { API_URL } from '@/lib/config';
 
@@ -36,6 +38,23 @@ interface ContactItem {
   value: string;
   icon?: string;
   url?: string;
+}
+
+interface FooterConfig {
+  newsletter_title: string;
+  newsletter_show: boolean;
+  scam_warning_title: string;
+  scam_warning_text: string;
+  scam_warning_show: boolean;
+  company_description: string;
+  license_number: string;
+  line_id: string;
+  line_url: string;
+  line_qr_image: string;
+  col1_title: string;
+  col2_title: string;
+  col3_title: string;
+  features: { icon: string; label: string }[];
 }
 
 // Fallback footer links
@@ -73,6 +92,33 @@ const features = [
   { icon: Headphones, label: 'บริการ 24 ชม.' },
 ];
 
+// Icon name to component map for dynamic features
+const ICON_MAP: Record<string, React.ElementType> = {
+  Shield, CreditCard, Headphones, Phone, Mail, MapPin, Clock, MessageCircle,
+};
+
+// Default footer config
+const defaultFooterConfig: FooterConfig = {
+  newsletter_title: 'ติดตามเพื่อรับโปรโมชั่น',
+  newsletter_show: true,
+  scam_warning_title: 'ระวัง !! กลุ่มมิจฉาชีพขายทัวร์และบริการอื่นๆ',
+  scam_warning_text: 'โดยแอบอ้างใช้ชื่อบริษัทเน็กซ์ ทริป ฮอลิเดย์ กรุณาชำระค่าบริการผ่านธนาคารชื่อบัญชีบริษัท "เน็กซ์ ทริป ฮอลิเดย์ จำกัด" เท่านั้น',
+  scam_warning_show: true,
+  company_description: 'บริษัททัวร์ชั้นนำ ให้บริการจัดทัวร์ท่องเที่ยวทั้งในและต่างประเทศ ด้วยประสบการณ์กว่า 10 ปี พร้อมทีมงานมืออาชีพดูแลตลอดการเดินทาง',
+  license_number: 'TAT: 11/07440',
+  line_id: '@nexttripholiday',
+  line_url: 'https://line.me/R/ti/p/@nexttripholiday',
+  line_qr_image: '',
+  col1_title: 'ทัวร์ยอดนิยม',
+  col2_title: 'บริษัท',
+  col3_title: 'ช่วยเหลือ',
+  features: [
+    { icon: 'Shield', label: 'ใบอนุญาตถูกต้อง' },
+    { icon: 'CreditCard', label: 'ชำระเงินปลอดภัย' },
+    { icon: 'Headphones', label: 'บริการ 24 ชม.' },
+  ],
+};
+
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const [tourLinks, setTourLinks] = useState<FooterLink[]>(fallbackTourLinks);
@@ -82,14 +128,21 @@ export default function Footer() {
   const [socials, setSocials] = useState<ContactItem[]>([]);
   const [businessHours, setBusinessHours] = useState<ContactItem[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [footerConfig, setFooterConfig] = useState<FooterConfig>(defaultFooterConfig);
+  
+  // Newsletter form state
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterSubmitting, setNewsletterSubmitting] = useState(false);
+  const [newsletterMessage, setNewsletterMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     const fetchFooterData = async () => {
       try {
-        // Fetch footer menus and contacts in parallel
-        const [menusRes, contactsRes] = await Promise.all([
+        // Fetch footer menus, contacts, and footer config in parallel
+        const [menusRes, contactsRes, footerConfigRes] = await Promise.all([
           fetch(`${API_URL}/menus/public`).then((r) => r.ok ? r.json() : null).catch(() => null),
           fetch(`${API_URL}/site-contacts/public`).then((r) => r.ok ? r.json() : null).catch(() => null),
+          fetch(`${API_URL}/footer-config/public`).then((r) => r.ok ? r.json() : null).catch(() => null),
         ]);
 
         // Process footer menus
@@ -106,6 +159,11 @@ export default function Footer() {
           if (contactsRes.data.contact) setContacts(contactsRes.data.contact);
           if (contactsRes.data.social) setSocials(contactsRes.data.social);
           if (contactsRes.data.business_hours) setBusinessHours(contactsRes.data.business_hours);
+        }
+
+        // Process footer config
+        if (footerConfigRes?.success && footerConfigRes.data) {
+          setFooterConfig({ ...defaultFooterConfig, ...footerConfigRes.data });
         }
       } catch {
         // Use fallback data
@@ -135,17 +193,131 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="bg-[var(--color-gray-900)] text-white">
+    <footer>
+      {/* Newsletter & LINE section */}
+      {footerConfig.newsletter_show && (
+      <div className="bg-gradient-to-b from-gray-50 to-gray-100">
+        <div className=" max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 ">
+          <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+              {/* Left: Newsletter */}
+              <div className="flex-1 w-full md:w-auto">
+                <h3 className="text-xl font-bold text-gray-800 mb-3">{footerConfig.newsletter_title}</h3>
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!newsletterEmail.trim() || newsletterSubmitting) return;
+                    setNewsletterSubmitting(true);
+                    setNewsletterMessage(null);
+                    try {
+                      const res = await fetch(`${API_URL}/subscribers/subscribe`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({ email: newsletterEmail, source_page: 'footer' }),
+                      });
+                      const data = await res.json();
+                      if (data.success) {
+                        setNewsletterMessage({ type: 'success', text: data.message || 'สมัครสำเร็จ! กรุณาตรวจสอบอีเมล' });
+                        if (!data.already_subscribed) setNewsletterEmail('');
+                      } else {
+                        setNewsletterMessage({ type: 'error', text: data.message || 'เกิดข้อผิดพลาด' });
+                      }
+                    } catch {
+                      setNewsletterMessage({ type: 'error', text: 'ไม่สามารถเชื่อมต่อได้ กรุณาลองใหม่' });
+                    } finally {
+                      setNewsletterSubmitting(false);
+                    }
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <div className="flex items-center flex-1 border border-gray-300 rounded-lg overflow-hidden">
+                    <div className="px-3">
+                      <Mail className="w-5 h-5 text-orange-500" />
+                    </div>
+                    <input
+                      type="email"
+                      placeholder="อีเมลของคุณ"
+                      value={newsletterEmail}
+                      onChange={(e) => { setNewsletterEmail(e.target.value); setNewsletterMessage(null); }}
+                      required
+                      className="flex-1 py-2.5 pr-3 text-sm text-gray-700 outline-none"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={newsletterSubmitting}
+                    className="px-5 py-2.5 bg-green-500 hover:bg-green-600 disabled:bg-green-400 text-white text-sm font-semibold rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5"
+                  >
+                    <Send className="w-4 h-4" />
+                    {newsletterSubmitting ? 'กำลังส่ง...' : 'รับโปรโมชั่น'}
+                  </button>
+                </form>
+                {newsletterMessage && (
+                  <p className={`text-sm mt-2 ${newsletterMessage.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
+                    {newsletterMessage.text}
+                  </p>
+                )}
+              </div>
+
+              {/* Right: LINE QR */}
+              <div className="flex items-center gap-5 flex-shrink-0">
+                <div className="w-[100px] h-[100px] rounded-xl overflow-hidden bg-white border border-gray-200 shadow-sm">
+                  <Image
+                    src={footerConfig.line_qr_image || '/images/line-qr.png'}
+                    alt="LINE QR Code"
+                    width={90}
+                    height={90}
+                    className="w-full h-full object-contain"
+                    unoptimized
+                  />
+                </div>
+                <div className="text-center">
+                  <a
+                    href={lineContact?.url || footerConfig.line_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold px-5 py-2.5 rounded-full transition-colors text-sm"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    {footerConfig.line_id}
+                  </a>
+                  <p className="text-gray-500 text-xs mt-2">ติดตามเราผ่านไลน์</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Scam warning */}
+          {footerConfig.scam_warning_show && (
+          <div className="mt-6 border-2 border-yellow-300 bg-yellow-50 rounded-xl px-6 py-4 text-center">
+            <p className="text-red-600 font-bold text-sm flex items-center justify-center gap-1.5 mb-1">
+              <AlertTriangle className="w-4 h-4" />
+              {footerConfig.scam_warning_title}
+            </p>
+            <p className="text-gray-600 text-xs leading-relaxed">
+              {footerConfig.scam_warning_text}
+            </p>
+          </div>
+          )}
+        </div>
+      </div>
+      )}
+
+      {/* Dark footer area */}
+      <div className="bg-[var(--color-gray-900)] text-white">
       {/* Features bar */}
       <div className="bg-[var(--color-primary)]">
         <div className="container-custom py-4">
           <div className="flex flex-wrap justify-center gap-6 md:gap-12">
-            {features.map((feature, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <feature.icon className="w-5 h-5 text-blue-200" />
-                <span className="text-sm font-medium">{feature.label}</span>
-              </div>
-            ))}
+            {(footerConfig.features.length > 0 ? footerConfig.features : features.map(f => ({ icon: '', label: f.label }))).map((feature, index) => {
+              const IconComp = typeof feature.icon === 'string' ? ICON_MAP[feature.icon] || Shield : Shield;
+              return (
+                <div key={index} className="flex items-center gap-2">
+                  <IconComp className="w-5 h-5 text-blue-200" />
+                  <span className="text-sm font-medium">{feature.label}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -166,8 +338,7 @@ export default function Footer() {
             </Link>
             
             <p className="text-gray-400 text-sm mb-6 max-w-md">
-              บริษัททัวร์ชั้นนำ ให้บริการจัดทัวร์ท่องเที่ยวทั้งในและต่างประเทศ 
-              ด้วยประสบการณ์กว่า 10 ปี พร้อมทีมงานมืออาชีพดูแลตลอดการเดินทาง
+              {footerConfig.company_description}
             </p>
 
             {/* Contact info */}
@@ -259,7 +430,7 @@ export default function Footer() {
 
           {/* Tour links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">ทัวร์ยอดนิยม</h3>
+            <h3 className="text-lg font-semibold mb-4">{footerConfig.col1_title}</h3>
             <ul className="space-y-2.5">
               {!dataLoaded ? (
                 [...Array(5)].map((_, i) => (
@@ -282,7 +453,7 @@ export default function Footer() {
 
           {/* Company links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">บริษัท</h3>
+            <h3 className="text-lg font-semibold mb-4">{footerConfig.col2_title}</h3>
             <ul className="space-y-2.5">
               {!dataLoaded ? (
                 [...Array(6)].map((_, i) => (
@@ -305,7 +476,7 @@ export default function Footer() {
 
           {/* Support links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">ช่วยเหลือ</h3>
+            <h3 className="text-lg font-semibold mb-4">{footerConfig.col3_title}</h3>
             <ul className="space-y-2.5">
               {!dataLoaded ? (
                 [...Array(8)].map((_, i) => (
@@ -328,6 +499,8 @@ export default function Footer() {
         </div>
       </div>
 
+      {/* Newsletter & LINE section - removed, moved to top */}
+
       {/* Bottom bar */}
       <div className="border-t border-gray-800">
         <div className="container-custom py-6">
@@ -337,10 +510,11 @@ export default function Footer() {
             </p>
             <div className="flex items-center gap-2">
               <span className="text-gray-500 text-xs">ใบอนุญาตนำเที่ยว</span>
-              <span className="text-gray-400 text-sm font-medium">License TAT: 11/07440 </span>
+              <span className="text-gray-400 text-sm font-medium">License {footerConfig.license_number}</span>
             </div>
           </div>
         </div>
+      </div>
       </div>
     </footer>
   );

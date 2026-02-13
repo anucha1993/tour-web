@@ -628,4 +628,108 @@ export const internationalToursApi = {
     api.get<{ data: InternationalTourSettings }>('/tours/international/settings'),
 };
 
+// ==================== Review Types ====================
+
+export interface ReviewImage {
+  id: number;
+  tour_review_id: number;
+  image_url: string;
+  thumbnail_url: string | null;
+  sort_order: number;
+}
+
+export interface TourReview {
+  id: number;
+  tour_id: number;
+  user_id: number | null;
+  reviewer_name: string;
+  reviewer_avatar_url: string | null;
+  rating: number;
+  category_ratings: Record<string, number> | null;
+  tags: string[] | null;
+  comment: string;
+  review_source: string;
+  status: string;
+  admin_reply: string | null;
+  replied_at: string | null;
+  is_featured: boolean;
+  helpful_count: number;
+  created_at: string;
+  images?: ReviewImage[];
+  tour?: { id: number; title: string; slug: string; cover_image_url?: string } | null;
+  user?: { id: number; first_name: string; last_name: string; avatar?: string } | null;
+}
+
+export interface ReviewTag {
+  id: number;
+  name: string;
+  slug: string;
+  icon: string | null;
+  is_active: boolean;
+  usage_count: number;
+  sort_order: number;
+}
+
+export interface ReviewSummary {
+  average_rating: number;
+  total_reviews: number;
+  rating_distribution: Record<string, number>;
+  category_averages: Record<string, number>;
+}
+
+// ==================== Review API ====================
+
+export const reviewApi = {
+  // Get reviews for a tour (public)
+  list: (tourSlug: string, params?: Record<string, string | number | undefined>) => {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== '' && value !== null) {
+          searchParams.append(key, String(value));
+        }
+      });
+    }
+    const qs = searchParams.toString();
+    return api.get<{ data: { summary: ReviewSummary; reviews: { data: TourReview[] } } }>(`/tours/${tourSlug}/reviews${qs ? `?${qs}` : ''}`);
+  },
+
+  // Get review summary
+  summary: (tourSlug: string) =>
+    api.get<{ data: ReviewSummary }>(`/tours/${tourSlug}/reviews/summary`),
+
+  // Get review tags
+  tags: () => api.get<{ data: ReviewTag[] }>('/review-tags'),
+
+  // Get featured reviews for homepage
+  featured: (limit?: number) =>
+    api.get<{ data: TourReview[] }>(`/reviews/featured${limit ? `?limit=${limit}` : ''}`),
+
+  // Mark review as helpful
+  markHelpful: (reviewId: number) =>
+    api.post<{ data: TourReview }>(`/reviews/${reviewId}/helpful`),
+
+  // Check if member can review a tour
+  canReview: (tourSlug: string) =>
+    api.get<{ can_review: boolean; reason?: string }>(`/member/reviews/${tourSlug}/can-review`),
+
+  // Get member's own reviews
+  myReviews: () =>
+    api.get<{ data: { data: TourReview[] } }>('/member/reviews/my'),
+
+  // Submit a review (uses FormData for image upload)
+  store: async (tourSlug: string, formData: FormData) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('member_token') : null;
+    const res = await fetch(`${API_BASE_URL}/member/reviews/${tourSlug}`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData,
+    });
+    return res.json();
+  },
+};
+
 export default api;

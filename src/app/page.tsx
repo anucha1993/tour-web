@@ -1,14 +1,6 @@
 import Link from "next/link";
 import { 
   Phone, 
-  Star, 
-  ArrowRight,
-  Plane,
-  Shield,
-  Clock,
-  Award,
-  MapPin,
-  Calendar,
   Search,
 } from "lucide-react";
 import HeroSlider from "@/components/home/HeroSlider";
@@ -17,31 +9,9 @@ import Promotions from "@/components/home/Promotions";
 import TourTabs from "@/components/home/TourTabs";
 import RecommendedTours from "@/components/home/RecommendedTours";
 import OurClients from "@/components/home/OurClients";
+import CustomerReviews from "@/components/home/CustomerReviews";
+import WhyChooseUs from "@/components/home/WhyChooseUs";
 import PopupModal from "@/components/home/PopupModal";
-
-// Why choose us features
-const features = [
-  {
-    icon: Shield,
-    title: "ใบอนุญาตถูกต้อง",
-    description: "ได้รับใบอนุญาตจาก ททท. และ กรมการท่องเที่ยว",
-  },
-  {
-    icon: Award,
-    title: "ประสบการณ์กว่า 10 ปี",
-    description: "ทีมงานมืออาชีพพร้อมดูแลตลอดการเดินทาง",
-  },
-  {
-    icon: Clock,
-    title: "บริการ 24 ชั่วโมง",
-    description: "ติดต่อเราได้ตลอดเวลาทั้งก่อนและระหว่างเดินทาง",
-  },
-  {
-    icon: Plane,
-    title: "สายการบินชั้นนำ",
-    description: "ร่วมกับสายการบินชั้นนำระดับโลก",
-  },
-];
 
 export default function HomePage() {
   return (
@@ -64,40 +34,11 @@ export default function HomePage() {
       {/* Recommended Tours - Dynamic from API */}
       <RecommendedTours />
 
-     
+      {/* Customer Reviews */}
+      <CustomerReviews />
 
       {/* Why Choose Us */}
-      <section className="py-16 lg:py-20 bg-[var(--color-primary-50)]">
-        <div className="container-custom">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl lg:text-3xl font-bold text-[var(--color-gray-800)]">
-              ทำไมต้องเลือกเรา?
-            </h2>
-            <p className="text-[var(--color-gray-500)] mt-2">
-              NextTrip พร้อมให้บริการคุณด้วยมาตรฐานสูงสุด
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feature, index) => (
-              <div
-                key={index}
-                className="bg-white rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-shadow"
-              >
-                <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-[var(--color-primary-50)] flex items-center justify-center">
-                  <feature.icon className="w-7 h-7 text-[var(--color-primary)]" />
-                </div>
-                <h3 className="font-semibold text-[var(--color-gray-800)] mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-sm text-[var(--color-gray-500)]">
-                  {feature.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <WhyChooseUs />
 
        {/* Our Clients */}
       <OurClients />
