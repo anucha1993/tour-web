@@ -89,13 +89,33 @@ function ConfirmContent() {
           <p className="text-gray-600 mb-6">{message}</p>
 
           {status === 'success' && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <p className="text-sm text-gray-500">
                 คุณจะได้รับข่าวสาร โปรโมชั่น และทัวร์สุดพิเศษจาก NextTrip Holiday
               </p>
+
+              {/* แนะนำสมัครสมาชิก */}
+              <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl p-5 text-left">
+                <h3 className="text-sm font-bold text-gray-800 mb-1.5 flex items-center gap-2">
+                  ⭐ สมัครสมาชิกเพื่อรับสิทธิพิเศษเพิ่มเติม!
+                </h3>
+                <ul className="text-xs text-gray-600 space-y-1 mb-3">
+                  <li className="flex items-center gap-1.5">✅ จองทัวร์ได้สะดวกรวดเร็ว</li>
+                  <li className="flex items-center gap-1.5">✅ ติดตามสถานะการจองได้ตลอด</li>
+                  <li className="flex items-center gap-1.5">✅ รับส่วนลดพิเศษสำหรับสมาชิก</li>
+                  <li className="flex items-center gap-1.5">✅ บันทึกทัวร์โปรดและเขียนรีวิว</li>
+                </ul>
+                <Link
+                  href="/member/register"
+                  className="inline-flex items-center gap-2 bg-[var(--color-primary)] hover:opacity-90 text-white px-5 py-2.5 rounded-lg font-medium transition-all text-sm w-full justify-center"
+                >
+                  🎉 สมัครสมาชิกฟรี
+                </Link>
+              </div>
+
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors"
               >
                 🏠 กลับหน้าหลัก
               </Link>
