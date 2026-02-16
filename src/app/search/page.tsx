@@ -114,9 +114,46 @@ function SearchContent() {
       {/* Results */}
       <div className="container-custom py-6">
         {loading && tours.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16">
-            <Loader2 className="w-10 h-10 text-orange-500 animate-spin mb-4" />
-            <p className="text-gray-500">กำลังค้นหา...</p>
+          <div className="space-y-4">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="bg-white rounded-xl border border-gray-100 overflow-hidden animate-pulse">
+                <div className="flex flex-col sm:flex-row">
+                  {/* Image skeleton */}
+                  <div className="w-full sm:w-48 aspect-square flex-shrink-0 bg-gray-200" />
+                  {/* Content skeleton */}
+                  <div className="flex-1 p-4 sm:p-5 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="h-5 bg-gray-200 rounded w-20" />
+                      <div className="h-4 bg-gray-100 rounded w-24" />
+                    </div>
+                    <div className="h-5 bg-gray-200 rounded w-3/4" />
+                    <div className="h-4 bg-gray-100 rounded w-1/2" />
+                    <div className="flex gap-2 mt-2">
+                      <div className="h-5 bg-gray-100 rounded w-16" />
+                      <div className="h-5 bg-gray-100 rounded w-16" />
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className="h-4 bg-gray-100 rounded w-20" />
+                      <div className="h-4 bg-gray-100 rounded w-20" />
+                      <div className="h-4 bg-gray-100 rounded w-20" />
+                    </div>
+                  </div>
+                  {/* Price skeleton */}
+                  <div className="hidden sm:flex flex-col items-end justify-start p-5 gap-1">
+                    <div className="h-3 bg-gray-100 rounded w-12" />
+                    <div className="h-7 bg-orange-100 rounded w-24" />
+                  </div>
+                </div>
+                {/* Share bar skeleton */}
+                <div className="flex items-center gap-1 justify-end px-4 py-2 border-t border-gray-50">
+                  <div className="h-4 bg-gray-100 rounded w-8" />
+                  <div className="w-7 h-7 bg-gray-100 rounded-full" />
+                  <div className="w-7 h-7 bg-gray-100 rounded-full" />
+                  <div className="w-7 h-7 bg-gray-100 rounded-full" />
+                  <div className="w-7 h-7 bg-gray-100 rounded-full" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : tours.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
