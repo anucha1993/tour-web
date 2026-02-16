@@ -232,7 +232,7 @@ export interface TourTabData {
   icon?: string;
   badge_text?: string;
   badge_color?: string;
-  display_mode: 'tab' | 'badge' | 'both' | 'period';
+  display_modes: ('tab' | 'badge' | 'period' | 'promotion')[];
   badge_icon?: string;
   tours: TourTabTour[];
 }
@@ -245,7 +245,7 @@ export interface TourTabBadge {
   badge_icon?: string;
   tour_ids: number[];
   discount_min_amount?: number | null;
-  display_mode?: string;
+  display_modes?: string[];
 }
 
 export const tourTabsApi = {
@@ -257,6 +257,9 @@ export const tourTabsApi = {
 
   // Get badge-type tabs with tour IDs for global badge display
   badges: () => api.get<{ data: TourTabBadge[] }>('/tour-tabs/public/badges'),
+
+  // Get promotion-type tabs with tours for promotions page
+  promotions: () => api.get<{ data: TourTabData[] }>('/tour-tabs/public/promotions'),
 };
 
 // Recommended Tours types
@@ -783,6 +786,244 @@ export const internationalToursApi = {
   // Get display settings
   getSettings: () =>
     api.get<{ data: InternationalTourSettings }>('/tours/international/settings'),
+};
+
+// ===================== Domestic Tours Listing =====================
+
+// Reuse the same item/period/transport/offer types – the API returns the same shape
+export type DomesticTourItem = InternationalTourItem;
+export type DomesticTourPeriod = InternationalTourPeriod;
+export type DomesticTourTransport = InternationalTourTransport;
+export type DomesticTourOffer = InternationalTourOffer;
+
+export interface DomesticTourFilters {
+  cities?: { id: number; name_th: string; country_id: number; country_name: string; tour_count: number }[];
+  airlines?: { id: number; code: string; name: string; image: string | null }[];
+  departure_months?: { value: string; label: string }[];
+}
+
+export interface DomesticTourSettings {
+  show_periods: boolean;
+  max_periods_display: number;
+  show_transport: boolean;
+  show_hotel_star: boolean;
+  show_meal_count: boolean;
+  show_commission: boolean;
+  filter_city: boolean;
+  filter_search: boolean;
+  filter_airline: boolean;
+  filter_departure_month: boolean;
+  filter_price_range: boolean;
+  sort_options: Record<string, string>;
+  cover_image_url?: string | null;
+  cover_image_position?: string;
+}
+
+export interface DomesticToursResponse {
+  data: DomesticTourItem[];
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
+  filters: DomesticTourFilters;
+  settings: DomesticTourSettings;
+  active_filters?: {
+    city?: { id: number; name_th: string; name_en: string; slug: string; country_id: number } | null;
+  };
+}
+
+export const domesticToursApi = {
+  // List tours with filters and pagination
+  list: (params?: Record<string, string | number | undefined>) => {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== '' && value !== null) {
+          searchParams.append(key, String(value));
+        }
+      });
+    }
+    const qs = searchParams.toString();
+    return api.get<DomesticToursResponse>(`/tours/domestic${qs ? `?${qs}` : ''}`);
+  },
+
+  // Get display settings
+  getSettings: () =>
+    api.get<{ data: DomesticTourSettings }>('/tours/domestic/settings'),
+};
+
+// ===================== Festival Tours Listing =====================
+
+export interface FestivalCountryInfo {
+  id: number;
+  name_th: string;
+  slug: string;
+  iso2: string;
+  tour_count: number;
+}
+
+export interface FestivalHolidayPublic {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  start_date: string;
+  end_date: string;
+  date_range_text: string;
+  image_url: string | null;
+  badge_text: string | null;
+  badge_color: string;
+  badge_icon: string | null;
+  tour_count: number;
+  countries?: FestivalCountryInfo[];
+}
+
+export type FestivalTourItem = InternationalTourItem;
+export type FestivalTourPeriod = InternationalTourPeriod;
+
+export interface FestivalTourFilters {
+  countries?: { id: number; name_th: string; slug: string; iso2: string; tour_count: number }[];
+  cities?: { id: number; name_th: string; country_id: number; country_name: string; tour_count: number }[];
+  airlines?: { id: number; code: string; name: string; image: string | null }[];
+  departure_months?: { value: string; label: string }[];
+}
+
+export interface FestivalTourSettings {
+  show_periods: boolean;
+  max_periods_display: number;
+  show_transport: boolean;
+  show_hotel_star: boolean;
+  show_meal_count: boolean;
+  show_commission: boolean;
+  filter_country: boolean;
+  filter_city: boolean;
+  filter_search: boolean;
+  filter_airline: boolean;
+  filter_departure_month: boolean;
+  filter_price_range: boolean;
+  sort_options: Record<string, string>;
+  cover_image_url?: string | null;
+  cover_image_position?: string;
+}
+
+export interface FestivalToursResponse {
+  data: FestivalTourItem[];
+  meta: { current_page: number; last_page: number; per_page: number; total: number };
+  filters: FestivalTourFilters;
+  settings: FestivalTourSettings;
+  festival: {
+    id: number;
+    name: string;
+    slug: string;
+    description: string | null;
+    start_date: string;
+    end_date: string;
+    date_range_text: string;
+    badge_text: string | null;
+    badge_color: string;
+    badge_icon: string | null;
+    cover_image_url: string | null;
+    cover_image_position: string;
+  };
+}
+
+export interface FestivalBadge {
+  id: number;
+  name: string;
+  badge_text: string;
+  badge_color: string;
+  badge_icon: string | null;
+  display_modes: string[];
+  tour_ids: number[];
+  period_ids: number[];
+}
+
+export const festivalToursApi = {
+  list: () =>
+    api.get<{ data: FestivalHolidayPublic[] }>('/tours/festival'),
+
+  getBySlug: (slug: string, params?: Record<string, string | number | undefined>) => {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== '' && value !== null) {
+          searchParams.append(key, String(value));
+        }
+      });
+    }
+    const qs = searchParams.toString();
+    const decodedSlug = decodeURIComponent(slug);
+    return api.get<FestivalToursResponse>(`/tours/festival/${encodeURIComponent(decodedSlug)}${qs ? `?${qs}` : ''}`);
+  },
+
+  badges: () =>
+    api.get<{ data: FestivalBadge[] }>('/tours/festival-badges'),
+
+  pageSettings: () =>
+    api.get<{ cover_image_url: string | null; cover_image_position: string }>('/tours/festival/page-settings'),
+};
+
+// ===================== Search & Autocomplete =====================
+
+export interface SearchAutocompleteItem {
+  type: 'country' | 'city' | 'festival' | 'tour';
+  id: number;
+  title: string;
+  subtitle?: string;
+  url: string;
+  image?: string | null;
+  icon?: string | null;
+  tour_count?: number;
+  country?: string | null;
+  country_flag?: string | null;
+  price?: string | null;
+}
+
+export interface PopularSearchData {
+  popular_destinations: {
+    type: string;
+    title: string;
+    url: string;
+    icon?: string;
+    image?: string | null;
+    count: number;
+  }[];
+  festivals: {
+    type: string;
+    title: string;
+    url: string;
+    icon?: string;
+    count: number;
+  }[];
+  trending_tours: {
+    type: string;
+    title: string;
+    url: string;
+    image?: string | null;
+    price?: string | null;
+    country?: string | null;
+  }[];
+}
+
+export const searchApi = {
+  autocomplete: (q: string) =>
+    api.get<{ data: SearchAutocompleteItem[] }>(`/search/autocomplete?q=${encodeURIComponent(q)}`),
+
+  search: (q: string, page?: number) =>
+    api.get<{ data: unknown[]; meta: { total: number; current_page: number; last_page: number } }>(
+      `/search?q=${encodeURIComponent(q)}${page ? `&page=${page}` : ''}`
+    ),
+
+  popular: () =>
+    api.get<{ data: PopularSearchData }>('/search/popular'),
+
+  suggestions: (q?: string) =>
+    api.get<{ data: string[] }>(`/search/suggestions${q ? `?q=${encodeURIComponent(q)}` : ''}`),
+
+  trackKeyword: (keyword: string, resultCount?: number) =>
+    api.post('/search/track', { keyword, result_count: resultCount || 0 }),
 };
 
 export default api;

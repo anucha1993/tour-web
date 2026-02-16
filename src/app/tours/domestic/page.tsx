@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useSearchParams, useRouter, useParams } from 'next/navigation';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -15,10 +15,10 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import {
-  internationalToursApi,
-  InternationalTourItem,
-  InternationalTourFilters,
-  InternationalTourSettings,
+  domesticToursApi,
+  DomesticTourItem,
+  DomesticTourFilters,
+  DomesticTourSettings,
   InternationalTourPeriod,
 } from '@/lib/api';
 import TourTabBadges from '@/components/shared/TourTabBadges';
@@ -77,7 +77,7 @@ const TourBadge = ({ badge }: { badge: string }) => {
   return <span className={`${colors[badge] || 'bg-gray-500'} text-white text-xs font-bold px-2.5 py-1 rounded-sm uppercase`}>{labels[badge] || badge}</span>;
 };
 
-const PromotionBadges = ({ tour }: { tour: InternationalTourItem }) => {
+const PromotionBadges = ({ tour }: { tour: DomesticTourItem }) => {
   const isSoldOut = tour.available_seats === 0;
   if (isSoldOut) return null;
   return (
@@ -102,7 +102,7 @@ const BADGE_BG_CLASSES: Record<string, string> = {
   pink: 'bg-gradient-to-r from-pink-500 to-rose-400',
 };
 
-function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: InternationalTourSettings }) {
+function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: DomesticTourSettings }) {
   const { getPeriodBadges } = useTourBadges();
   const [showAllPeriods, setShowAllPeriods] = useState(false);
   const maxDisplay = settings.max_periods_display || 6;
@@ -121,7 +121,7 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
           )}
           {tour.badge && <div className="absolute top-2 left-2"><TourBadge badge={tour.badge} /></div>}
           {hasDiscount && tour.max_discount_percent && tour.max_discount_percent > 0 && (
-            <div className="absolute top-2 right-2 bg-orange-500 text-white text-sm font-bold px-2.5 py-1 ">ลด {Math.round(tour.max_discount_percent)}%</div>
+            <div className="absolute top-2 right-2 bg-orange-500 text-white text-sm font-bold px-2.5 py-1">ลด {Math.round(tour.max_discount_percent)}%</div>
           )}
         </div>
         <div className="flex-1 pt-3 lg:p-5">
@@ -195,7 +195,7 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
             </div>
           )}
           <div className="flex flex-col-reverse gap-2 lg:flex-row lg:items-end lg:justify-between mt-2">
-             <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
               {tour.pdf_url && (
                 <a
                   href={tour.pdf_url}
@@ -220,7 +220,6 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
                 ดูรายละเอียดทัวร์
               </Link>
             </div>
-            
             <div className="text-right">
               <div className="text-xs lg:text-sm text-gray-500">ราคาเริ่มต้น</div>
               {hasDiscount && tour.price_adult && <div className="text-sm lg:text-base text-gray-400 line-through">{formatPrice(tour.price_adult)}</div>}
@@ -242,7 +241,7 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
           href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/tours/${tour.slug}`)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className=" cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors"
+          className="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors"
           title="แชร์ Facebook"
         >
           <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
@@ -315,7 +314,6 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
                           })()}
                         </div>
                       </td>
-                      {/* ผู้ใหญ่ (พัก2-3ท่าน) */}
                       <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center whitespace-nowrap">
                         {period.offer ? (
                           period.offer.net_price_adult ? (
@@ -326,7 +324,6 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
                           ) : <span className="text-xs text-orange-500 font-medium">ติดต่อฝ่ายขาย</span>
                         ) : <span className="text-xs text-orange-500 font-medium">ติดต่อฝ่ายขาย</span>}
                       </td>
-                       {/* ผู้ใหญ่ (พักเดี่ยว) */}
                       <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center whitespace-nowrap">
                         {period.offer ? (
                           (period.offer.net_price_single ?? period.offer.price_single) ? (
@@ -341,7 +338,6 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
                       <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center">{period.booked}</td>
                       <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center"><PeriodStatusBadge period={period} /></td>
                       {settings.show_commission && <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center text-green-600">{period.offer?.commission_agent || '-'}</td>}
-                     
                     </tr>
                   );
                 })}
@@ -360,23 +356,20 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
   );
 }
 
-// ===== Country Tours Page =====
-export default function CountryToursPage() {
+// ===== Domestic Tours Page Content =====
+function DomesticToursContent() {
   const router = useRouter();
-  const params = useParams();
   const searchParams = useSearchParams();
-  const countrySlug = params.slug as string;
 
-  const [tours, setTours] = useState<InternationalTourItem[]>([]);
-  const [filters, setFilters] = useState<InternationalTourFilters>({});
-  const [settings, setSettings] = useState<InternationalTourSettings>({
+  const [tours, setTours] = useState<DomesticTourItem[]>([]);
+  const [filters, setFilters] = useState<DomesticTourFilters>({});
+  const [settings, setSettings] = useState<DomesticTourSettings>({
     show_periods: true, max_periods_display: 6, show_transport: true, show_hotel_star: true,
-    show_meal_count: true, show_commission: false, filter_country: true, filter_city: true,
+    show_meal_count: true, show_commission: false, filter_city: true,
     filter_search: true, filter_airline: true, filter_departure_month: true, filter_price_range: true, sort_options: {},
   });
   const [meta, setMeta] = useState({ current_page: 1, last_page: 1, per_page: 10, total: 0 });
   const [loading, setLoading] = useState(true);
-  const [countryInfo, setCountryInfo] = useState<{ id: number; name_th: string; name_en: string; iso2: string } | null>(null);
 
   const [activeSearchParams, setActiveSearchParams] = useState<SearchParams>({
     search: searchParams.get('search') || undefined,
@@ -395,7 +388,6 @@ export default function CountryToursPage() {
   const abortRef = useRef<AbortController | null>(null);
 
   const fetchTours = useCallback(async (page: number = 1) => {
-    // ยกเลิก request ก่อนหน้าที่ยังไม่เสร็จ
     if (abortRef.current) abortRef.current.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -404,20 +396,16 @@ export default function CountryToursPage() {
     try {
       const apiParams: Record<string, string | number | undefined> = {
         page,
-        country_slug: countrySlug,
         ...activeSearchParams,
         ...(sortBy && { sort_by: sortBy }),
       };
-      const response = await internationalToursApi.list(apiParams);
+      const response = await domesticToursApi.list(apiParams);
       if (controller.signal.aborted) return;
       if (response) {
         setTours(response.data || []);
         setMeta(response.meta || { current_page: 1, last_page: 1, per_page: 10, total: 0 });
         setFilters(response.filters || {});
         setSettings(response.settings || settings);
-        if (response.active_filters?.country) {
-          setCountryInfo(response.active_filters.country);
-        }
       }
     } catch (error) {
       if (controller.signal.aborted) return;
@@ -426,7 +414,7 @@ export default function CountryToursPage() {
       if (!controller.signal.aborted) setLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [countrySlug, activeSearchParams, sortBy]);
+  }, [activeSearchParams, sortBy]);
 
   useEffect(() => {
     fetchTours(currentPage);
@@ -440,17 +428,17 @@ export default function CountryToursPage() {
     Object.entries(params).forEach(([k, v]) => { if (v) p.set(k, v); });
     if (sortBy) p.set('sort_by', sortBy);
     const qs = p.toString();
-    router.push(`/tours/country/${countrySlug}${qs ? `?${qs}` : ''}`, { scroll: false });
+    router.push(`/tours/domestic${qs ? `?${qs}` : ''}`, { scroll: false });
   };
 
   const clearFilters = () => {
     setActiveSearchParams({});
     setSortBy('');
     setCurrentPage(1);
-    router.push(`/tours/country/${countrySlug}`, { scroll: false });
+    router.push('/tours/domestic', { scroll: false });
   };
 
-  const isInitialLoad = loading && tours.length === 0 && !countryInfo;
+  const isInitialLoad = loading && tours.length === 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -470,7 +458,7 @@ export default function CountryToursPage() {
             <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/20" />
           </>
         )}
-        <div className={`container-custom relative z-10  ${settings.cover_image_url ? 'pt-14 pb-28 lg:pt-30 lg:pb-40' : 'pt-8 pb-28 lg:pt-12 lg:pb-36'}`}>
+        <div className={`container-custom relative z-10 ${settings.cover_image_url ? 'pt-14 pb-28 lg:pt-30 lg:pb-40' : 'pt-8 pb-28 lg:pt-12 lg:pb-36'}`}>
           {isInitialLoad ? (
             <div className="animate-pulse">
               <div className="flex items-center gap-3 mb-2">
@@ -483,18 +471,16 @@ export default function CountryToursPage() {
           ) : (
             <>
               <div className="flex items-center gap-3 mb-2">
-                <Link href="/tours/international" className="text-white/70 hover:text-white transition-colors">
+                <Link href="/" className="text-white/70 hover:text-white transition-colors">
                   <ArrowLeft className="w-5 h-5" />
                 </Link>
-                {countryInfo?.iso2 && (
-                  <img src={`https://flagcdn.com/32x24/${countryInfo.iso2.toLowerCase()}.png`} width={32} height={24} alt="" className="rounded shadow" />
-                )}
+                <img src="https://flagcdn.com/32x24/th.png" width={32} height={24} alt="Thailand" className="rounded shadow" />
                 <h1 className="text-3xl lg:text-4xl font-bold">
-                  ทัวร์{countryInfo?.name_th || countrySlug}
+                  ทัวร์ในประเทศ
                 </h1>
               </div>
               <p className="text-white/80 text-base lg:text-lg ml-8">
-                รวมโปรแกรมทัวร์{countryInfo?.name_th || ''} ราคาพิเศษ พร้อมเดินทาง
+                รวมโปรแกรมทัวร์ในประเทศไทย เที่ยวทั่วไทย ราคาพิเศษ พร้อมเดินทาง
               </p>
             </>
           )}
@@ -532,13 +518,10 @@ export default function CountryToursPage() {
               filters={filters}
               onSearch={handleSearch}
               onClear={clearFilters}
-              initialValues={{
-                ...activeSearchParams,
-                ...(countryInfo?.id ? { country_id: String(countryInfo.id) } : {}),
-              }}
+              initialValues={activeSearchParams}
               showFilters={{
                 search: settings.filter_search,
-                country: settings.filter_country,
+                country: false,
                 city: settings.filter_city,
                 airline: settings.filter_airline,
                 departureMonth: settings.filter_departure_month,
@@ -597,5 +580,18 @@ export default function CountryToursPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// ===== Domestic Tours Page =====
+export default function DomesticToursPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="w-10 h-10 text-orange-500 animate-spin" />
+      </div>
+    }>
+      <DomesticToursContent />
+    </Suspense>
   );
 }

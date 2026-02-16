@@ -236,7 +236,7 @@ export default function TourTabs() {
       try {
         const response = await tourTabsApi.list();
         if (response.success && response.data) {
-          setTabs(response.data.filter((t: TourTabData) => t.display_mode === 'tab' || t.display_mode === 'both'));
+          setTabs(response.data.filter((t: TourTabData) => t.display_modes?.includes('tab')));
         }
       } catch (error) {
         console.error('Failed to fetch tour tabs:', error);

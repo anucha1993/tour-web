@@ -306,7 +306,7 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
                           <span className={`font-medium ${isClosed ? '' : 'text-gray-500'}`}>{formatDateRange(period.start_date, period.end_date)}</span>
                           <span className="text-gray-500 text-xs">{getDayOfWeek(period.start_date)}</span>
                           {(() => {
-                            const pBadges = getPeriodBadges(tour.id, period.offer?.discount_adult || 0);
+                            const pBadges = getPeriodBadges(tour.id, period.offer?.discount_adult || 0, period.id);
                             return pBadges.map((b, bi) => (
                               <span key={bi} className={`text-[10px] font-bold text-white px-1.5 py-0.5 rounded ${BADGE_BG_CLASSES[b.color] || 'bg-gray-500'} ${b.color === 'yellow' ? 'text-yellow-900' : ''}`}>
                                 {b.icon && <span>{b.icon}</span>}{b.text}

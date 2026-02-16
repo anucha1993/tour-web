@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Menu, X, ChevronDown, Phone, Search, Clock, MessageCircle, Facebook, Instagram, Youtube, Heart, User, LogOut, MapPin } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
+import SearchOverlay from '@/components/shared/SearchOverlay';
 import { API_URL } from '@/lib/config';
 
 // TikTok icon (not in lucide-react)
@@ -25,6 +26,14 @@ interface NavMenuItem {
 interface IntlCity {
   id: number;
   name_th: string;
+  slug: string;
+  tour_count: number;
+}
+
+interface DomesticCity {
+  id: number;
+  name_th: string;
+  name_en: string;
   slug: string;
   tour_count: number;
 }
@@ -68,11 +77,7 @@ const fallbackMenuItems: NavMenuItem[] = [
     label: 'ทัวร์ในประเทศ', 
     href: '/tours/domestic',
     submenu: [
-      { label: 'ทัวร์ภาคเหนือ', href: '/tours/domestic/north' },
-      { label: 'ทัวร์ภาคใต้', href: '/tours/domestic/south' },
-      { label: 'ทัวร์ภาคอีสาน', href: '/tours/domestic/northeast' },
-      { label: 'ทัวร์ภาคกลาง', href: '/tours/domestic/central' },
-      { label: 'ดูทั้งหมด', href: '/tours/domestic' },
+      { label: 'ดูทัวร์ในประเทศทั้งหมด', href: '/tours/domestic' },
     ]
   },
   { 
@@ -83,9 +88,6 @@ const fallbackMenuItems: NavMenuItem[] = [
     label: 'ทัวร์ตามเทศกาล', 
     href: '/tours/festival',
     submenu: [
-      { label: 'ทัวร์ปีใหม่', href: '/tours/festival/new-year' },
-      { label: 'ทัวร์สงกรานต์', href: '/tours/festival/songkran' },
-      { label: 'ทัวร์วันหยุดยาว', href: '/tours/festival/long-weekend' },
       { label: 'ดูทั้งหมด', href: '/tours/festival' },
     ]
   },
@@ -106,12 +108,15 @@ const fallbackMenuItems: NavMenuItem[] = [
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const submenuTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [mobileSubmenu, setMobileSubmenu] = useState<string | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [menuItems, setMenuItems] = useState<NavMenuItem[]>(fallbackMenuItems);
   const [intlCountries, setIntlCountries] = useState<IntlMenuData>([]);
+  const [domesticCities, setDomesticCities] = useState<DomesticCity[]>([]);
+  const [festivalMenuItems, setFestivalMenuItems] = useState<{ label: string; href: string }[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [contactPhone, setContactPhone] = useState({ label: 'สอบถามทัวร์', value: '02-136-9144', url: 'tel:021369144' });
   const [contactHotline, setContactHotline] = useState({ label: 'Hotline (ตลอดเวลา)', value: '091-091-6364', url: 'tel:0910916364' });
@@ -148,28 +153,58 @@ export default function Header() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [menusRes, contactsRes, intlMenuRes] = await Promise.all([
+        const [menusRes, contactsRes, intlMenuRes, domesticMenuRes, festivalMenuRes] = await Promise.all([
           fetch(`${API_URL}/menus/public`).then(r => r.ok ? r.json() : null).catch(() => null),
           fetch(`${API_URL}/site-contacts/public`).then(r => r.ok ? r.json() : null).catch(() => null),
           fetch(`${API_URL}/tours/international-menu`).then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch(`${API_URL}/tours/domestic-menu`).then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch(`${API_URL}/tours/festival`).then(r => r.ok ? r.json() : null).catch(() => null),
         ]);
 
         if (intlMenuRes?.success && Array.isArray(intlMenuRes.data)) {
           setIntlCountries(intlMenuRes.data);
         }
 
-        if (menusRes?.success && menusRes.data?.header) {
-          const apiMenus: NavMenuItem[] = menusRes.data.header.map((item: { title: string; url: string; children?: { title: string; url: string }[] }) => ({
-            label: item.title,
-            href: item.url || '#',
-            megaMenu: (item.url || '').includes('international'),
-            submenu: item.children && item.children.length > 0
-              ? item.children.map((child: { title: string; url: string }) => ({
-                  label: child.title,
-                  href: child.url || '#',
-                }))
-              : undefined,
+        // Build domestic submenu from real city data
+        if (domesticMenuRes?.success && Array.isArray(domesticMenuRes.data)) {
+          setDomesticCities(domesticMenuRes.data);
+        }
+
+        // Build festival submenu from API data
+        let festivalSubs: { label: string; href: string }[] = [];
+        if (festivalMenuRes?.data && Array.isArray(festivalMenuRes.data)) {
+          festivalSubs = festivalMenuRes.data.map((f: { name: string; slug: string; badge_icon?: string | null }) => ({
+            label: `${f.badge_icon ? f.badge_icon + ' ' : ''}${f.name}`,
+            href: `/tours/festival/${f.slug}`,
           }));
+          festivalSubs.push({ label: 'ดูทั้งหมด', href: '/tours/festival' });
+          setFestivalMenuItems(festivalSubs);
+        }
+
+        if (menusRes?.success && menusRes.data?.header) {
+          const apiMenus: NavMenuItem[] = menusRes.data.header.map((item: { title: string; url: string; children?: { title: string; url: string }[] }) => {
+            const href = item.url || '#';
+            const isDomestic = href.includes('domestic');
+            const isFestival = href.includes('festival');
+            return {
+              label: item.title,
+              href,
+              megaMenu: href.includes('international'),
+              // For domestic menu, use a minimal placeholder submenu so the dropdown arrow shows
+              // The actual rendering will use domesticCities data
+              // For festival menu, use dynamically fetched festival list
+              submenu: isDomestic
+                ? [{ label: 'ดูทัวร์ในประเทศทั้งหมด', href: '/tours/domestic' }]
+                : isFestival && festivalSubs.length > 0
+                  ? festivalSubs
+                  : (item.children && item.children.length > 0
+                      ? item.children.map((child: { title: string; url: string }) => ({
+                          label: child.title,
+                          href: child.url || '#',
+                        }))
+                      : undefined),
+            };
+          });
           if (apiMenus.length > 0) setMenuItems(apiMenus);
         }
 
@@ -234,6 +269,7 @@ export default function Header() {
   };
 
   return (
+    <>
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled 
@@ -373,16 +409,43 @@ export default function Header() {
                 {/* Regular dropdown submenu (non-mega) */}
                 {item.submenu && !item.megaMenu && activeSubmenu === item.href && (
                   <div className="absolute top-full left-0 pt-2 animate-slide-down z-50">
-                    <div className="bg-white rounded-xl shadow-xl border border-gray-100 py-2 min-w-[200px]">
-                      {item.submenu.map((subItem) => (
-                        <Link
-                          key={subItem.href}
-                          href={subItem.href}
-                          className="block px-4 py-2.5 text-sm text-[var(--color-gray-700)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-50)] transition-colors"
-                        >
-                          {subItem.label}
-                        </Link>
-                      ))}
+                    <div className="bg-white rounded-xl shadow-xl border border-gray-100 py-2 min-w-[220px]">
+                      {/* Domestic tours: show dynamic cities with tour counts */}
+                      {item.href === '/tours/domestic' && domesticCities.length > 0 ? (
+                        <>
+                          {domesticCities.map((city) => (
+                            <Link
+                              key={city.id}
+                              href={`/tours/domestic?city_id=${city.id}`}
+                              className="flex items-center justify-between px-4 py-2.5 text-sm text-[var(--color-gray-700)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-50)] transition-colors"
+                            >
+                              <span className="flex items-center gap-1.5">
+                                <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                                {city.name_th}
+                              </span>
+                              <span className="text-xs text-gray-400 bg-gray-100 rounded-full px-1.5 py-0.5 min-w-[20px] text-center">{city.tour_count}</span>
+                            </Link>
+                          ))}
+                          <div className="border-t border-gray-100 mt-1 pt-1">
+                            <Link
+                              href="/tours/domestic"
+                              className="block px-4 py-2.5 text-sm text-[var(--color-primary)] font-medium hover:bg-[var(--color-primary-50)] transition-colors"
+                            >
+                              ดูทั้งหมด →
+                            </Link>
+                          </div>
+                        </>
+                      ) : (
+                        item.submenu.map((subItem) => (
+                          <Link
+                            key={subItem.href}
+                            href={subItem.href}
+                            className="block px-4 py-2.5 text-sm text-[var(--color-gray-700)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-50)] transition-colors"
+                          >
+                            {subItem.label}
+                          </Link>
+                        ))
+                      )}
                     </div>
                   </div>
                 )}
@@ -394,6 +457,7 @@ export default function Header() {
           <div className="flex items-center gap-1 lg:gap-3">
             {/* Search button - hidden on mobile */}
             <button 
+              onClick={() => setIsSearchOpen(true)}
               className="hidden lg:flex p-2.5 rounded-lg text-[var(--color-gray-500)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-50)] transition-colors"
               aria-label="ค้นหาทัวร์"
             >
@@ -693,18 +757,45 @@ export default function Header() {
                       </button>
                       
                       {/* Mobile submenu - collapsible */}
-                      <div className={`overflow-hidden transition-all duration-300 ${mobileSubmenu === item.href ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                      <div className={`overflow-hidden transition-all duration-300 ${mobileSubmenu === item.href ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
                         <div className="ml-4 py-2 space-y-1 border-l-2 border-[var(--color-primary-100)]">
-                          {item.submenu.map((subItem) => (
-                            <Link
-                              key={subItem.href}
-                              href={subItem.href}
-                              onClick={() => setIsMobileMenuOpen(false)}
-                              className="block px-4 py-2.5 text-sm text-[var(--color-gray-600)] hover:text-[var(--color-primary)] transition-colors"
-                            >
-                              {subItem.label}
-                            </Link>
-                          ))}
+                          {/* Domestic tours: show dynamic cities with tour counts */}
+                          {item.href === '/tours/domestic' && domesticCities.length > 0 ? (
+                            <>
+                              {domesticCities.map((city) => (
+                                <Link
+                                  key={city.id}
+                                  href={`/tours/domestic?city_id=${city.id}`}
+                                  onClick={() => setIsMobileMenuOpen(false)}
+                                  className="flex items-center justify-between px-4 py-2.5 text-sm text-[var(--color-gray-600)] hover:text-[var(--color-primary)] transition-colors"
+                                >
+                                  <span className="flex items-center gap-1.5">
+                                    <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                                    {city.name_th}
+                                  </span>
+                                  <span className="text-[10px] text-gray-400 bg-gray-100 rounded-full px-1.5 py-0.5">{city.tour_count}</span>
+                                </Link>
+                              ))}
+                              <Link
+                                href="/tours/domestic"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="block px-4 py-2.5 text-sm text-[var(--color-primary)] font-medium hover:underline"
+                              >
+                                ดูทั้งหมด →
+                              </Link>
+                            </>
+                          ) : (
+                            item.submenu.map((subItem) => (
+                              <Link
+                                key={subItem.href}
+                                href={subItem.href}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="block px-4 py-2.5 text-sm text-[var(--color-gray-600)] hover:text-[var(--color-primary)] transition-colors"
+                              >
+                                {subItem.label}
+                              </Link>
+                            ))
+                          )}
                         </div>
                       </div>
                     </>
@@ -775,14 +866,13 @@ export default function Header() {
                 )
               )}
               
-              <Link
-                href="/tours"
-                onClick={() => setIsMobileMenuOpen(false)}
+              <button
+                onClick={() => { setIsMobileMenuOpen(false); setIsSearchOpen(true); }}
                 className="btn-primary w-full flex items-center justify-center gap-2"
               >
                 <Search className="w-5 h-5" />
                 <span>ค้นหาทัวร์</span>
-              </Link>
+              </button>
               
               {/* Contact info */}
               <div className="mt-6 space-y-3 text-sm">
@@ -829,5 +919,9 @@ export default function Header() {
         </div>
       )}
     </header>
+
+    {/* Search Overlay */}
+    <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+    </>
   );
 }

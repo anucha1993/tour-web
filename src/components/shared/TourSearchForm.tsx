@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, MapPin, Plane, Calendar, ChevronDown, X, SlidersHorizontal } from 'lucide-react';
-import { InternationalTourFilters } from '@/lib/api';
+import { InternationalTourFilters, DomesticTourFilters, FestivalTourFilters } from '@/lib/api';
 
 // ===== Types =====
 export interface SearchParams {
@@ -21,7 +21,7 @@ export interface SearchParams {
 }
 
 interface TourSearchFormProps {
-  filters: InternationalTourFilters;
+  filters: InternationalTourFilters | DomesticTourFilters | FestivalTourFilters;
   onSearch: (params: SearchParams) => void;
   onClear: () => void;
   initialValues?: Partial<SearchParams>;
@@ -36,6 +36,9 @@ interface TourSearchFormProps {
     priceRange?: boolean;
   };
 }
+
+// Helper to safely access optional filter properties across union types
+type AnyFilters = InternationalTourFilters & DomesticTourFilters & FestivalTourFilters;
 
 // ===== Helpers =====
 const TH_MONTHS: Record<string, string> = {
@@ -67,7 +70,7 @@ const fmtDate = (s: string) => {
 
 // ===== Component =====
 export default function TourSearchForm({
-  filters,
+  filters: rawFilters,
   onSearch,
   onClear,
   initialValues = {},
@@ -75,6 +78,8 @@ export default function TourSearchForm({
   hideCity = false,
   showFilters = {},
 }: TourSearchFormProps) {
+  // Cast to intersection type so all optional properties are accessible
+  const filters = rawFilters as AnyFilters;
   const [search, setSearch] = useState(initialValues.search || '');
   const [countryId, setCountryId] = useState(initialValues.country_id || '');
   const [cityId, setCityId] = useState(initialValues.city_id || '');
@@ -146,11 +151,6 @@ export default function TourSearchForm({
     return found ? `${found.name} (${found.code})` : '';
   }, [airlineId, filters.airlines]);
 
-  const filteredCities = useMemo(() => {
-    if (!countryId) return [];
-    return (filters.cities || []).filter(c => c.country_id === Number(countryId));
-  }, [countryId, filters.cities]);
-
   const show = {
     search: showFilters.search !== false,
     country: showFilters.country !== false && !hideCountry,
@@ -159,6 +159,15 @@ export default function TourSearchForm({
     month: showFilters.departureMonth !== false,
     price: showFilters.priceRange !== false,
   };
+
+  const filteredCities = useMemo(() => {
+    const allCities = filters.cities || [];
+    // When country filter is hidden, show all cities
+    if (!show.country) return allCities;
+    if (!countryId) return [];
+    return allCities.filter(c => c.country_id === Number(countryId));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countryId, filters.cities, show.country]);
 
   const handleCountryChange = (val: string) => {
     setCountryId(val);
@@ -444,8 +453,8 @@ export default function TourSearchForm({
         </div>
       </div>
 
-      {/* ═══ City badges (เมื่อเลือกประเทศแล้ว) ═══ */}
-      {show.city && countryId && filteredCities.length > 0 && (
+      {/* ═══ City badges (เมื่อเลือกประเทศแล้ว หรือเมื่อซ่อน country filter) ═══ */}
+      {show.city && (countryId || !show.country) && filteredCities.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {filteredCities.map(c => (
             <button

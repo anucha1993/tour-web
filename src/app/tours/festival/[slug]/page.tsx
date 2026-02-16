@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useSearchParams, useRouter, useParams } from 'next/navigation';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -13,12 +13,15 @@ import {
   ChevronDown,
   Loader2,
   ArrowLeft,
+  Calendar,
 } from 'lucide-react';
 import {
-  internationalToursApi,
-  InternationalTourItem,
-  InternationalTourFilters,
-  InternationalTourSettings,
+  festivalToursApi,
+  FestivalTourItem,
+  FestivalTourFilters,
+  FestivalTourSettings,
+  FestivalToursResponse,
+  FestivalHolidayPublic,
   InternationalTourPeriod,
 } from '@/lib/api';
 import TourTabBadges from '@/components/shared/TourTabBadges';
@@ -61,6 +64,7 @@ const formatDepartureMonthRange = (periods: { start_date: string }[]) => {
   }
   return `${firstMonth} ${firstYear}-${lastMonth} ${lastYear}`;
 };
+
 const getDayOfWeek = (dateStr: string) => ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'][new Date(dateStr).getDay()];
 
 const PeriodStatusBadge = ({ period }: { period: InternationalTourPeriod }) => {
@@ -77,7 +81,7 @@ const TourBadge = ({ badge }: { badge: string }) => {
   return <span className={`${colors[badge] || 'bg-gray-500'} text-white text-xs font-bold px-2.5 py-1 rounded-sm uppercase`}>{labels[badge] || badge}</span>;
 };
 
-const PromotionBadges = ({ tour }: { tour: InternationalTourItem }) => {
+const PromotionBadges = ({ tour }: { tour: FestivalTourItem }) => {
   const isSoldOut = tour.available_seats === 0;
   if (isSoldOut) return null;
   return (
@@ -102,7 +106,7 @@ const BADGE_BG_CLASSES: Record<string, string> = {
   pink: 'bg-gradient-to-r from-pink-500 to-rose-400',
 };
 
-function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: InternationalTourSettings }) {
+function TourCard({ tour, settings }: { tour: FestivalTourItem; settings: FestivalTourSettings }) {
   const { getPeriodBadges } = useTourBadges();
   const [showAllPeriods, setShowAllPeriods] = useState(false);
   const maxDisplay = settings.max_periods_display || 6;
@@ -121,7 +125,7 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
           )}
           {tour.badge && <div className="absolute top-2 left-2"><TourBadge badge={tour.badge} /></div>}
           {hasDiscount && tour.max_discount_percent && tour.max_discount_percent > 0 && (
-            <div className="absolute top-2 right-2 bg-orange-500 text-white text-sm font-bold px-2.5 py-1 ">ลด {Math.round(tour.max_discount_percent)}%</div>
+            <div className="absolute top-2 right-2 bg-orange-500 text-white text-sm font-bold px-2.5 py-1">ลด {Math.round(tour.max_discount_percent)}%</div>
           )}
         </div>
         <div className="flex-1 pt-3 lg:p-5">
@@ -158,7 +162,6 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
           )}
           {tour.description && <p className="text-sm lg:text-base text-gray-600 line-clamp-2 mb-2 lg:mb-3">{tour.description}</p>}
 
-          {/* Highlights section */}
           {tour.highlights && tour.highlights.length > 0 && (
             <div className="mb-2">
               <div className="flex items-center gap-1.5 mb-1">
@@ -195,32 +198,17 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
             </div>
           )}
           <div className="flex flex-col-reverse gap-2 lg:flex-row lg:items-end lg:justify-between mt-2">
-             <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
               {tour.pdf_url && (
-                <a
-                  href={tour.pdf_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs lg:text-sm text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg px-2.5 lg:px-3 py-1.5 transition-colors"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                    <line x1="16" y1="13" x2="8" y2="13" />
-                    <line x1="16" y1="17" x2="8" y2="17" />
-                    <polyline points="10 9 9 9 8 9" />
-                  </svg>
+                <a href={tour.pdf_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs lg:text-sm text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg px-2.5 lg:px-3 py-1.5 transition-colors">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
                   PDF
                 </a>
               )}
-              <Link
-                href={`/tours/${tour.slug}`}
-                className="inline-flex items-center gap-1.5 text-xs lg:text-sm text-white bg-orange-500 hover:bg-orange-600 rounded-lg px-2.5 lg:px-3 py-1.5 font-medium transition-colors"
-              >
+              <Link href={`/tours/${tour.slug}`} className="inline-flex items-center gap-1.5 text-xs lg:text-sm text-white bg-orange-500 hover:bg-orange-600 rounded-lg px-2.5 lg:px-3 py-1.5 font-medium transition-colors">
                 ดูรายละเอียดทัวร์
               </Link>
             </div>
-            
             <div className="text-right">
               <div className="text-xs lg:text-sm text-gray-500">ราคาเริ่มต้น</div>
               {hasDiscount && tour.price_adult && <div className="text-sm lg:text-base text-gray-400 line-through">{formatPrice(tour.price_adult)}</div>}
@@ -238,45 +226,16 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
       {/* Share buttons */}
       <div className="flex items-center gap-1 justify-end px-2 lg:px-4 pt-1 mt-0 lg:mt-[-20px]">
         <span className="text-xs text-gray-400 mr-0.5">แชร์</span>
-        <a
-          href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/tours/${tour.slug}`)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className=" cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors"
-          title="แชร์ Facebook"
-        >
+        <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/tours/${tour.slug}`)}`} target="_blank" rel="noopener noreferrer" className="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors" title="แชร์ Facebook">
           <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
         </a>
-        <a
-          href={`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/tours/${tour.slug}`)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-green-50 hover:bg-green-100 text-green-600 transition-colors"
-          title="แชร์ LINE"
-        >
+        <a href={`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/tours/${tour.slug}`)}`} target="_blank" rel="noopener noreferrer" className="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-green-50 hover:bg-green-100 text-green-600 transition-colors" title="แชร์ LINE">
           <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
         </a>
-        <a
-          href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/tours/${tour.slug}`)}&text=${encodeURIComponent(tour.title)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-100 text-gray-700 transition-colors"
-          title="แชร์ X"
-        >
+        <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/tours/${tour.slug}`)}&text=${encodeURIComponent(tour.title)}`} target="_blank" rel="noopener noreferrer" className="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-100 text-gray-700 transition-colors" title="แชร์ X">
           <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
         </a>
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            const url = `${window.location.origin}/tours/${tour.slug}`;
-            navigator.clipboard.writeText(url);
-            const btn = e.currentTarget;
-            btn.title = 'คัดลอกแล้ว!';
-            setTimeout(() => { btn.title = 'คัดลอกลิงก์'; }, 2000);
-          }}
-          className="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-100 text-gray-500 transition-colors"
-          title="คัดลอกลิงก์"
-        >
+        <button onClick={(e) => { e.preventDefault(); const url = `${window.location.origin}/tours/${tour.slug}`; navigator.clipboard.writeText(url); const btn = e.currentTarget; btn.title = 'คัดลอกแล้ว!'; setTimeout(() => { btn.title = 'คัดลอกลิงก์'; }, 2000); }} className="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-100 text-gray-500 transition-colors" title="คัดลอกลิงก์">
           <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
         </button>
       </div>
@@ -315,7 +274,6 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
                           })()}
                         </div>
                       </td>
-                      {/* ผู้ใหญ่ (พัก2-3ท่าน) */}
                       <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center whitespace-nowrap">
                         {period.offer ? (
                           period.offer.net_price_adult ? (
@@ -326,7 +284,6 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
                           ) : <span className="text-xs text-orange-500 font-medium">ติดต่อฝ่ายขาย</span>
                         ) : <span className="text-xs text-orange-500 font-medium">ติดต่อฝ่ายขาย</span>}
                       </td>
-                       {/* ผู้ใหญ่ (พักเดี่ยว) */}
                       <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center whitespace-nowrap">
                         {period.offer ? (
                           (period.offer.net_price_single ?? period.offer.price_single) ? (
@@ -341,7 +298,6 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
                       <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center">{period.booked}</td>
                       <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center"><PeriodStatusBadge period={period} /></td>
                       {settings.show_commission && <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center text-green-600">{period.offer?.commission_agent || '-'}</td>}
-                     
                     </tr>
                   );
                 })}
@@ -360,26 +316,29 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
   );
 }
 
-// ===== Country Tours Page =====
-export default function CountryToursPage() {
+// ===== Festival Detail Page =====
+export default function FestivalDetailPage() {
   const router = useRouter();
-  const params = useParams();
   const searchParams = useSearchParams();
-  const countrySlug = params.slug as string;
+  const params = useParams();
+  const festivalSlug = params.slug as string;
 
-  const [tours, setTours] = useState<InternationalTourItem[]>([]);
-  const [filters, setFilters] = useState<InternationalTourFilters>({});
-  const [settings, setSettings] = useState<InternationalTourSettings>({
-    show_periods: true, max_periods_display: 6, show_transport: true, show_hotel_star: true,
+  const [tours, setTours] = useState<FestivalTourItem[]>([]);
+  const [filters, setFilters] = useState<FestivalTourFilters>({});
+  const [settings, setSettings] = useState<FestivalTourSettings>({
+    show_periods: true, max_periods_display: 10, show_transport: true, show_hotel_star: true,
     show_meal_count: true, show_commission: false, filter_country: true, filter_city: true,
-    filter_search: true, filter_airline: true, filter_departure_month: true, filter_price_range: true, sort_options: {},
+    filter_search: true, filter_airline: true, filter_departure_month: true, filter_price_range: true,
+    sort_options: {},
   });
+  const [festivalInfo, setFestivalInfo] = useState<FestivalToursResponse['festival'] | null>(null);
   const [meta, setMeta] = useState({ current_page: 1, last_page: 1, per_page: 10, total: 0 });
   const [loading, setLoading] = useState(true);
-  const [countryInfo, setCountryInfo] = useState<{ id: number; name_th: string; name_en: string; iso2: string } | null>(null);
+  const [otherFestivals, setOtherFestivals] = useState<FestivalHolidayPublic[]>([]);
 
   const [activeSearchParams, setActiveSearchParams] = useState<SearchParams>({
     search: searchParams.get('search') || undefined,
+    country_id: searchParams.get('country_id') || undefined,
     city_id: searchParams.get('city_id') || undefined,
     airline_id: searchParams.get('airline_id') || undefined,
     departure_date_from: searchParams.get('departure_date_from') || undefined,
@@ -395,7 +354,6 @@ export default function CountryToursPage() {
   const abortRef = useRef<AbortController | null>(null);
 
   const fetchTours = useCallback(async (page: number = 1) => {
-    // ยกเลิก request ก่อนหน้าที่ยังไม่เสร็จ
     if (abortRef.current) abortRef.current.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -404,19 +362,18 @@ export default function CountryToursPage() {
     try {
       const apiParams: Record<string, string | number | undefined> = {
         page,
-        country_slug: countrySlug,
         ...activeSearchParams,
         ...(sortBy && { sort_by: sortBy }),
       };
-      const response = await internationalToursApi.list(apiParams);
+      const response = await festivalToursApi.getBySlug(festivalSlug, apiParams);
       if (controller.signal.aborted) return;
       if (response) {
         setTours(response.data || []);
         setMeta(response.meta || { current_page: 1, last_page: 1, per_page: 10, total: 0 });
         setFilters(response.filters || {});
         setSettings(response.settings || settings);
-        if (response.active_filters?.country) {
-          setCountryInfo(response.active_filters.country);
+        if (response.festival) {
+          setFestivalInfo(response.festival);
         }
       }
     } catch (error) {
@@ -426,51 +383,66 @@ export default function CountryToursPage() {
       if (!controller.signal.aborted) setLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [countrySlug, activeSearchParams, sortBy]);
+  }, [festivalSlug, activeSearchParams, sortBy]);
 
   useEffect(() => {
     fetchTours(currentPage);
     return () => { if (abortRef.current) abortRef.current.abort(); };
   }, [currentPage, fetchTours]);
 
-  const handleSearch = (params: SearchParams) => {
-    setActiveSearchParams(params);
+  // Fetch other festivals for badge navigation
+  useEffect(() => {
+    const fetchFestivals = async () => {
+      try {
+        const res = await festivalToursApi.list();
+        if (res?.data) {
+          setOtherFestivals(res.data);
+        }
+      } catch (e) {
+        console.error('Failed to fetch festivals:', e);
+      }
+    };
+    fetchFestivals();
+  }, []);
+
+  const handleSearch = (searchP: SearchParams) => {
+    setActiveSearchParams(searchP);
     setCurrentPage(1);
     const p = new URLSearchParams();
-    Object.entries(params).forEach(([k, v]) => { if (v) p.set(k, v); });
+    Object.entries(searchP).forEach(([k, v]) => { if (v) p.set(k, v); });
     if (sortBy) p.set('sort_by', sortBy);
     const qs = p.toString();
-    router.push(`/tours/country/${countrySlug}${qs ? `?${qs}` : ''}`, { scroll: false });
+    router.push(`/tours/festival/${festivalSlug}${qs ? `?${qs}` : ''}`, { scroll: false });
   };
 
   const clearFilters = () => {
     setActiveSearchParams({});
     setSortBy('');
     setCurrentPage(1);
-    router.push(`/tours/country/${countrySlug}`, { scroll: false });
+    router.push(`/tours/festival/${festivalSlug}`, { scroll: false });
   };
 
-  const isInitialLoad = loading && tours.length === 0 && !countryInfo;
+  const isInitialLoad = loading && tours.length === 0 && !festivalInfo;
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero */}
-      <div className="relative bg-gradient-to-r from-orange-500 to-amber-500 text-white overflow-hidden">
-        {settings.cover_image_url && (
+      <div className="relative bg-gradient-to-r from-rose-500 to-orange-500 text-white overflow-hidden">
+        {festivalInfo?.cover_image_url && (
           <>
             <div
               className="absolute inset-0"
               style={{
-                backgroundImage: `url(${settings.cover_image_url})`,
+                backgroundImage: `url(${festivalInfo.cover_image_url})`,
                 backgroundSize: 'cover',
-                backgroundPosition: settings.cover_image_position || 'center',
+                backgroundPosition: festivalInfo.cover_image_position || 'center',
                 backgroundRepeat: 'no-repeat',
               }}
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/20" />
           </>
         )}
-        <div className={`container-custom relative z-10  ${settings.cover_image_url ? 'pt-14 pb-28 lg:pt-30 lg:pb-40' : 'pt-8 pb-28 lg:pt-12 lg:pb-36'}`}>
+        <div className={`container-custom relative z-10 ${festivalInfo?.cover_image_url ? 'pt-14 pb-28 lg:pt-30 lg:pb-40' : 'pt-8 pb-28 lg:pt-12 lg:pb-36'}`}>
           {isInitialLoad ? (
             <div className="animate-pulse">
               <div className="flex items-center gap-3 mb-2">
@@ -483,19 +455,29 @@ export default function CountryToursPage() {
           ) : (
             <>
               <div className="flex items-center gap-3 mb-2">
-                <Link href="/tours/international" className="text-white/70 hover:text-white transition-colors">
+                <Link href="/tours/festival" className="text-white/70 hover:text-white transition-colors">
                   <ArrowLeft className="w-5 h-5" />
                 </Link>
-                {countryInfo?.iso2 && (
-                  <img src={`https://flagcdn.com/32x24/${countryInfo.iso2.toLowerCase()}.png`} width={32} height={24} alt="" className="rounded shadow" />
+                {festivalInfo?.badge_icon ? (
+                  <span className="text-3xl">{festivalInfo.badge_icon}</span>
+                ) : (
+                  <Calendar className="w-7 h-7 text-white/80" />
                 )}
                 <h1 className="text-3xl lg:text-4xl font-bold">
-                  ทัวร์{countryInfo?.name_th || countrySlug}
+                  {festivalInfo?.name || 'ทัวร์ตามเทศกาล'}
                 </h1>
               </div>
               <p className="text-white/80 text-base lg:text-lg ml-8">
-                รวมโปรแกรมทัวร์{countryInfo?.name_th || ''} ราคาพิเศษ พร้อมเดินทาง
+                {festivalInfo?.description || (festivalInfo?.date_range_text
+                  ? `ทัวร์สำหรับช่วง ${festivalInfo.date_range_text}`
+                  : 'รวมทัวร์สำหรับเทศกาลนี้')}
               </p>
+              {festivalInfo?.date_range_text && (
+                <div className="ml-8 mt-1 inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 rounded-lg text-sm text-white/90 backdrop-blur-sm">
+                  <Calendar className="w-4 h-4" />
+                  {festivalInfo.date_range_text}
+                </div>
+              )}
             </>
           )}
         </div>
@@ -507,17 +489,9 @@ export default function CountryToursPage() {
           {isInitialLoad ? (
             <div className="bg-white rounded-2xl shadow-xl p-4 lg:p-6 animate-pulse">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <div className="md:col-span-2">
-                  <div className="h-4 bg-gray-200 rounded w-20 mb-2" />
-                  <div className="h-12 bg-gray-100 rounded-lg" />
-                </div>
-                <div>
-                  <div className="h-4 bg-gray-200 rounded w-24 mb-2" />
-                  <div className="h-12 bg-gray-100 rounded-lg" />
-                </div>
-                <div className="flex items-end">
-                  <div className="h-12 bg-orange-200 rounded-lg w-full" />
-                </div>
+                <div className="md:col-span-2"><div className="h-4 bg-gray-200 rounded w-20 mb-2" /><div className="h-12 bg-gray-100 rounded-lg" /></div>
+                <div><div className="h-4 bg-gray-200 rounded w-24 mb-2" /><div className="h-12 bg-gray-100 rounded-lg" /></div>
+                <div className="flex items-end"><div className="h-12 bg-orange-200 rounded-lg w-full" /></div>
               </div>
               <div className="mt-4 pt-4 border-t border-gray-100">
                 <div className="flex gap-3">
@@ -532,10 +506,7 @@ export default function CountryToursPage() {
               filters={filters}
               onSearch={handleSearch}
               onClear={clearFilters}
-              initialValues={{
-                ...activeSearchParams,
-                ...(countryInfo?.id ? { country_id: String(countryInfo.id) } : {}),
-              }}
+              initialValues={activeSearchParams}
               showFilters={{
                 search: settings.filter_search,
                 country: settings.filter_country,
@@ -547,6 +518,35 @@ export default function CountryToursPage() {
             />
           )}
         </div>
+
+        {/* Other Festival Badges */}
+        {otherFestivals.length > 1 && (
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">เทศกาลอื่น ๆ</h3>
+            <div className="flex flex-wrap gap-2">
+              {otherFestivals.map(f => {
+                const isCurrent = festivalInfo?.id === f.id;
+                return (
+                  <Link
+                    key={f.id}
+                    href={`/tours/festival/${f.slug}`}
+                    className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium border transition-all ${
+                      isCurrent
+                        ? 'bg-orange-500 text-white border-orange-500 shadow-sm'
+                        : 'bg-white text-gray-700 border-gray-200 hover:border-orange-300 hover:text-orange-600 hover:shadow-sm'
+                    }`}
+                  >
+                    {f.badge_icon && <span className="text-base">{f.badge_icon}</span>}
+                    <span>{f.name}</span>
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                      isCurrent ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
+                    }`}>{f.tour_count}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Results header */}
         <div className="flex items-center justify-between mb-4">
