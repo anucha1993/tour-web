@@ -530,9 +530,46 @@ export default function PromotionsPage() {
 
         {/* Content */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="w-10 h-10 animate-spin text-orange-500 mb-4" />
-            <p className="text-gray-500">กำลังโหลดโปรโมชั่น...</p>
+          <div className="space-y-12">
+            {/* Skeleton: Tab section header */}
+            {[1, 2].map(section => (
+              <div key={section}>
+                <div className="flex items-center gap-3 mb-6 animate-pulse">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="h-7 bg-gray-200 rounded w-48" />
+                      <div className="h-5 bg-orange-100 rounded-full w-20" />
+                    </div>
+                    <div className="h-4 bg-gray-100 rounded w-64 mt-2" />
+                  </div>
+                  <div className="h-4 bg-gray-100 rounded w-16" />
+                </div>
+                {/* Skeleton: Tour cards grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="bg-white rounded-xl overflow-hidden shadow-sm animate-pulse">
+                      <div className="aspect-square bg-gray-200" />
+                      <div className="p-4 space-y-2.5">
+                        <div className="flex items-center gap-2">
+                          <div className="h-4 bg-gray-200 rounded w-16" />
+                          <div className="h-4 bg-gray-100 rounded w-20" />
+                        </div>
+                        <div className="h-5 bg-gray-200 rounded w-full" />
+                        <div className="h-4 bg-gray-100 rounded w-3/4" />
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-3 bg-gray-200 rounded" />
+                          <div className="h-4 bg-gray-100 rounded w-20" />
+                        </div>
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                          <div className="h-3 bg-gray-100 rounded w-12" />
+                          <div className="h-7 bg-orange-100 rounded w-24" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         ) : promotionTabs.length === 0 ? (
           <div className="text-center py-20">
