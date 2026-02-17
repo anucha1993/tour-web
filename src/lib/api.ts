@@ -531,6 +531,7 @@ export interface TourReview {
   tags: string[] | null;
   comment: string | null;
   review_source: 'self' | 'assisted' | 'internal';
+  tour_type: 'individual' | 'private' | 'corporate';
   status: 'pending' | 'approved' | 'rejected';
   admin_reply: string | null;
   replied_at: string | null;
@@ -621,6 +622,7 @@ export const reviewApi = {
     category_ratings?: CategoryRatings;
     tags?: string[];
     comment: string;
+    tour_type?: 'individual' | 'private' | 'corporate';
   }) => api.post<{ data: TourReview }>(`/web/reviews/${tourSlug}`, data),
 
   // Auth: Submit a review with images (FormData)
@@ -1088,16 +1090,26 @@ export interface GroupTourPublicPage {
     group_size: string | null;
     destination: string | null;
     image_url: string | null;
+    logo_url: string | null;
+    group_type: string | null;
   }[];
   testimonials: {
     id: number;
-    company_name: string;
-    reviewer_name: string | null;
-    reviewer_position: string | null;
-    logo_url: string | null;
-    content: string;
+    reviewer_name: string;
+    reviewer_avatar_url: string | null;
+    comment: string;
     rating: number;
+    tour_type: 'individual' | 'private' | 'corporate';
+    tags: string[] | null;
+    is_featured: boolean;
+    tour: { title: string; slug: string } | null;
+    created_at: string;
   }[];
+  testimonial_settings: {
+    title: string;
+    subtitle: string | null;
+    show_section: boolean;
+  };
 }
 
 export interface GroupTourInquiryForm {

@@ -42,7 +42,7 @@ export default function GroupToursPage() {
   if (loading) return <LoadingSkeleton />;
   if (!data) return <div className="min-h-screen flex items-center justify-center"><p className="text-gray-500">ไม่สามารถโหลดข้อมูลได้</p></div>;
 
-  const { settings, portfolios, testimonials } = data;
+  const { settings, portfolios, testimonials, testimonial_settings } = data;
 
   return (
     <div className="min-h-screen bg-white">
@@ -77,8 +77,8 @@ export default function GroupToursPage() {
       )}
 
       {/* Testimonials */}
-      {testimonials && testimonials.length > 0 && (
-        <TestimonialsSection testimonials={testimonials} />
+      {testimonials && testimonials.length > 0 && (testimonial_settings?.show_section !== false) && (
+        <TestimonialsSection testimonials={testimonials} testimonialSettings={testimonial_settings} />
       )}
 
       {/* FAQ */}
@@ -266,7 +266,8 @@ function PortfolioSection({ portfolios }: { portfolios: GroupTourPublicPage['por
           <p className="text-gray-500">กรุ๊ปทัวร์ที่เราดูแลด้วยความเอาใจใส่</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {visible.map((item) => (
+          {visible.map((item) => {
+            return (
             <div key={item.id} className="group rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
               <div className="relative aspect-video overflow-hidden">
                 {item.image_url ? (
@@ -276,23 +277,41 @@ function PortfolioSection({ portfolios }: { portfolios: GroupTourPublicPage['por
                     <Users className="w-12 h-12 text-orange-300" />
                   </div>
                 )}
-                {item.group_size && (
-                  <div className="absolute top-3 right-3 px-3 py-1 bg-orange-600/60 text-white text-xs rounded-full backdrop-blur-sm">
-                    จำนวน {item.group_size} ท่าน
-                  </div>
-                )}
+                {/* Badges row */}
+                <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
+                  {/* Group type badge */}
+                  {item.group_type ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border backdrop-blur-sm bg-white/80 text-gray-800 border-white/50 shadow-sm">
+                      {item.group_type}
+                    </span>
+                  ) : <span />}
+                  {/* Group size badge */}
+                  {item.group_size && (
+                    <span className="px-3 py-1 bg-orange-600/60 text-white text-xs rounded-full backdrop-blur-sm">
+                      จำนวน {item.group_size} ท่าน
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="p-4">
                 <h3 className="font-bold text-gray-900">{item.title}</h3>
-                <div className="flex items-center gap-3 mt-2 text-sm text-orange-600">
-                  {item.destination && (
-                    <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{item.destination}</span>
+                <div className="flex items-center justify-between mt-2">
+                  <div className="flex items-center gap-3 text-sm text-orange-600">
+                    {item.destination && (
+                      <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{item.destination}</span>
+                    )}
+                  </div>
+                  {item.logo_url && (
+                    <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 overflow-hidden relative flex-shrink-0 shadow-sm">
+                      <Image src={item.logo_url} alt="logo" fill className="object-contain p-0.5" />
+                    </div>
                   )}
                 </div>
                 {item.caption && <p className="text-sm text-gray-600 mt-2 line-clamp-2">{item.caption}</p>}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
         {portfolios.length > 6 && (
           <div className="text-center mt-8">
@@ -306,41 +325,71 @@ function PortfolioSection({ portfolios }: { portfolios: GroupTourPublicPage['por
   );
 }
 
-// ===================== Testimonials Section =====================
-function TestimonialsSection({ testimonials }: { testimonials: GroupTourPublicPage['testimonials'] }) {
+// ===================== Testimonials Section (from Tour Reviews) =====================
+const TOUR_TYPE_MAP: Record<string, { label: string; emoji: string; color: string; bg: string; border: string }> = {
+  individual: { label: 'บุคคล/ทั่วไป', emoji: '👤', color: 'text-gray-700', bg: 'bg-gray-100', border: 'border-gray-200' },
+  private: { label: 'เหมาส่วนตัว', emoji: '👨‍👩‍👧‍👦', color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200' },
+  corporate: { label: 'กรุ๊ปบริษัท', emoji: '🏢', color: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-200' },
+};
+
+function TestimonialsSection({ testimonials, testimonialSettings }: { 
+  testimonials: GroupTourPublicPage['testimonials'];
+  testimonialSettings?: GroupTourPublicPage['testimonial_settings'];
+}) {
+  const title = testimonialSettings?.title || 'เสียงจากลูกค้า';
+  const subtitle = testimonialSettings?.subtitle || 'ความประทับใจจากลูกค้าที่ใช้บริการจัดกรุ๊ปทัวร์';
+
   return (
     <section className="py-16 md:py-20 bg-gray-50">
       <div className="max-w-6xl mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">เสียงจากลูกค้า</h2>
-          <p className="text-gray-500">ความประทับใจจากองค์กรที่ไว้วางใจเรา</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">{title}</h2>
+          {subtitle && <p className="text-gray-500">{subtitle}</p>}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {testimonials.slice(0, 18).map((t) => (
-            <div key={t.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <div className="flex items-center gap-1 mb-4">
-                {Array.from({ length: t.rating }).map((_, i) => (
-                  <Star key={i} className="w-4 h-4 text-amber-400 fill-current" />
-                ))}
-              </div>
-              <p className="text-gray-700 mb-4 leading-relaxed">&ldquo;{t.content}&rdquo;</p>
-              <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
-                <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden relative flex-shrink-0">
-                  {t.logo_url ? (
-                    <Image src={t.logo_url} alt={t.company_name} fill className="object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold">{t.company_name.charAt(0)}</div>
-                  )}
+          {testimonials.map((t) => {
+            const typeInfo = TOUR_TYPE_MAP[t.tour_type] || TOUR_TYPE_MAP.corporate;
+            return (
+              <div key={t.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 relative">
+                {/* Tour Type Badge */}
+                <span className={`absolute top-4 right-4 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border ${typeInfo.bg} ${typeInfo.color} ${typeInfo.border}`}>
+                  {typeInfo.emoji} {typeInfo.label}
+                </span>
+                {/* Stars */}
+                <div className="flex items-center gap-1 mb-3">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className={`w-4 h-4 ${i < t.rating ? 'text-amber-400 fill-current' : 'text-gray-200'}`} />
+                  ))}
                 </div>
-                <div>
-                  <p className="font-medium text-gray-900 text-sm">{t.company_name}</p>
-                  {t.reviewer_name && (
-                    <p className="text-xs text-gray-500">{t.reviewer_name}{t.reviewer_position ? ` - ${t.reviewer_position}` : ''}</p>
-                  )}
+                {/* Comment */}
+                <p className="text-gray-700 mb-4 leading-relaxed line-clamp-4">&ldquo;{t.comment}&rdquo;</p>
+                {/* Tags */}
+                {t.tags && t.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-4">
+                    {t.tags.slice(0, 3).map((tag, i) => (
+                      <span key={i} className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">{tag}</span>
+                    ))}
+                  </div>
+                )}
+                {/* Reviewer */}
+                <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+                  <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden relative flex-shrink-0 flex items-center justify-center">
+                    {t.reviewer_avatar_url ? (
+                      <Image src={t.reviewer_avatar_url} alt={t.reviewer_name} fill className="object-cover" />
+                    ) : (
+                      <span className="text-gray-400 font-bold text-sm">{t.reviewer_name?.charAt(0)?.toUpperCase() || '?'}</span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 text-sm truncate">{t.reviewer_name}</p>
+                    {t.tour && (
+                      <p className="text-[11px] text-gray-400 truncate mt-0.5">🗺️ {t.tour.title}</p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

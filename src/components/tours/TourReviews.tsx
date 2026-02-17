@@ -93,6 +93,15 @@ function ReviewCard({ review, onHelpful }: ReviewCardProps) {
                 แนะนำ
               </span>
             )}
+            {review.tour_type && (
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                review.tour_type === 'corporate' ? 'bg-purple-100 text-purple-700'
+                : review.tour_type === 'private' ? 'bg-blue-100 text-blue-700'
+                : 'bg-gray-100 text-gray-600'
+              }`}>
+                {review.tour_type === 'corporate' ? '🏢 กรุ๊ปบริษัท' : review.tour_type === 'private' ? '👨‍👩‍👧‍👦 เหมาส่วนตัว' : '👤 บุคคล/ทั่วไป'}
+              </span>
+            )}
           </div>
         </div>
       </div>

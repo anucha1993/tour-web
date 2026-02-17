@@ -69,6 +69,7 @@ export default function ReviewForm({ tourSlug, onSuccess, onCancel }: ReviewForm
   const [categoryRatings, setCategoryRatings] = useState<CategoryRatings>({});
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [comment, setComment] = useState('');
+  const [tourType, setTourType] = useState<'individual' | 'private' | 'corporate'>('individual');
   const [availableTags, setAvailableTags] = useState<ReviewTag[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -122,6 +123,7 @@ export default function ReviewForm({ tourSlug, onSuccess, onCancel }: ReviewForm
         category_ratings: Object.keys(categoryRatings).length > 0 ? categoryRatings : undefined,
         tags: selectedTags.length > 0 ? selectedTags : undefined,
         comment: comment.trim(),
+        tour_type: tourType,
       });
 
       if (res.success) {
@@ -150,6 +152,32 @@ export default function ReviewForm({ tourSlug, onSuccess, onCancel }: ReviewForm
 
   return (
     <div className="space-y-5">
+      {/* Tour Type */}
+      <div>
+        <h3 className="text-base font-semibold text-gray-900 mb-2">ประเภทการซื้อทัวร์</h3>
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { value: 'individual' as const, label: 'บุคคล/ทั่วไป', icon: '👤' },
+            { value: 'private' as const, label: 'เหมาส่วนตัว', icon: '👨‍👩‍👧‍👦' },
+            { value: 'corporate' as const, label: 'กรุ๊ปเหมาบริษัท', icon: '🏢' },
+          ].map((type) => (
+            <button
+              key={type.value}
+              type="button"
+              onClick={() => setTourType(type.value)}
+              className={`flex flex-col items-center gap-1 px-3 py-3 rounded-xl border-2 transition-all text-sm ${
+                tourType === type.value
+                  ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm'
+                  : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <span className="text-lg">{type.icon}</span>
+              <span className="font-medium text-xs leading-tight text-center">{type.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Overall Rating */}
       <div className="text-center">
         <h3 className="text-base font-semibold text-gray-900 mb-2">ให้คะแนนทัวร์นี้</h3>
@@ -206,6 +234,31 @@ export default function ReviewForm({ tourSlug, onSuccess, onCancel }: ReviewForm
           </div>
         </div>
       )}
+
+      {/* Tour Type */}
+      <div>
+        <h4 className="text-sm font-medium text-gray-700 mb-3">ประเภทการซื้อทัวร์</h4>
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { value: 'individual' as const, label: '👤 บุคคล/ทั่วไป', activeClass: 'border-gray-500 bg-gray-50 text-gray-700' },
+            { value: 'private' as const, label: '👨‍👩‍👧‍👦 เหมาส่วนตัว', activeClass: 'border-blue-500 bg-blue-50 text-blue-700' },
+            { value: 'corporate' as const, label: '🏢 กรุ๊ปบริษัท', activeClass: 'border-purple-500 bg-purple-50 text-purple-700' },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setTourType(opt.value)}
+              className={`px-3 py-2.5 rounded-xl text-xs font-medium border-2 transition-all ${
+                tourType === opt.value
+                  ? opt.activeClass
+                  : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Comment */}
       <div>
