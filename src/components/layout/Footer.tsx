@@ -196,7 +196,7 @@ export default function Footer() {
     <footer>
       {/* Newsletter & LINE section */}
       {footerConfig.newsletter_show && (
-      <div className="bg-gradient-to-b from-gray-50 to-gray-100">
+      <div className="bg-gradient-to-b from-gray-50 to-gray-200">
         <div className=" max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 ">
           {!dataLoaded ? (
             /* Skeleton Loading */

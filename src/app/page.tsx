@@ -12,6 +12,7 @@ import OurClients from "@/components/home/OurClients";
 import CustomerReviews from "@/components/home/CustomerReviews";
 import WhyChooseUs from "@/components/home/WhyChooseUs";
 import PopupModal from "@/components/home/PopupModal";
+import LatestBlogPosts from "@/components/home/LatestBlogPosts";
 
 export default function HomePage() {
   return (
@@ -39,6 +40,9 @@ export default function HomePage() {
 
       {/* Why Choose Us */}
       <WhyChooseUs />
+
+      {/* Latest Blog Posts */}
+      <LatestBlogPosts />
 
        {/* Our Clients */}
       <OurClients />

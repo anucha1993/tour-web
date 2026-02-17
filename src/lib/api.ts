@@ -965,6 +965,55 @@ export const festivalToursApi = {
     api.get<{ cover_image_url: string | null; cover_image_position: string }>('/tours/festival/page-settings'),
 };
 
+// ===================== Tour Packages =====================
+
+export interface TourPackagePublic {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  image_url: string | null;
+  hashtags: string[];
+  countries: Array<{ id: number; name_th: string; iso2: string; slug: string }>;
+  expires_at: string | null;
+  is_never_expire: boolean;
+}
+
+export interface TourPackageDetail {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  terms: string | null;
+  remarks: string | null;
+  cancellation_policy: string | null;
+  inclusions: string[];
+  exclusions: string[];
+  timeline: Array<{ day_number: number; detail: string }>;
+  image_url: string | null;
+  pdf_url: string | null;
+  hashtags: string[];
+  countries: Array<{ id: number; name_th: string; iso2: string; slug: string }>;
+  expires_at: string | null;
+  is_never_expire: boolean;
+  seo_title: string | null;
+  seo_description: string | null;
+  seo_keywords: string | null;
+}
+
+export const tourPackagesApi = {
+  list: () =>
+    api.get<{ data: TourPackagePublic[] }>('/tours/packages'),
+
+  getBySlug: (slug: string) => {
+    const decodedSlug = decodeURIComponent(slug);
+    return api.get<{ data: TourPackageDetail }>(`/tours/packages/${encodeURIComponent(decodedSlug)}`);
+  },
+
+  pageSettings: () =>
+    api.get<{ cover_image_url: string | null; cover_image_position: string }>('/tours/packages/page-settings'),
+};
+
 // ===================== Search & Autocomplete =====================
 
 export interface SearchAutocompleteItem {
@@ -1007,6 +1056,74 @@ export interface PopularSearchData {
   }[];
 }
 
+// ===================== Group Tours (Public) =====================
+
+export interface GroupTourPublicPage {
+  settings: {
+    hero_title: string;
+    hero_subtitle: string;
+    hero_image_url: string | null;
+    hero_image_position: string;
+    content: string | null;
+    stats: { icon: string; value: string; label: string }[];
+    group_types: { icon: string; title: string; description: string }[];
+    advantages_title: string;
+    advantages_image_url: string | null;
+    advantages: { text: string }[];
+    process_steps: { step_number: number; title: string; description: string }[];
+    faqs: { question: string; answer: string }[];
+    cta_title: string;
+    cta_description: string;
+    cta_phone: string;
+    cta_email: string;
+    cta_line_id: string;
+    seo_title: string | null;
+    seo_description: string | null;
+    seo_keywords: string | null;
+  };
+  portfolios: {
+    id: number;
+    title: string;
+    caption: string | null;
+    group_size: string | null;
+    destination: string | null;
+    image_url: string | null;
+  }[];
+  testimonials: {
+    id: number;
+    company_name: string;
+    reviewer_name: string | null;
+    reviewer_position: string | null;
+    logo_url: string | null;
+    content: string;
+    rating: number;
+  }[];
+}
+
+export interface GroupTourInquiryForm {
+  name: string;
+  organization?: string;
+  phone: string;
+  email?: string;
+  line_id?: string;
+  group_type?: string;
+  group_size?: string;
+  destination?: string;
+  travel_date_start?: string;
+  travel_date_end?: string;
+  details?: string;
+}
+
+export const groupToursApi = {
+  getPage: () =>
+    api.get<{ data: GroupTourPublicPage }>('/tours/group'),
+
+  submitInquiry: (data: GroupTourInquiryForm) =>
+    api.post<{ message: string }>('/tours/group/inquiry', data),
+};
+
+// ===================== Search & Autocomplete =====================
+
 export const searchApi = {
   autocomplete: (q: string) =>
     api.get<{ data: SearchAutocompleteItem[] }>(`/search/autocomplete?q=${encodeURIComponent(q)}`),
@@ -1024,6 +1141,152 @@ export const searchApi = {
 
   trackKeyword: (keyword: string, resultCount?: number) =>
     api.post('/search/track', { keyword, result_count: resultCount || 0 }),
+};
+
+// ===================== Blog =====================
+
+export interface BlogCategory {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  icon: string | null;
+  sort_order: number;
+  is_active: boolean;
+  posts_count?: number;
+}
+
+export interface BlogPost {
+  id: number;
+  category_id: number | null;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: string | null;
+  cover_image_url: string | null;
+  author_name: string;
+  author_avatar_url: string | null;
+  status: string;
+  is_featured: boolean;
+  published_at: string | null;
+  view_count: number;
+  tags: string[] | null;
+  reading_time_min: number | null;
+  category?: { id: number; name: string; slug: string } | null;
+  created_at: string;
+}
+
+export interface BlogPageSettings {
+  id: number;
+  hero_title: string;
+  hero_subtitle: string | null;
+  hero_image_url: string | null;
+  hero_image_position: string;
+}
+
+export const blogApi = {
+  getSettings: () =>
+    api.get<{ data: BlogPageSettings }>('/blog/settings'),
+
+  getCategories: () =>
+    api.get<{ data: BlogCategory[] }>('/blog/categories'),
+
+  getPosts: (params?: { category?: string; tag?: string; featured?: boolean; search?: string; page?: number; per_page?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.category) sp.append('category', params.category);
+    if (params?.tag) sp.append('tag', params.tag);
+    if (params?.featured) sp.append('featured', '1');
+    if (params?.search) sp.append('search', params.search);
+    if (params?.page) sp.append('page', String(params.page));
+    if (params?.per_page) sp.append('per_page', String(params.per_page));
+    const qs = sp.toString();
+    return api.get<{ data: BlogPost[]; current_page: number; last_page: number; total: number }>(
+      `/blog/posts${qs ? `?${qs}` : ''}`
+    );
+  },
+
+  getPost: (slug: string) =>
+    api.get<{ data: BlogPost; related: BlogPost[] }>(`/blog/posts/${slug}`),
+};
+
+// ===================== About Page =====================
+
+export interface AboutPageSettings {
+  id: number;
+  hero_title: string;
+  hero_subtitle: string | null;
+  hero_image_url: string | null;
+  hero_image_position: string;
+  about_title: string;
+  about_content: string | null;
+  highlights: { label: string; value: string; suffix?: string }[] | null;
+  value_props: string[] | null;
+  company_name: string | null;
+  registration_no: string | null;
+  capital: string | null;
+  vat_no: string | null;
+  tat_license: string | null;
+  company_info_extra: string | null;
+  license_image_url: string | null;
+}
+
+export interface AboutAssociation {
+  id: number;
+  name: string;
+  license_no: string | null;
+  logo_url: string | null;
+  website_url: string | null;
+  sort_order: number;
+}
+
+export interface AboutServiceItem {
+  id: number;
+  title: string;
+  description: string | null;
+  icon: string | null;
+  sort_order: number;
+}
+
+export interface AboutCustomerGroup {
+  id: number;
+  title: string;
+  description: string | null;
+  icon: string | null;
+  image_url: string | null;
+  sort_order: number;
+}
+
+export interface AboutAward {
+  id: number;
+  title: string;
+  description: string | null;
+  year: string | null;
+  image_url: string | null;
+  sort_order: number;
+}
+
+export interface OurClientPublic {
+  id: number;
+  url: string;
+  thumbnail_url: string | null;
+  name: string;
+  alt: string | null;
+  description: string | null;
+  website_url: string | null;
+}
+
+export interface AboutPageData {
+  settings: AboutPageSettings;
+  associations: AboutAssociation[];
+  services: AboutServiceItem[];
+  customer_groups: AboutCustomerGroup[];
+  awards: AboutAward[];
+  clients: OurClientPublic[];
+}
+
+export const aboutApi = {
+  getPage: () =>
+    api.get<{ data: AboutPageData }>('/about/public'),
 };
 
 export default api;
