@@ -11,7 +11,7 @@ import {
   Coffee, Sun, Moon, FileText, Download,
   Eye, Sparkles, ShoppingBag, UtensilsCrossed, Gift,
   Check, Minus, AlertCircle, ArrowLeft, Building2,
-  ImageIcon,
+  ImageIcon, Play, Video,
 } from 'lucide-react';
 import {
   tourDetailApi,
@@ -19,12 +19,14 @@ import {
   TourDetail,
   TourDetailPeriod,
   TourDetailItinerary,
+  TourDetailVideo,
   ReviewSummary,
 } from '@/lib/api';
 import FavoriteButton from '@/components/home/FavoriteButton';
 import BookingModal from '@/components/tours/BookingModal';
 import TourTabBadges from '@/components/shared/TourTabBadges';
 import ReviewSection from '@/components/tours/ReviewSection';
+import RelatedToursCarousel from '@/components/tours/RelatedToursCarousel';
 
 // ===== Helper Components =====
 
@@ -262,6 +264,83 @@ function ViatorGallery({ images, galleryImages, coverUrl, coverAlt, title }: {
         </div>
       )}
     </>
+  );
+}
+
+// ===== Video Review Section =====
+function getYouTubeId(url: string): string | null {
+  const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|shorts\/))([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+function getEmbedUrl(url: string): string | null {
+  const ytId = getYouTubeId(url);
+  if (ytId) return `https://www.youtube.com/embed/${ytId}`;
+  const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+  return null;
+}
+
+function VideoReviewSection({ videos }: { videos: TourDetailVideo[] }) {
+  const [playingId, setPlayingId] = useState<number | null>(null);
+
+  return (
+    <div className="pt-6 border-t border-gray-100">
+      <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-800 mb-4">
+        <Video className="w-5 h-5 text-orange-500" />
+        วิดีโอรีวิว
+      </h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {videos.map((video) => {
+          const embedUrl = getEmbedUrl(video.video_url);
+          const ytId = getYouTubeId(video.video_url);
+          const thumbnail = video.thumbnail_url || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null);
+          const isPlaying = playingId === video.id;
+
+          return (
+            <div key={video.id} className="rounded-xl overflow-hidden bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="relative aspect-video bg-gray-900">
+                {isPlaying && embedUrl ? (
+                  <iframe
+                    src={`${embedUrl}?autoplay=1`}
+                    className="absolute inset-0 w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  <button
+                    onClick={() => embedUrl ? setPlayingId(video.id) : window.open(video.video_url, '_blank')}
+                    className="relative w-full h-full group cursor-pointer"
+                  >
+                    {thumbnail ? (
+                      <Image src={thumbnail} alt={video.title} fill className="object-cover" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
+                        <Video className="w-12 h-12 text-gray-500" />
+                      </div>
+                    )}
+                    {/* Play button overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
+                      <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                        <Play className="w-7 h-7 text-orange-500 ml-1" fill="currentColor" />
+                      </div>
+                    </div>
+                  </button>
+                )}
+              </div>
+              {video.title && (
+                <div className="px-3 py-2">
+                  <p className="text-sm font-medium text-gray-800 line-clamp-2">{video.title}</p>
+                  {video.description && (
+                    <p className="text-xs text-gray-500 mt-1 line-clamp-1">{video.description}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -732,7 +811,7 @@ function TransportSection({ transports }: { transports: TourDetail['transports']
 }
 
 // ===== Detail Tab Types =====
-type DetailTab = 'detail' | 'periods' | 'itinerary' | 'conditions' | 'reviews';
+type DetailTab = 'detail' | 'periods' | 'itinerary' | 'conditions';
 
 // ===== Main Page =====
 export default function TourDetailPage() {
@@ -748,7 +827,7 @@ export default function TourDetailPage() {
   const [highlightSlideIndex, setHighlightSlideIndex] = useState(0);
   const [reviewSummary, setReviewSummary] = useState<ReviewSummary | null>(null);
   const viewRecorded = useRef(false);
-  const reviewsTabRef = useRef<HTMLButtonElement | null>(null);
+  const reviewSectionRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch tour data
   useEffect(() => {
@@ -854,7 +933,6 @@ export default function TourDetailPage() {
     { id: 'periods', label: 'ช่วงเวลาการเดินทาง', icon: Calendar, count: tour.periods.length || undefined },
     { id: 'itinerary', label: 'โปรแกรมทัวร์', icon: MapPin, count: tour.itineraries.length || undefined },
     { id: 'conditions', label: 'เงื่อนไข', icon: Shield },
-    { id: 'reviews' as DetailTab, label: 'รีวิว', icon: Star, count: reviewSummary?.total_reviews || undefined },
   ];
 
   return (
@@ -918,10 +996,7 @@ export default function TourDetailPage() {
                   <span className="text-gray-300 hidden sm:inline">|</span>
                   <button
                     onClick={() => {
-                      setActiveTab('reviews');
-                      setTimeout(() => {
-                        reviewsTabRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                      }, 100);
+                      reviewSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }}
                     className="flex items-center gap-1 text-amber-600 hover:text-amber-700 transition cursor-pointer"
                   >
@@ -1197,10 +1272,7 @@ export default function TourDetailPage() {
                   {reviewSummary && reviewSummary.total_reviews > 0 && (
                     <button
                       onClick={() => {
-                        setActiveTab('reviews');
-                        setTimeout(() => {
-                          reviewsTabRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }, 100);
+                        reviewSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                       }}
                       className="flex-1 text-sm text-orange-600 font-medium bg-white hover:bg-orange-50 border border-orange-200 rounded-lg py-2 px-3 transition cursor-pointer text-center"
                     >
@@ -1209,10 +1281,7 @@ export default function TourDetailPage() {
                   )}
                   <button
                     onClick={() => {
-                      setActiveTab('reviews');
-                      setTimeout(() => {
-                        reviewsTabRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                      }, 100);
+                      reviewSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }}
                     className="flex-1 text-sm text-white font-medium bg-orange-500 hover:bg-orange-600 rounded-lg py-2 px-3 transition cursor-pointer text-center"
                   >
@@ -1312,7 +1381,6 @@ export default function TourDetailPage() {
               {TABS.map(tab => (
                 <button
                   key={tab.id}
-                  ref={tab.id === 'reviews' ? reviewsTabRef : undefined}
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition whitespace-nowrap cursor-pointer ${
                     activeTab === tab.id
@@ -1323,7 +1391,7 @@ export default function TourDetailPage() {
                   <tab.icon className="w-4 h-4" />
                   <span className="hidden sm:inline">{tab.label}</span>
                   <span className="sm:hidden">
-                    {tab.id === 'detail' ? 'รายละเอียด' : tab.id === 'periods' ? 'เดินทาง' : tab.id === 'itinerary' ? 'โปรแกรม' : tab.id === 'reviews' ? 'รีวิว' : 'เงื่อนไข'}
+                    {tab.id === 'detail' ? 'รายละเอียด' : tab.id === 'periods' ? 'เดินทาง' : tab.id === 'itinerary' ? 'โปรแกรม' : 'เงื่อนไข'}
                   </span>
                   {tab.count && tab.count > 0 && (
                     <span className="ml-1 text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full">
@@ -1446,6 +1514,7 @@ export default function TourDetailPage() {
                       </div>
                     </div>
                   )}
+
                 </div>
               )}
 
@@ -1508,14 +1577,31 @@ export default function TourDetailPage() {
                 </div>
               )}
 
-              {/* ---- Reviews Tab ---- */}
-              {activeTab === 'reviews' && (
-                <ReviewSection tourSlug={tour.slug} />
-              )}
             </div>
           </div>
 
         </div>
+      </div>
+
+      {/* ===== Video Reviews Section (outside card) ===== */}
+      {tour.gallery_videos && tour.gallery_videos.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 mt-8">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6">
+            <VideoReviewSection videos={tour.gallery_videos} />
+          </div>
+        </div>
+      )}
+
+      {/* ===== Customer Reviews Section (outside card) ===== */}
+      <div ref={reviewSectionRef} className="max-w-7xl mx-auto px-4 mt-8">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6">
+          <ReviewSection tourSlug={tour.slug} />
+        </div>
+      </div>
+
+      {/* ===== Related Tours Carousel ===== */}
+      <div className="max-w-7xl mx-auto px-4 mt-8 mb-8">
+        <RelatedToursCarousel tourSlug={tour.slug} />
       </div>
 
       {/* Booking Modal */}

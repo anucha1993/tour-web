@@ -343,6 +343,14 @@ export interface TourDetailGallery {
   caption: string | null;
 }
 
+export interface TourDetailVideo {
+  id: number;
+  video_url: string;
+  thumbnail_url: string | null;
+  title: string;
+  description: string | null;
+}
+
 export interface TourDetailCountry {
   id: number;
   name: string;
@@ -380,6 +388,7 @@ export interface TourDetail {
   cover_image_alt: string | null;
   gallery: TourDetailGallery[];
   gallery_images: TourDetailGallery[];
+  gallery_videos: TourDetailVideo[];
   pdf_url: string | null;
   hashtags: string[] | null;
   themes: string[] | null;
@@ -410,6 +419,7 @@ export const tourDetailApi = {
   get: (slug: string) => api.get<{ data: TourDetail }>(`/tours/detail/${slug}`),
   recordView: (slug: string, data?: { referrer?: string; utm_source?: string; utm_medium?: string; utm_campaign?: string; session_id?: string }) =>
     api.post<{ success: boolean }>(`/tours/detail/${slug}/view`, data),
+  getRelatedTours: (slug: string) => api.get<{ data: TourTabTour[] }>(`/tours/detail/${slug}/related`),
 };
 
 // Member API
@@ -547,9 +557,12 @@ export interface TourReview {
   };
   tour?: {
     id: number;
-    tour_name: string;
+    title: string;
     slug: string;
-    cover_image: string | null;
+    tour_code: string;
+    tour_name?: string;
+    cover_image?: string | null;
+    cover_image_url?: string | null;
   };
 }
 
