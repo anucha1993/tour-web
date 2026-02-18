@@ -13,6 +13,7 @@ import CustomerReviews from "@/components/home/CustomerReviews";
 import WhyChooseUs from "@/components/home/WhyChooseUs";
 import PopupModal from "@/components/home/PopupModal";
 import LatestBlogPosts from "@/components/home/LatestBlogPosts";
+import FlashSale from "@/components/home/FlashSale";
 
 export default function HomePage() {
   return (
@@ -22,6 +23,9 @@ export default function HomePage() {
 
       {/* Hero Section with Slider */}
       <HeroSlider />
+
+      {/* Flash Sale */}
+      <FlashSale />
 
       {/* Promotions Carousel */}
       <Promotions />

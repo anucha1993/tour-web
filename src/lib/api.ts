@@ -1301,4 +1301,54 @@ export const aboutApi = {
     api.get<{ data: AboutPageData }>('/about/public'),
 };
 
+// ─── Flash Sale Types & API ───
+
+export interface FlashSalePublicItem {
+  id: number;
+  slug: string;
+  title: string;
+  tour_code: string;
+  country: { id: number; name: string; iso2: string };
+  days: number;
+  nights: number;
+  price: number;
+  original_price: number;
+  departure_date: string | null;
+  max_departure_date: string | null;
+  airline: string | null;
+  image_url: string | null;
+  badge: string | null;
+  rating: number | null;
+  review_count: number | null;
+  available_seats: number;
+  view_count: number;
+  hotel_star: number | null;
+  // Flash sale specific
+  flash_price: number;
+  original_price_snapshot: number;
+  discount_percent: number;
+  quantity_limit: number | null;
+  quantity_sold: number;
+  remaining: number | null;
+  sold_percent: number | null;
+  is_sold_out: boolean;
+}
+
+export interface FlashSalePublic {
+  id: number;
+  title: string;
+  description: string | null;
+  banner_image_url: string | null;
+  start_date: string;
+  end_date: string;
+  is_running: boolean;
+  is_upcoming: boolean;
+  items: FlashSalePublicItem[];
+}
+
+export const flashSaleApi = {
+  getActive: () =>
+    api.get<{ data: FlashSalePublic[] }>('/flash-sales/public'),
+};
+
 export default api;
