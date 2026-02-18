@@ -1,24 +1,19 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
   Zap,
   Clock,
-  MapPin,
   Calendar,
   Plane,
-  Star,
-  Eye,
-  Hotel,
-  ChevronLeft,
-  ChevronRight,
+  ExternalLink,
 } from 'lucide-react';
 import { flashSaleApi, FlashSalePublic, FlashSalePublicItem } from '@/lib/api';
-import FavoriteButton from './FavoriteButton';
 
-// ─── Countdown Timer ───
+// ─── Countdown Timer Hook ───
 function useCountdown(endDate: string) {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, expired: false });
 
@@ -45,13 +40,12 @@ function useCountdown(endDate: string) {
   return timeLeft;
 }
 
+// ─── Header Countdown Display ───
 function CountdownDisplay({ endDate }: { endDate: string }) {
   const { days, hours, minutes, seconds, expired } = useCountdown(endDate);
 
   if (expired) {
-    return (
-      <span className="text-sm text-gray-400 font-medium">หมดเวลาแล้ว</span>
-    );
+    return <span className="text-sm text-gray-400 font-medium">หมดเวลาแล้ว</span>;
   }
 
   const blocks = [
@@ -80,18 +74,34 @@ function CountdownDisplay({ endDate }: { endDate: string }) {
   );
 }
 
-// ─── Progress Bar for limited stock ───
-function StockProgress({ sold, limit }: { sold: number; limit: number }) {
+// ─── Per-row compact countdown ───
+function RowCountdown({ endDate }: { endDate: string }) {
+  const { days, hours, minutes, seconds, expired } = useCountdown(endDate);
+
+  if (expired) {
+    return <span className="text-xs text-gray-400">หมดเวลา</span>;
+  }
+
+  return (
+    <span className="text-xs text-red-500 font-mono font-semibold whitespace-nowrap">
+      {days > 0 && <span>{days}d </span>}
+      {String(hours).padStart(2, '0')}:{String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+    </span>
+  );
+}
+
+// ─── Stock bar (compact) ───
+function StockBar({ sold, limit }: { sold: number; limit: number }) {
   const percent = Math.min(100, Math.round((sold / limit) * 100));
   const remaining = Math.max(0, limit - sold);
 
   return (
-    <div className="mt-2">
-      <div className="flex justify-between text-[10px] mb-1">
-        <span className="text-red-500 font-semibold">ขายแล้ว {percent}%</span>
-        <span className="text-gray-500">เหลือ {remaining} ที่นั่ง</span>
+    <div className="w-full min-w-[80px]">
+      <div className="flex justify-between text-[10px] mb-0.5">
+        <span className="text-red-500 font-semibold">{percent}%</span>
+        <span className="text-gray-400">เหลือ {remaining}</span>
       </div>
-      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+      <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
         <div
           className="h-full bg-gradient-to-r from-red-500 to-yellow-400 rounded-full transition-all duration-500"
           style={{ width: `${percent}%` }}
@@ -101,8 +111,147 @@ function StockProgress({ sold, limit }: { sold: number; limit: number }) {
   );
 }
 
-// ─── Flash Sale Tour Card ───
-function FlashTourCard({ item }: { item: FlashSalePublicItem }) {
+// ─── Format date to Thai short ───
+function formatDateThai(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString('th-TH', {
+    day: 'numeric',
+    month: 'short',
+    year: '2-digit',
+  });
+}
+
+// ─── Table Row ───
+function FlashRow({ item, index }: { item: FlashSalePublicItem; index: number }) {
+  const router = useRouter();
+  const flashPrice = Number(item.flash_price);
+  const originalPrice = Number(item.original_price_snapshot || item.original_price || 0);
+  const discountPercent = Number(item.discount_percent || 0);
+
+  return (
+    <tr
+      onClick={() => router.push(`/tours/${item.slug}`)}
+      className={`group cursor-pointer ${item.is_sold_out ? 'opacity-60' : ''}`}
+    >
+      {/* Row number */}
+      <td className="px-2 py-2.5 text-center text-xs text-gray-400 border-b border-gray-100 group-hover:bg-orange-50/50 transition-colors">
+        {index + 1}
+      </td>
+
+      {/* Tour: Image + Title + Code */}
+      <td className="px-2 py-2.5 border-b border-gray-100 group-hover:bg-orange-50/50 transition-colors">
+        <div className="flex items-center gap-2.5">
+          <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+            {item.image_url ? (
+              <Image
+                src={item.image_url}
+                alt={item.title}
+                fill
+                className="object-cover"
+                sizes="48px"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-300">
+                <Plane className="w-5 h-5" />
+              </div>
+            )}
+            {item.is_sold_out && (
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                <span className="text-[8px] font-bold text-white">SOLD</span>
+              </div>
+            )}
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-gray-800 group-hover:text-red-500 transition-colors line-clamp-1">
+              {item.title}
+            </p>
+            <div className="flex items-center gap-2 text-[11px] text-gray-400 mt-0.5">
+              <span className="font-mono">{item.tour_code}</span>
+              <span className="flex items-center gap-0.5">
+                <Calendar className="w-3 h-3" />
+                {item.days}D{item.nights}N
+              </span>
+              {item.country?.name && (
+                <span>{item.country.name}</span>
+              )}
+            </div>
+          </div>
+        </div>
+      </td>
+
+      {/* Period dates */}
+      <td className="px-2 py-2.5 border-b border-gray-100 group-hover:bg-orange-50/50 transition-colors hidden sm:table-cell">
+        <div className="text-xs text-gray-600 whitespace-nowrap">
+          {formatDateThai(item.period_start_date)}
+        </div>
+        <div className="text-[10px] text-gray-400 whitespace-nowrap">
+          ถึง {formatDateThai(item.period_end_date)}
+        </div>
+      </td>
+
+      {/* Original price */}
+      <td className="px-2 py-2.5 border-b border-gray-100 group-hover:bg-orange-50/50 transition-colors text-right hidden md:table-cell">
+        {originalPrice > flashPrice ? (
+          <span className="text-xs text-gray-400 line-through whitespace-nowrap">
+            ฿{originalPrice.toLocaleString()}
+          </span>
+        ) : (
+          <span className="text-xs text-gray-400">-</span>
+        )}
+      </td>
+
+      {/* Flash price */}
+      <td className="px-2 py-2.5 border-b border-gray-100 group-hover:bg-orange-50/50 transition-colors text-right">
+        <span className="text-sm font-bold text-red-500 whitespace-nowrap">
+          ฿{flashPrice.toLocaleString()}
+        </span>
+      </td>
+
+      {/* Discount */}
+      <td className="px-2 py-2.5 border-b border-gray-100 group-hover:bg-orange-50/50 transition-colors text-center hidden sm:table-cell">
+        {discountPercent > 0 ? (
+          <span className="inline-flex items-center gap-0.5 bg-gradient-to-r from-red-500 to-orange-500 text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
+            <Zap className="w-3 h-3 fill-white" />
+            -{discountPercent}%
+          </span>
+        ) : (
+          <span className="text-xs text-gray-400">-</span>
+        )}
+      </td>
+
+      {/* Countdown */}
+      <td className="px-2 py-2.5 border-b border-gray-100 group-hover:bg-orange-50/50 transition-colors text-center hidden lg:table-cell">
+        {item.flash_end_date && !item.is_sold_out ? (
+          <RowCountdown endDate={item.flash_end_date} />
+        ) : item.is_sold_out ? (
+          <span className="text-[11px] text-red-600 font-semibold">SOLD OUT</span>
+        ) : (
+          <span className="text-xs text-gray-400">-</span>
+        )}
+      </td>
+
+      {/* Stock */}
+      <td className="px-2 py-2.5 border-b border-gray-100 group-hover:bg-orange-50/50 transition-colors hidden lg:table-cell">
+        {item.quantity_limit && !item.is_sold_out ? (
+          <StockBar sold={item.quantity_sold} limit={item.quantity_limit} />
+        ) : item.is_sold_out ? (
+          <span className="text-[10px] text-gray-400">-</span>
+        ) : (
+          <span className="text-[10px] text-gray-400">ไม่จำกัด</span>
+        )}
+      </td>
+
+      {/* Action */}
+      <td className="px-2 py-2.5 border-b border-gray-100 group-hover:bg-orange-50/50 transition-colors text-center">
+        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-red-50 text-red-500 group-hover:bg-red-500 group-hover:text-white transition-colors">
+          <ExternalLink className="w-3.5 h-3.5" />
+        </span>
+      </td>
+    </tr>
+  );
+}
+
+// ─── Mobile Card Row (stacked layout for small screens) ───
+function MobileFlashRow({ item, index }: { item: FlashSalePublicItem; index: number }) {
   const flashPrice = Number(item.flash_price);
   const originalPrice = Number(item.original_price_snapshot || item.original_price || 0);
   const discountPercent = Number(item.discount_percent || 0);
@@ -110,136 +259,56 @@ function FlashTourCard({ item }: { item: FlashSalePublicItem }) {
   return (
     <Link
       href={`/tours/${item.slug}`}
-      className={`group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex-shrink-0 w-[260px] sm:w-[280px] ${
-        item.is_sold_out ? 'opacity-70' : ''
+      className={`flex items-center gap-3 px-3 py-3 border-b border-gray-100 hover:bg-orange-50/50 transition-colors ${
+        item.is_sold_out ? 'opacity-60' : ''
       }`}
     >
-      {/* Image */}
-      <div className="relative aspect-square bg-gray-200 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10" />
+      {/* Index */}
+      <span className="text-xs text-gray-400 w-5 text-center flex-shrink-0">{index + 1}</span>
 
-        {/* Flash Sale badge */}
-        {discountPercent > 0 && !item.is_sold_out && (
-          <div className="absolute top-2 left-2 z-20 flex items-center gap-1 bg-gradient-to-r from-red-500 to-yellow-500 text-white px-2 py-1 rounded-lg text-xs font-bold shadow-lg">
-            <Zap className="w-3 h-3 fill-white" />
-            Flash Sale
-          </div>
-        )}
-
-        {/* SOLD OUT */}
-        {item.is_sold_out && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/30">
-            <span className="bg-red-600 text-white px-4 py-1.5 rounded-lg text-sm font-bold transform -rotate-12 shadow-lg">
-              SOLD OUT
-            </span>
-          </div>
-        )}
-
+      {/* Thumbnail */}
+      <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
         {item.image_url ? (
-          <Image
-            src={item.image_url}
-            alt={item.title}
-            fill
-            className={`object-cover group-hover:scale-105 transition-transform duration-300 ${
-              item.is_sold_out ? 'grayscale-[30%]' : ''
-            }`}
-            sizes="(max-width: 640px) 260px, 280px"
-          />
+          <Image src={item.image_url} alt={item.title} fill className="object-cover" sizes="56px" />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-            <Plane className="w-10 h-10" />
+          <div className="w-full h-full flex items-center justify-center text-gray-300">
+            <Plane className="w-5 h-5" />
           </div>
         )}
-
-        {/* Favorite */}
-        {!item.is_sold_out && (
-          <div className="absolute top-2 right-2 z-30">
-            <FavoriteButton
-              tour={{
-                id: item.id,
-                title: item.title,
-                slug: item.slug,
-                image_url: item.image_url,
-                price: flashPrice,
-                country_name: item.country?.name,
-                days: item.days,
-                nights: item.nights,
-                tour_code: item.tour_code,
-              }}
-              size="sm"
-            />
+        {item.is_sold_out && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+            <span className="text-[7px] font-bold text-white">SOLD</span>
           </div>
         )}
-
-        {/* Country */}
-        <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1 text-white text-xs">
-          <MapPin className="w-3.5 h-3.5" />
-          {item.country?.name}
-        </div>
       </div>
 
-      {/* Content */}
-      <div className="p-3">
-        <div className="flex items-center gap-1.5 mb-1">
-          <span className="text-[10px] font-mono text-gray-400">{item.tour_code}</span>
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-gray-800 line-clamp-1">{item.title}</p>
+        <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-gray-400">
+          <span className="font-mono">{item.tour_code}</span>
+          <span>·</span>
+          <span>{formatDateThai(item.period_start_date)}</span>
         </div>
-
-        <h3 className="font-semibold text-sm text-gray-800 group-hover:text-red-500 transition-colors line-clamp-2 min-h-[40px]">
-          {item.title}
-        </h3>
-
-        <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-500">
-          <span className="flex items-center gap-0.5">
-            <Calendar className="w-3 h-3" />
-            {item.days}วัน {item.nights}คืน
-          </span>
-          {item.airline && (
-            <span className="flex items-center gap-0.5">
-              <Plane className="w-3 h-3" />
-              {item.airline}
-            </span>
-          )}
-        </div>
-
-        {/* Hotel stars */}
-        {item.hotel_star && item.hotel_star > 0 && (
-          <div className="flex items-center gap-0.5 mt-1 text-xs text-gray-500">
-            <Hotel className="w-3 h-3 text-amber-500" />
-            {Array.from({ length: item.hotel_star }, (_, i) => (
-              <Star key={i} className="w-2.5 h-2.5 text-amber-400 fill-amber-400" />
-            ))}
+        {item.flash_end_date && !item.is_sold_out && (
+          <div className="flex items-center gap-1 mt-0.5 text-[10px] text-red-500">
+            <Clock className="w-3 h-3" />
+            <RowCountdown endDate={item.flash_end_date} />
           </div>
         )}
+      </div>
 
-        {/* Price */}
-        <div className="mt-2 pt-2 border-t border-gray-100">
-          <div className="flex items-end justify-between">
-            <div>
-              <p className="text-[10px] text-gray-500">ราคา Flash Sale</p>
-              <div className="flex items-baseline gap-1.5">
-                {originalPrice > flashPrice && (
-                  <span className="text-xs text-gray-400 line-through">
-                    ฿{originalPrice.toLocaleString()}
-                  </span>
-                )}
-                <span className="text-lg font-bold text-red-500">
-                  ฿{flashPrice.toLocaleString()}
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center gap-1 text-gray-500 text-[10px] bg-gray-100 rounded-full px-2 py-0.5">
-              <Eye className="w-3 h-3" />
-              {item.view_count >= 1000
-                ? `${(item.view_count / 1000).toFixed(1)}k`
-                : item.view_count}
-            </div>
-          </div>
-
-          {/* Stock progress */}
-          {item.quantity_limit && !item.is_sold_out && (
-            <StockProgress sold={item.quantity_sold} limit={item.quantity_limit} />
-          )}
-        </div>
+      {/* Price */}
+      <div className="text-right flex-shrink-0">
+        {discountPercent > 0 && (
+          <span className="inline-block bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full mb-0.5">
+            -{discountPercent}%
+          </span>
+        )}
+        {originalPrice > flashPrice && (
+          <p className="text-[10px] text-gray-400 line-through">฿{originalPrice.toLocaleString()}</p>
+        )}
+        <p className="text-sm font-bold text-red-500">฿{flashPrice.toLocaleString()}</p>
       </div>
     </Link>
   );
@@ -249,16 +318,12 @@ function FlashTourCard({ item }: { item: FlashSalePublicItem }) {
 export default function FlashSale() {
   const [flashSales, setFlashSales] = useState<FlashSalePublic[]>([]);
   const [loading, setLoading] = useState(true);
-  const [scrollContainerRef, setScrollContainerRef] = useState<HTMLDivElement | null>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await flashSaleApi.getActive();
         const data: FlashSalePublic[] = res.data || [];
-        // Only show flash sales that are running and have items
         setFlashSales(data.filter((fs: FlashSalePublic) => fs.is_running && fs.items.length > 0));
       } catch (err) {
         console.error('Error fetching flash sales:', err);
@@ -269,49 +334,22 @@ export default function FlashSale() {
     fetchData();
   }, []);
 
-  const checkScroll = useCallback(() => {
-    if (!scrollContainerRef) return;
-    const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef;
-    setCanScrollLeft(scrollLeft > 0);
-    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 10);
-  }, [scrollContainerRef]);
-
-  useEffect(() => {
-    if (!scrollContainerRef) return;
-    checkScroll();
-    scrollContainerRef.addEventListener('scroll', checkScroll);
-    window.addEventListener('resize', checkScroll);
-    return () => {
-      scrollContainerRef.removeEventListener('scroll', checkScroll);
-      window.removeEventListener('resize', checkScroll);
-    };
-  }, [scrollContainerRef, checkScroll]);
-
-  const scroll = (dir: 'left' | 'right') => {
-    if (!scrollContainerRef) return;
-    const amount = 300;
-    scrollContainerRef.scrollBy({
-      left: dir === 'left' ? -amount : amount,
-      behavior: 'smooth',
-    });
-  };
-
   if (loading) {
     return (
       <section className="py-10 lg:py-14 bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50">
         <div className="container-custom">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-48 mb-4" />
-            <div className="h-4 bg-gray-200 rounded w-64 mb-6" />
-            <div className="flex gap-4 overflow-hidden">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="w-[280px] flex-shrink-0 bg-white rounded-xl overflow-hidden">
-                  <div className="aspect-square bg-gray-200" />
-                  <div className="p-3 space-y-2">
+          <div className="animate-pulse space-y-3">
+            <div className="h-8 bg-gray-200 rounded w-48" />
+            <div className="h-4 bg-gray-200 rounded w-64" />
+            <div className="bg-white rounded-xl p-4 space-y-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gray-200 rounded-lg" />
+                  <div className="flex-1 space-y-2">
                     <div className="h-4 bg-gray-200 rounded w-3/4" />
-                    <div className="h-4 bg-gray-200 rounded w-1/2" />
-                    <div className="h-6 bg-gray-200 rounded w-24 mt-2" />
+                    <div className="h-3 bg-gray-200 rounded w-1/2" />
                   </div>
+                  <div className="h-5 bg-gray-200 rounded w-20" />
                 </div>
               ))}
             </div>
@@ -330,13 +368,13 @@ export default function FlashSale() {
           key={sale.id}
           className="py-10 lg:py-14 bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50 relative overflow-hidden"
         >
-          {/* Decorative elements */}
+          {/* Decorative blurs */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-red-100/50 to-transparent rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-yellow-100/50 to-transparent rounded-full blur-3xl" />
 
           <div className="container-custom relative">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg shadow-red-500/30">
@@ -347,9 +385,7 @@ export default function FlashSale() {
                   </h2>
                 </div>
                 {sale.description && (
-                  <p className="text-gray-600 text-sm ml-12">
-                    {sale.description}
-                  </p>
+                  <p className="text-gray-600 text-sm ml-12">{sale.description}</p>
                 )}
               </div>
 
@@ -361,35 +397,49 @@ export default function FlashSale() {
               </div>
             </div>
 
-            {/* Tour Cards Carousel */}
-            <div className="relative">
-              {/* Scroll arrows */}
-              {canScrollLeft && (
-                <button
-                  onClick={() => scroll('left')}
-                  className="absolute -left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white shadow-lg rounded-full flex items-center justify-center hover:bg-gray-50 transition"
-                >
-                  <ChevronLeft className="w-5 h-5 text-gray-700" />
-                </button>
+            {/* ════ Desktop Table ════ */}
+            <div className="hidden sm:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="max-h-[520px] overflow-y-auto">
+                <table className="w-full">
+                  <thead className="sticky top-0 bg-gradient-to-r from-gray-50 to-gray-100/80 backdrop-blur-sm z-10">
+                    <tr className="text-[11px] text-gray-500 uppercase tracking-wider">
+                      <th className="px-2 py-3 text-center w-8">#</th>
+                      <th className="px-2 py-3 text-left">ทัวร์</th>
+                      <th className="px-2 py-3 text-left hidden sm:table-cell">วันเดินทาง</th>
+                      <th className="px-2 py-3 text-right hidden md:table-cell">ราคาเดิม</th>
+                      <th className="px-2 py-3 text-right">ราคา Flash</th>
+                      <th className="px-2 py-3 text-center hidden sm:table-cell">ส่วนลด</th>
+                      <th className="px-2 py-3 text-center hidden lg:table-cell">นับถอยหลัง</th>
+                      <th className="px-2 py-3 text-center hidden lg:table-cell w-[100px]">สถานะ</th>
+                      <th className="px-2 py-3 text-center w-10"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sale.items.map((item, idx) => (
+                      <FlashRow key={`${item.id}-${item.period_start_date}`} item={item} index={idx} />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {sale.items.length > 10 && (
+                <div className="text-center py-2 text-xs text-gray-400 border-t border-gray-100 bg-gray-50/50">
+                  เลื่อนลงเพื่อดูเพิ่มเติม ({sale.items.length} รายการ)
+                </div>
               )}
-              {canScrollRight && (
-                <button
-                  onClick={() => scroll('right')}
-                  className="absolute -right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white shadow-lg rounded-full flex items-center justify-center hover:bg-gray-50 transition"
-                >
-                  <ChevronRight className="w-5 h-5 text-gray-700" />
-                </button>
-              )}
+            </div>
 
-              {/* Cards */}
-              <div
-                ref={setScrollContainerRef}
-                className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-2 px-2"
-              >
-                {sale.items.map((item) => (
-                  <FlashTourCard key={item.id} item={item} />
+            {/* ════ Mobile List ════ */}
+            <div className="sm:hidden bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="max-h-[480px] overflow-y-auto">
+                {sale.items.map((item, idx) => (
+                  <MobileFlashRow key={`${item.id}-${item.period_start_date}`} item={item} index={idx} />
                 ))}
               </div>
+              {sale.items.length > 10 && (
+                <div className="text-center py-2 text-xs text-gray-400 border-t border-gray-100 bg-gray-50/50">
+                  เลื่อนลงเพื่อดูเพิ่มเติม ({sale.items.length} รายการ)
+                </div>
+              )}
             </div>
           </div>
         </section>

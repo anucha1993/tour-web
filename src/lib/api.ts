@@ -1314,7 +1314,6 @@ export interface FlashSalePublicItem {
   price: number;
   original_price: number;
   departure_date: string | null;
-  max_departure_date: string | null;
   airline: string | null;
   image_url: string | null;
   badge: string | null;
@@ -1332,6 +1331,10 @@ export interface FlashSalePublicItem {
   remaining: number | null;
   sold_percent: number | null;
   is_sold_out: boolean;
+  // Per-item countdown & period info
+  flash_end_date: string;
+  period_start_date: string;
+  period_end_date: string;
 }
 
 export interface FlashSalePublic {
