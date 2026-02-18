@@ -1351,4 +1351,47 @@ export const flashSaleApi = {
     api.get<{ data: FlashSalePublic[] }>('/flash-sales/public'),
 };
 
+// ─── Contact Us Types & API ───
+
+export interface ContactPageSettings {
+  hero_title: string;
+  hero_subtitle: string | null;
+  hero_image_url: string | null;
+  intro_text: string | null;
+  map_embed_url: string | null;
+  office_name: string | null;
+  office_address: string | null;
+  office_lat: string | null;
+  office_lng: string | null;
+  show_map: boolean;
+  show_form: boolean;
+  is_active: boolean;
+  seo_title: string | null;
+  seo_description: string | null;
+  seo_keywords: string | null;
+}
+
+export interface SiteContactItem {
+  id: number;
+  key: string;
+  label: string;
+  value: string;
+  icon?: string;
+  url?: string;
+}
+
+export interface ContactPageData {
+  settings: ContactPageSettings;
+  contacts: SiteContactItem[];
+  socials: SiteContactItem[];
+  business_hours: SiteContactItem[];
+}
+
+export const contactApi = {
+  getPage: () =>
+    api.get<{ data: ContactPageData }>('/contact/public'),
+  submitForm: (data: { name: string; email: string; phone?: string; subject: string; message: string }) =>
+    api.post<{ data: unknown; message: string }>('/contact/submit', data),
+};
+
 export default api;

@@ -68,7 +68,7 @@ export default function HeroSlider() {
   const hasSlides = slides.length > 0;
 
   return (
-    <section className="relative min-h-100px] lg:min-h-[600px] text-white">
+    <section className="relative z-0 min-h-100px] lg:min-h-[600px] text-white">
       {/* Background - Slides or Gradient */}
       {hasSlides ? (
         <>
