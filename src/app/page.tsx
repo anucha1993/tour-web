@@ -1,3 +1,4 @@
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { 
   Phone, 
@@ -5,15 +6,15 @@ import {
 } from "lucide-react";
 import HeroSlider from "@/components/home/HeroSlider";
 import PopularCountries from "@/components/home/PopularCountries";
-import Promotions from "@/components/home/Promotions";
-import TourTabs from "@/components/home/TourTabs";
-import RecommendedTours from "@/components/home/RecommendedTours";
-import OurClients from "@/components/home/OurClients";
-import CustomerReviews from "@/components/home/CustomerReviews";
-import WhyChooseUs from "@/components/home/WhyChooseUs";
-import PopupModal from "@/components/home/PopupModal";
-import LatestBlogPosts from "@/components/home/LatestBlogPosts";
-import FlashSale from "@/components/home/FlashSale";
+
+// SSR-safe dynamic imports (Server Component compatible)
+const Promotions = dynamic(() => import("@/components/home/Promotions"));
+const TourTabs = dynamic(() => import("@/components/home/TourTabs"));
+const RecommendedTours = dynamic(() => import("@/components/home/RecommendedTours"));
+const FlashSale = dynamic(() => import("@/components/home/FlashSale"));
+
+// Client-only dynamic imports (ssr: false requires Client Component wrapper)
+import { OurClients, CustomerReviews, WhyChooseUs, PopupModal, LatestBlogPosts } from "@/components/home/LazyBelowFold";
 
 export default function HomePage() {
   return (

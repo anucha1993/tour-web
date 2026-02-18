@@ -1,13 +1,16 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Menu, X, ChevronDown, Phone, Search, Clock, MessageCircle, Facebook, Instagram, Youtube, Heart, User, LogOut, MapPin } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
-import SearchOverlay from '@/components/shared/SearchOverlay';
 import { API_URL } from '@/lib/config';
+
+// Lazy load SearchOverlay - only loaded when user opens search
+const SearchOverlay = dynamic(() => import('@/components/shared/SearchOverlay'), { ssr: false });
 
 // TikTok icon (not in lucide-react)
 const TikTokIcon = ({ className }: { className?: string }) => (
@@ -921,8 +924,8 @@ export default function Header() {
         </div>
       )}
 
-    {/* Search Overlay */}
-    <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+    {/* Search Overlay - only mount when needed */}
+    {isSearchOpen && <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />}
     </>
   );
 }

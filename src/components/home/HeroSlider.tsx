@@ -1,11 +1,39 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { API_URL } from "@/lib/config";
-import SearchForm from "@/components/shared/SearchForm";
+
+// Lazy load SearchForm - it pulls in api.ts (1500+ lines)
+const SearchForm = dynamic(() => import("@/components/shared/SearchForm"), {
+  ssr: false,
+  loading: () => (
+    <div className="bg-white rounded-2xl shadow-2xl p-4 lg:p-6 max-w-5xl">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="md:col-span-2">
+          <div className="h-4 bg-gray-200 rounded w-24 mb-2" />
+          <div className="h-12 bg-gray-200 rounded-lg" />
+        </div>
+        <div>
+          <div className="h-4 bg-gray-200 rounded w-32 mb-2" />
+          <div className="h-12 bg-gray-200 rounded-lg" />
+        </div>
+        <div className="flex items-end">
+          <div className="h-12 bg-orange-300 rounded-lg w-full" />
+        </div>
+      </div>
+      <div className="mt-4 pt-4 border-t border-gray-100 flex gap-2">
+        <div className="h-4 bg-gray-200 rounded w-16" />
+        <div className="h-4 bg-gray-200 rounded w-12" />
+        <div className="h-4 bg-gray-200 rounded w-12" />
+        <div className="h-4 bg-gray-200 rounded w-12" />
+      </div>
+    </div>
+  ),
+});
 
 interface HeroSlide {
   id: number;
@@ -68,17 +96,18 @@ export default function HeroSlider() {
   const hasSlides = slides.length > 0;
 
   return (
-    <section className="relative z-0 min-h-100px] lg:min-h-[600px] text-white">
+    <section className="relative z-0 min-h-[100px] lg:min-h-[600px] text-white">
       {/* Background - Slides or Gradient */}
       {hasSlides ? (
         <>
-          {/* Image Slides */}
+          {/* Image Slides - only render first 2 slides initially for faster LCP */}
           {slides.map((slide, index) => (
             <div
               key={slide.id}
               className={`absolute inset-0 transition-opacity duration-1000 overflow-hidden ${
-                index === currentSlide ? "opacity-100" : "opacity-1"
+                index === currentSlide ? "opacity-100" : "opacity-0"
               }`}
+              aria-hidden={index !== currentSlide}
             >
               
               <Image
@@ -86,9 +115,10 @@ export default function HeroSlider() {
                 alt={slide.alt || "Hero image"}
                 fill
                 priority={index === 0}
+                loading={index === 0 ? "eager" : "lazy"}
                 fetchPriority={index === 0 ? "high" : "low"}
                 className="object-cover object-top"
-            
+                sizes="100vw"
               />
 
               {/* Overlay */}
@@ -190,8 +220,8 @@ export default function HeroSlider() {
 
         {/* Search Box */}
         {isLoading ? (
-          /* Skeleton for Search Box */
-          <div className="bg-white/80 rounded-2xl shadow-2xl p-4 lg:p-6 max-w-4xl animate-pulse">
+          /* Skeleton for Search Box - must match real SearchForm dimensions to avoid CLS */
+          <div className="bg-white rounded-2xl shadow-2xl p-4 lg:p-6 max-w-5xl">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="md:col-span-2">
                 <div className="h-4 bg-gray-200 rounded w-24 mb-2" />

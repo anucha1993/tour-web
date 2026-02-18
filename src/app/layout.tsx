@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
 import { Noto_Sans_Thai } from "next/font/google";
 import "./globals.css";
-import { Header, Footer } from "@/components/layout";
+import { Header } from "@/components/layout";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import { TourBadgesProvider } from "@/contexts/TourBadgesContext";
-import FavoritesDrawer from "@/components/home/FavoritesDrawer";
+import LazyFavoritesDrawer from "@/components/home/LazyFavoritesDrawer";
+import LazyFooter from "@/components/layout/LazyFooter";
 
 const notoSansThai = Noto_Sans_Thai({
   variable: "--font-noto-sans-thai",
   subsets: ["thai", "latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "600", "700"],
   display: "swap",
 });
 
@@ -50,9 +51,9 @@ export default function RootLayout({
   return (
     <html lang="th">
       <head>
-        <link rel="preconnect" href="http://127.0.0.1:8000" />
+        <link rel="preconnect" href="https://api.nexttrip.asia" />
         <link rel="preconnect" href="https://imagedelivery.net" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="http://127.0.0.1:8000" />
+        <link rel="dns-prefetch" href="https://api.nexttrip.asia" />
         <link rel="dns-prefetch" href="https://imagedelivery.net" />
       </head>
       <body className={`${notoSansThai.variable} antialiased`}>
@@ -63,8 +64,8 @@ export default function RootLayout({
             <main className="min-h-screen pt-[80px] lg:pt-[160px] isolate">
               {children}
             </main>
-            <Footer />
-            <FavoritesDrawer />
+            <LazyFooter />
+            <LazyFavoritesDrawer />
             </TourBadgesProvider>
           </FavoritesProvider>
         </AuthProvider>

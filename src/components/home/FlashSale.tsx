@@ -334,32 +334,13 @@ export default function FlashSale() {
     fetchData();
   }, []);
 
-  if (loading) {
-    return (
-      <section className="py-10 lg:py-14 bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50">
-        <div className="container-custom">
-          <div className="animate-pulse space-y-3">
-            <div className="h-8 bg-gray-200 rounded w-48" />
-            <div className="h-4 bg-gray-200 rounded w-64" />
-            <div className="bg-white rounded-xl p-4 space-y-3">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gray-200 rounded-lg" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-3/4" />
-                    <div className="h-3 bg-gray-200 rounded w-1/2" />
-                  </div>
-                  <div className="h-5 bg-gray-200 rounded w-20" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  }
+  // Don't render anything if no flash sales - no skeleton needed since this is below fold
+  if (!loading && flashSales.length === 0) return null;
 
-  if (flashSales.length === 0) return null;
+  // Show compact skeleton while loading
+  if (loading) {
+    return null;
+  }
 
   return (
     <>

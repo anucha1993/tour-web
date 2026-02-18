@@ -170,7 +170,7 @@ function ReviewCard({ review }: { review: TourReview }) {
               className="w-11 h-11 rounded-full object-cover border-2 border-white shadow-sm"
             />
           ) : (
-            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-light)] flex items-center justify-center text-white font-bold text-sm shadow-sm">
+            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-50)] flex items-center justify-center text-white font-bold text-sm shadow-sm">
               {review.reviewer_name.charAt(0)}
             </div>
           )}
