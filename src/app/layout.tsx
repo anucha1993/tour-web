@@ -60,7 +60,7 @@ export default function RootLayout({
           <FavoritesProvider>
             <TourBadgesProvider>
             <Header />
-            <main className="min-h-screen pt-[80px] lg:pt-[160px]">
+            <main className="min-h-screen pt-[80px] lg:pt-[160px] isolate">
               {children}
             </main>
             <Footer />

@@ -644,7 +644,9 @@ export default function Header() {
         </div>
       )}
 
-      {/* Mobile Menu */}
+    </header>
+
+      {/* Mobile Menu - outside header for proper z-index stacking */}
       {isMobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 bg-white z-[60] overflow-y-auto">
           {/* Mobile header */}
@@ -918,7 +920,6 @@ export default function Header() {
           </nav>
         </div>
       )}
-    </header>
 
     {/* Search Overlay */}
     <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
