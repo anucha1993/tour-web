@@ -469,6 +469,14 @@ export interface Member {
   gender?: 'male' | 'female' | 'other';
   consent_marketing: boolean;
   created_at: string;
+  total_points?: number;
+  lifetime_points?: number;
+  lifetime_spending?: number;
+  level?: {
+    name: string;
+    icon: string | null;
+    color: string | null;
+  } | null;
 }
 
 // Booking API
@@ -1408,6 +1416,113 @@ export const contactApi = {
     api.get<{ data: ContactPageData }>('/contact/public'),
   submitForm: (data: { name: string; email: string; phone?: string; subject: string; message: string }) =>
     api.post<{ data: unknown; message: string }>('/contact/submit', data),
+};
+
+// ===== Member Points & Levels =====
+
+export interface MemberPointLevel {
+  id: number;
+  name: string;
+  slug: string;
+  icon: string | null;
+  color: string | null;
+  min_spending: number;
+  discount_percent: number;
+  point_multiplier: number;
+  redemption_rate: number;
+  benefits: string[] | null;
+}
+
+export interface MemberPointSummary {
+  total_points: number;
+  lifetime_points: number;
+  lifetime_spending: number;
+  level: MemberPointLevel | null;
+  next_level: {
+    name: string;
+    icon: string | null;
+    min_spending: number;
+    spending_needed: number;
+    progress_percent: number;
+  } | null;
+  expiring_points: number;
+  this_month_earned: number;
+}
+
+export interface MemberPointTransaction {
+  id: number;
+  member_id: number;
+  rule_id: number | null;
+  type: 'earn' | 'spend' | 'expire' | 'adjust';
+  points: number;
+  balance_after: number;
+  description: string | null;
+  expires_at: string | null;
+  is_expired: boolean;
+  created_at: string;
+  rule?: { id: number; action: string; name: string; icon: string | null };
+}
+
+export interface MemberPointRule {
+  id: number;
+  action: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  calc_type: 'fixed' | 'percent';
+  points: number;
+  percent_of_amount: number;
+  max_points_per_day: number | null;
+  max_points_per_action: number | null;
+  cooldown_minutes: number;
+}
+
+export const memberPointsApi = {
+  getSummary: () =>
+    api.get<{ data: MemberPointSummary }>('/web/points/summary'),
+
+  getHistory: (params?: { type?: string; page?: number; per_page?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.type) sp.append('type', params.type);
+    if (params?.page) sp.append('page', String(params.page));
+    if (params?.per_page) sp.append('per_page', String(params.per_page));
+    return api.get<{
+      data: {
+        data: MemberPointTransaction[];
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+      };
+    }>(`/web/points/history?${sp}`);
+  },
+
+  getLevels: () =>
+    api.get<{ data: MemberPointLevel[] }>('/web/points/levels'),
+
+  getRules: () =>
+    api.get<{ data: MemberPointRule[] }>('/web/points/rules'),
+
+  previewRedeem: (points: number) =>
+    api.post<{
+      data: {
+        points: number;
+        redemption_rate: number;
+        discount_amount: number;
+        remaining_points: number;
+      };
+    }>('/web/points/preview-redeem', { points }),
+
+  redeem: (points: number, bookingCode?: string) =>
+    api.post<{
+      data: {
+        redemption_id: number;
+        points_used: number;
+        discount_amount: number;
+        remaining_points: number;
+      };
+      message: string;
+    }>('/web/points/redeem', { points, booking_code: bookingCode }),
 };
 
 export default api;

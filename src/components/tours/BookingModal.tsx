@@ -273,7 +273,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-4 sm:py-6" onClick={onClose}>
+    <div className="fixed inset-0 z-500 flex items-start justify-center overflow-y-auto py-4 sm:py-6" onClick={onClose}>
       {/* Backdrop */}
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm pointer-events-none" />
 

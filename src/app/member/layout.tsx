@@ -19,6 +19,7 @@ import {
   XMarkIcon,
   ChevronRightIcon,
   ShieldCheckIcon,
+  TrophyIcon,
 } from "@heroicons/react/24/outline";
 
 interface MenuItem {
@@ -42,6 +43,7 @@ const menuGroups: MenuGroup[] = [
       { href: "/member/quotations", icon: DocumentTextIcon, label: "ใบเสนอราคา", isMockup: true },
       { href: "/member/payment-history", icon: BanknotesIcon, label: "ประวัติการชำระเงิน", isMockup: true },
       { href: "/member/reviews", icon: StarIcon, label: "รีวิวของฉัน" },
+      { href: "/member/points", icon: TrophyIcon, label: "คะแนนสะสม" },
     ],
   },
   {
@@ -160,7 +162,22 @@ export default function MemberLayout({
                 <p className="font-medium text-gray-900 truncate">
                   {member.first_name || "สมาชิก"} {member.last_name || ""}
                 </p>
-                <p className="text-sm text-gray-500 truncate">{member.phone}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <p className="text-sm text-gray-500 truncate">{member.phone}</p>
+                </div>
+                {member.level && (
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                      <span>{member.level.icon || '🏅'}</span>
+                      {member.level.name}
+                    </span>
+                    {typeof member.total_points === 'number' && (
+                      <span className="text-xs text-gray-400">
+                        {member.total_points.toLocaleString()} pts
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
