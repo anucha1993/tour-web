@@ -490,6 +490,20 @@ function PeriodTable({ periods, onBookPeriod }: { periods: TourDetailPeriod[]; o
     booking: 'จองได้',
     sold_out: 'Sold Out',
   };
+
+  // Check if offer promotion is currently active based on promo dates
+  const isPromoActive = (offer: TourDetailPeriod['offer']) => {
+    if (!offer?.promo_name) return false;
+    const today = new Date().toISOString().split('T')[0];
+    if (offer.promo_start_date && today < offer.promo_start_date) return false;
+    if (offer.promo_end_date && today > offer.promo_end_date) return false;
+    return true;
+  };
+
+  const formatPromoDate = (dateStr: string) => {
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+  };
   
 
   return (
@@ -524,6 +538,24 @@ function PeriodTable({ periods, onBookPeriod }: { periods: TourDetailPeriod[]; o
                       {' - '}
                       {endD.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}
                     </div>
+                    {isPromoActive(offer) && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">
+                          <Sparkles className="w-3 h-3" />
+                          {offer!.promo_name}
+                        </span>
+                        {(offer!.promo_start_date || offer!.promo_end_date) && (
+                          <span className="text-xs text-gray-400">
+                            {offer!.promo_start_date && offer!.promo_end_date
+                              ? `${formatPromoDate(offer!.promo_start_date)} - ${formatPromoDate(offer!.promo_end_date)}`
+                              : offer!.promo_end_date
+                                ? `ถึง ${formatPromoDate(offer!.promo_end_date)}`
+                                : `ตั้งแต่ ${formatPromoDate(offer!.promo_start_date!)}`
+                            }
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-right">
                     {offer ? (
@@ -597,6 +629,24 @@ function PeriodTable({ periods, onBookPeriod }: { periods: TourDetailPeriod[]; o
                   {statusLabels[effectiveStatus] || effectiveStatus}
                 </span>
               </div>
+              {isPromoActive(offer) && (
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">
+                    <Sparkles className="w-3 h-3" />
+                    {offer!.promo_name}
+                  </span>
+                  {(offer!.promo_start_date || offer!.promo_end_date) && (
+                    <span className="text-xs text-gray-400">
+                      {offer!.promo_start_date && offer!.promo_end_date
+                        ? `${formatPromoDate(offer!.promo_start_date)} - ${formatPromoDate(offer!.promo_end_date)}`
+                        : offer!.promo_end_date
+                          ? `ถึง ${formatPromoDate(offer!.promo_end_date)}`
+                          : `ตั้งแต่ ${formatPromoDate(offer!.promo_start_date!)}`
+                      }
+                    </span>
+                  )}
+                </div>
+              )}
               {offer ? (
                 <div className="flex items-end justify-between">
                   <div>

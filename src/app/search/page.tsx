@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, ArrowLeft, MapPin, Calendar, Star, Loader2 } from 'lucide-react';
+import { Search, ArrowLeft, MapPin, Calendar, Star, Loader2, Sparkles } from 'lucide-react';
 import { searchApi } from '@/lib/api';
 import SearchForm from '@/components/shared/SearchForm';
 import TourTabBadges from '@/components/shared/TourTabBadges';
@@ -29,6 +29,7 @@ interface SearchTour {
     available: number;
     price: number | null;
   }[];
+  active_promotions?: { name: string; start_date: string | null; end_date: string | null }[];
 }
 
 const formatPrice = (price: number | null | undefined) => {
@@ -233,6 +234,12 @@ function SearchContent() {
                           {/* Promotion Badges */}
                           <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                             <TourTabBadges tourId={tour.id} className="text-xs px-2 py-0.5" />
+                            {tour.active_promotions?.map((promo, i) => (
+                              <span key={i} className="inline-flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded">
+                                <Sparkles className="w-3 h-3" />
+                                {promo.name}
+                              </span>
+                            ))}
                           </div>
                         </div>
 

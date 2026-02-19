@@ -13,6 +13,7 @@ import {
   ChevronDown,
   Loader2,
   ArrowLeft,
+  Sparkles,
 } from 'lucide-react';
 import {
   internationalToursApi,
@@ -88,6 +89,12 @@ const PromotionBadges = ({ tour }: { tour: InternationalTourItem }) => {
           {tour.discount_label}
         </span>
       )}
+      {tour.active_promotions?.map((promo, i) => (
+        <span key={i} className="inline-flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded">
+          <Sparkles className="w-3 h-3" />
+          {promo.name}
+        </span>
+      ))}
     </div>
   );
 };

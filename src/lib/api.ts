@@ -296,6 +296,8 @@ export interface TourDetailOffer {
   discount_single: number;
   deposit: number | null;
   promo_name: string | null;
+  promo_start_date: string | null;
+  promo_end_date: string | null;
 }
 
 export interface TourDetailPeriod {
@@ -693,6 +695,9 @@ export interface InternationalTourOffer {
   deposit: number | null;
   commission_agent?: string;
   commission_sale?: string;
+  promo_name?: string | null;
+  promo_start_date?: string | null;
+  promo_end_date?: string | null;
 }
 
 export interface InternationalTourPeriod {
@@ -754,6 +759,7 @@ export interface InternationalTourItem {
   meal_count?: { breakfast: number; lunch: number; dinner: number; total: number };
   transports?: InternationalTourTransport[];
   periods?: InternationalTourPeriod[];
+  active_promotions?: { name: string; start_date: string | null; end_date: string | null }[];
 }
 
 export interface InternationalTourFilters {
