@@ -11,7 +11,7 @@ import { API_URL } from "@/lib/config";
 const SearchForm = dynamic(() => import("@/components/shared/SearchForm"), {
   ssr: false,
   loading: () => (
-    <div className="bg-white rounded-2xl shadow-2xl p-4 lg:p-6 max-w-5xl">
+    <div className="bg-white rounded-2xl shadow-2xl p-4 lg:p-6 max-w-6xl">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="md:col-span-2">
           <div className="h-4 bg-gray-200 rounded w-24 mb-2" />
@@ -96,7 +96,7 @@ export default function HeroSlider() {
   const hasSlides = slides.length > 0;
 
   return (
-    <section className="relative z-0 min-h-[100px] lg:min-h-[600px] text-white">
+    <section className="relative z-0 min-h-[100px] lg:min-h-[600px] text-white overflow-hidden">
       {/* Background - Slides or Gradient */}
       {hasSlides ? (
         <>
@@ -221,7 +221,7 @@ export default function HeroSlider() {
         {/* Search Box */}
         {isLoading ? (
           /* Skeleton for Search Box - must match real SearchForm dimensions to avoid CLS */
-          <div className="bg-white rounded-2xl shadow-2xl p-4 lg:p-6 max-w-5xl">
+          <div className="bg-white rounded-2xl shadow-2xl p-4 lg:p-6 max-w-6xl">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="md:col-span-2">
                 <div className="h-4 bg-gray-200 rounded w-24 mb-2" />
@@ -243,7 +243,7 @@ export default function HeroSlider() {
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl shadow-2xl p-4 lg:p-6 max-w-5xl">
+          <div className="bg-white rounded-2xl shadow-2xl p-4 lg:p-6 max-w-6xl">
             <SearchForm variant="hero" showQuickLinks />
           </div>
         )}

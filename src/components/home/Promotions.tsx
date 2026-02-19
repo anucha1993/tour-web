@@ -129,7 +129,7 @@ export default function Promotions() {
 
         {/* Loading */}
         {isLoading && (
-          <div className="flex gap-4">
+          <div className="flex gap-4 overflow-hidden">
             {[...Array(3)].map((_, i) => (
               <SkeletonCard key={i} />
             ))}

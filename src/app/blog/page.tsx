@@ -5,23 +5,40 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   Calendar, Clock, Eye, Search, Tag, ChevronLeft, ChevronRight,
-  BookOpen, ArrowRight,
+  BookOpen, ArrowRight, Globe, MapPin, ChevronDown, ChevronUp, X,
 } from 'lucide-react';
-import { blogApi, BlogPost, BlogCategory, BlogPageSettings } from '@/lib/api';
+import {
+  blogApi,
+  BlogPost,
+  BlogCategory,
+  BlogPageSettings,
+  BlogFilterCountry,
+  BlogFilterCity,
+} from '@/lib/api';
 
 export default function BlogPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [featuredPosts, setFeaturedPosts] = useState<BlogPost[]>([]);
   const [categories, setCategories] = useState<BlogCategory[]>([]);
   const [pageSettings, setPageSettings] = useState<BlogPageSettings | null>(null);
+  const [countries, setCountries] = useState<BlogFilterCountry[]>([]);
+  const [cities, setCities] = useState<BlogFilterCity[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCountryId, setSelectedCountryId] = useState<number | null>(null);
+  const [selectedCityId, setSelectedCityId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    categories: true,
+    countries: true,
+    cities: true,
+  });
 
-  // Fetch categories + featured posts + page settings on mount
+  // Fetch static data on mount
   useEffect(() => {
     blogApi.getSettings().then(res => {
       const data = (res as unknown as { data: BlogPageSettings })?.data;
@@ -33,18 +50,27 @@ export default function BlogPage() {
       if (data) setCategories(data);
     }).catch(() => {});
 
+    blogApi.getFilters().then(res => {
+      const raw = res as unknown as { countries: BlogFilterCountry[]; cities: BlogFilterCity[] };
+      if (raw?.countries) setCountries(raw.countries);
+      if (raw?.cities) setCities(raw.cities);
+    }).catch(() => {});
+
     blogApi.getPosts({ featured: true, per_page: 3 }).then(res => {
       const raw = res as unknown as { data: BlogPost[] };
       if (raw?.data) setFeaturedPosts(raw.data);
     }).catch(() => {});
   }, []);
 
-  // Fetch posts when filters change
+  // Fetch posts when filters/page change
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
     blogApi.getPosts({
       category: selectedCategory || undefined,
       search: searchQuery || undefined,
+      country_id: selectedCountryId ?? undefined,
+      city_id: selectedCityId ?? undefined,
       page: currentPage,
       per_page: 12,
     }).then(res => {
@@ -58,18 +84,46 @@ export default function BlogPage() {
       setLoading(false);
     }).catch(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [selectedCategory, searchQuery, currentPage]);
+  }, [selectedCategory, searchQuery, selectedCountryId, selectedCityId, currentPage]);
 
   const handleCategoryChange = (slug: string) => {
-    setLoading(true);
     setSelectedCategory(slug === selectedCategory ? '' : slug);
     setCurrentPage(1);
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  const handleCountryChange = (id: number) => {
+    if (selectedCountryId === id) {
+      setSelectedCountryId(null);
+      setSelectedCityId(null);
+    } else {
+      setSelectedCountryId(id);
+      setSelectedCityId(null);
+    }
     setCurrentPage(1);
+  };
+
+  const handleCityChange = (id: number) => {
+    setSelectedCityId(selectedCityId === id ? null : id);
+    setCurrentPage(1);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearchQuery(searchInput);
+    setCurrentPage(1);
+  };
+
+  const clearAllFilters = () => {
+    setSelectedCategory('');
+    setSelectedCountryId(null);
+    setSelectedCityId(null);
+    setSearchQuery('');
+    setSearchInput('');
+    setCurrentPage(1);
+  };
+
+  const toggleSection = (key: string) => {
+    setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
   const formatDate = (dateStr: string | null) => {
@@ -85,18 +139,20 @@ export default function BlogPage() {
   const heroImage = pageSettings?.hero_image_url;
   const heroImagePos = pageSettings?.hero_image_position || 'center';
 
-  // Show hero skeleton on initial load
-  const showHeroSkeleton = loading && !heroPost && !selectedCategory && !searchQuery && currentPage === 1;
+  const isFiltered = !!(selectedCategory || selectedCountryId || selectedCityId || searchQuery);
+
+  // Cities filtered by selected country
+  const visibleCities = selectedCountryId
+    ? cities.filter(c => c.country_id === selectedCountryId)
+    : cities;
+
+  const selectedCountry = countries.find(c => c.id === selectedCountryId);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Skeleton */}
-      {showHeroSkeleton && <HeroSkeleton />}
-
-      {/* Hero Section with Featured Post */}
-      {heroPost && !selectedCategory && !searchQuery && currentPage === 1 && (
-        <section className="relative  text-white w-full ">
-          {/* Background cover image from settings */}
+      {/* Hero Section */}
+      {heroPost && !isFiltered && currentPage === 1 ? (
+        <section className="relative text-white w-full">
           {heroImage && (
             <>
               <Image src={heroImage} alt="" fill className="object-cover" style={{ objectPosition: heroImagePos }} priority />
@@ -140,36 +196,21 @@ export default function BlogPage() {
               </div>
               {heroPost.cover_image_url && (
                 <div className="relative aspect-[16/10] rounded-xl overflow-hidden shadow-2xl">
-                  <Image
-                    src={heroPost.cover_image_url}
-                    alt={heroPost.title}
-                    fill
-                    className="object-cover"
-                  />
+                  <Image src={heroPost.cover_image_url} alt={heroPost.title} fill className="object-cover" />
                 </div>
               )}
             </div>
           </div>
         </section>
-      )}
-
-      {/* Page Header (when no featured hero) */}
-      {(!heroPost || selectedCategory || searchQuery || currentPage > 1) && (
+      ) : (
         <section className="relative text-white py-16 md:py-20 overflow-hidden">
-          {/* Background: cover image from settings or gradient */}
           {heroImage ? (
             <>
               <Image src={heroImage} alt="" fill className="object-cover" style={{ objectPosition: heroImagePos }} priority />
               <div className="absolute inset-0 bg-black/50" />
             </>
           ) : (
-            <>
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600" />
-              <div className="absolute inset-0 opacity-10">
-                <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-white/30 -translate-y-1/2 translate-x-1/3" />
-                <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full bg-white/20 translate-y-1/3 -translate-x-1/4" />
-              </div>
-            </>
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600" />
           )}
           <div className="container-custom text-center relative z-10">
             <div className="flex items-center justify-center gap-2 mb-3">
@@ -184,166 +225,281 @@ export default function BlogPage() {
         </section>
       )}
 
-      {/* Filters */}
-      <section className="bg-white border-b border-gray-200 sticky top-[80px] lg:top-[160px] z-30">
-        <div className="container-custom py-4">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            {/* Category Pills */}
-            <div className="flex flex-wrap gap-2 overflow-x-auto pb-1 w-full md:w-auto">
-              <button
-                onClick={() => handleCategoryChange('')}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition ${
-                  !selectedCategory
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                ทั้งหมด
-              </button>
-              {categories.map(cat => (
-                <button
-                  key={cat.id}
-                  onClick={() => handleCategoryChange(cat.slug)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition ${
-                    selectedCategory === cat.slug
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {cat.name}
-                  {cat.posts_count ? (
-                    <span className="ml-1 text-xs opacity-70">({cat.posts_count})</span>
-                  ) : null}
-                </button>
-              ))}
-            </div>
+      {/* Main Content: Sidebar + Posts */}
+      <div className="container-custom py-10">
+        <div className="flex flex-col lg:flex-row gap-8">
 
-            {/* Search */}
-            <form onSubmit={handleSearch} className="relative w-full md:w-72">
-              <input
-                type="text"
-                placeholder="ค้นหาบทความ..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 rounded-full border-1 border-solid border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none text-sm"
-              />
-              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            </form>
-          </div>
-        </div>
-      </section>
+          {/* ===== SIDEBAR ===== */}
+          <aside className="w-full lg:w-72 shrink-0">
+            <div className="lg:sticky lg:top-[100px] space-y-5">
 
-      {/* Posts Grid */}
-      <section className="container-custom py-10">
-        {loading ? (
-          <>
-            <div className="flex items-center justify-between mb-6">
-              <div className="h-4 w-40 bg-gray-200 rounded animate-pulse" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <PostCardSkeleton key={i} />
-              ))}
-            </div>
-          </>
-        ) : posts.length === 0 ? (
-          <div className="text-center py-20">
-            <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">ไม่พบบทความ</h3>
-            <p className="text-gray-400">ลองเปลี่ยนหมวดหมู่หรือคำค้นหา</p>
-          </div>
-        ) : (
-          <>
-            {/* Results info */}
-            <div className="flex items-center justify-between mb-6">
-              <p className="text-sm text-gray-500">
-                แสดง {posts.length} จาก {total} บทความ
-              </p>
-            </div>
-
-            {/* Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {posts.map(post => (
-                <PostCard key={post.id} post={post} formatDate={formatDate} />
-              ))}
-            </div>
-
-            {/* Pagination */}
-            {lastPage > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-10">
-                <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage <= 1}
-                  className="p-2 rounded-lg border-1 border-solid border-gray-300 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                {Array.from({ length: lastPage }, (_, i) => i + 1)
-                  .filter(p => p === 1 || p === lastPage || Math.abs(p - currentPage) <= 2)
-                  .reduce<(number | string)[]>((acc, p, idx, arr) => {
-                    if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('...');
-                    acc.push(p);
-                    return acc;
-                  }, [])
-                  .map((item, idx) =>
-                    typeof item === 'string' ? (
-                      <span key={`dots-${idx}`} className="px-2 text-gray-400">...</span>
-                    ) : (
-                      <button
-                        key={item}
-                        onClick={() => setCurrentPage(item)}
-                        className={`w-10 h-10 rounded-lg text-sm font-medium transition ${
-                          currentPage === item
-                            ? 'bg-orange-500 text-white'
-                            : 'border-1 border-solid border-gray-300 hover:bg-gray-100'
-                        }`}
-                      >
-                        {item}
-                      </button>
-                    )
+              {/* Search */}
+              <div className="bg-white rounded-xl shadow-sm p-4">
+                <h3 className="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">ค้นหา</h3>
+                <form onSubmit={handleSearchSubmit} className="relative">
+                  <input
+                    type="text"
+                    placeholder="ค้นหาบทความ..."
+                    value={searchInput}
+                    onChange={e => setSearchInput(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-100 outline-none text-sm"
+                  />
+                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  {searchInput && (
+                    <button
+                      type="button"
+                      onClick={() => { setSearchInput(''); setSearchQuery(''); setCurrentPage(1); }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
                   )}
-                <button
-                  onClick={() => setCurrentPage(p => Math.min(lastPage, p + 1))}
-                  disabled={currentPage >= lastPage}
-                  className="p-2 rounded-lg border-1 border-solid border-gray-300 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
+                </form>
               </div>
-            )}
-          </>
-        )}
-      </section>
-    </div>
-  );
-}
 
-// ===================== Hero Skeleton =====================
-function HeroSkeleton() {
-  return (
-    <section className="relative bg-gray-200 w-full animate-pulse">
-      <div className="container-custom py-12 md:py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-5 h-5 bg-gray-300 rounded" />
-              <div className="h-3 w-32 bg-gray-300 rounded" />
+              {/* Active Filters Summary */}
+              {isFiltered && (
+                <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-bold text-orange-700">ตัวกรองที่ใช้</h3>
+                    <button
+                      onClick={clearAllFilters}
+                      className="text-xs text-orange-600 hover:text-orange-800 flex items-center gap-1"
+                    >
+                      <X className="w-3 h-3" /> ล้างทั้งหมด
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedCategory && (
+                      <span className="inline-flex items-center gap-1 text-xs bg-white border border-orange-200 text-orange-700 px-2 py-0.5 rounded-full">
+                        {categories.find(c => c.slug === selectedCategory)?.name}
+                        <button onClick={() => { setSelectedCategory(''); setCurrentPage(1); }}><X className="w-3 h-3" /></button>
+                      </span>
+                    )}
+                    {selectedCountry && (
+                      <span className="inline-flex items-center gap-1 text-xs bg-white border border-orange-200 text-orange-700 px-2 py-0.5 rounded-full">
+                        {selectedCountry.flag_emoji} {selectedCountry.name_th}
+                        <button onClick={() => { setSelectedCountryId(null); setSelectedCityId(null); setCurrentPage(1); }}><X className="w-3 h-3" /></button>
+                      </span>
+                    )}
+                    {selectedCityId && (
+                      <span className="inline-flex items-center gap-1 text-xs bg-white border border-orange-200 text-orange-700 px-2 py-0.5 rounded-full">
+                        {cities.find(c => c.id === selectedCityId)?.name_th}
+                        <button onClick={() => { setSelectedCityId(null); setCurrentPage(1); }}><X className="w-3 h-3" /></button>
+                      </span>
+                    )}
+                    {searchQuery && (
+                      <span className="inline-flex items-center gap-1 text-xs bg-white border border-orange-200 text-orange-700 px-2 py-0.5 rounded-full">
+                        &ldquo;{searchQuery}&rdquo;
+                        <button onClick={() => { setSearchQuery(''); setSearchInput(''); setCurrentPage(1); }}><X className="w-3 h-3" /></button>
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Categories */}
+              {categories.length > 0 && (
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                  <button
+                    onClick={() => toggleSection('categories')}
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition"
+                  >
+                    <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">หมวดหมู่</h3>
+                    {openSections.categories ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                  </button>
+                  {openSections.categories && (
+                    <div className="border-t border-gray-100">
+                      <button
+                        onClick={() => handleCategoryChange('')}
+                        className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition hover:bg-gray-50 ${!selectedCategory ? 'text-orange-600 font-semibold bg-orange-50' : 'text-gray-700'}`}
+                      >
+                        <span>ทั้งหมด</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${!selectedCategory ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-500'}`}>
+                          {categories.reduce((sum, c) => sum + (c.posts_count || 0), 0)}
+                        </span>
+                      </button>
+                      {categories.map(cat => (
+                        <button
+                          key={cat.id}
+                          onClick={() => handleCategoryChange(cat.slug)}
+                          className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition hover:bg-gray-50 ${selectedCategory === cat.slug ? 'text-orange-600 font-semibold bg-orange-50' : 'text-gray-700'}`}
+                        >
+                          <span>{cat.name}</span>
+                          {cat.posts_count ? (
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${selectedCategory === cat.slug ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-500'}`}>
+                              {cat.posts_count}
+                            </span>
+                          ) : null}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Countries */}
+              {countries.length > 0 && (
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                  <button
+                    onClick={() => toggleSection('countries')}
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition"
+                  >
+                    <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-gray-400" /> ประเทศ
+                    </h3>
+                    {openSections.countries ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                  </button>
+                  {openSections.countries && (
+                    <div className="border-t border-gray-100 max-h-64 overflow-y-auto">
+                      {countries.map(country => (
+                        <button
+                          key={country.id}
+                          onClick={() => handleCountryChange(country.id)}
+                          className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition hover:bg-gray-50 ${selectedCountryId === country.id ? 'text-orange-600 font-semibold bg-orange-50' : 'text-gray-700'}`}
+                        >
+                          <span className="flex items-center gap-2">
+                            {country.flag_emoji
+                              ? <span className="text-base">{country.flag_emoji}</span>
+                              : <Globe className="w-4 h-4 text-gray-300" />
+                            }
+                            {country.name_th}
+                          </span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${selectedCountryId === country.id ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-500'}`}>
+                            {country.posts_count}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Cities */}
+              {visibleCities.length > 0 && (
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                  <button
+                    onClick={() => toggleSection('cities')}
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition"
+                  >
+                    <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-gray-400" /> เมือง
+                      {selectedCountry && <span className="text-xs font-normal text-gray-400">({selectedCountry.name_th})</span>}
+                    </h3>
+                    {openSections.cities ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                  </button>
+                  {openSections.cities && (
+                    <div className="border-t border-gray-100 max-h-52 overflow-y-auto">
+                      {visibleCities.map(city => (
+                        <button
+                          key={city.id}
+                          onClick={() => handleCityChange(city.id)}
+                          className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition hover:bg-gray-50 ${selectedCityId === city.id ? 'text-orange-600 font-semibold bg-orange-50' : 'text-gray-700'}`}
+                        >
+                          <span className="flex items-center gap-2">
+                            <MapPin className="w-3.5 h-3.5 text-gray-300 shrink-0" />
+                            {city.name_th}
+                          </span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${selectedCityId === city.id ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-500'}`}>
+                            {city.posts_count}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
             </div>
-            <div className="h-10 w-4/5 bg-gray-300 rounded mb-3" />
-            <div className="h-10 w-3/5 bg-gray-300 rounded mb-4" />
-            <div className="h-4 w-full bg-gray-300 rounded mb-2" />
-            <div className="h-4 w-3/4 bg-gray-300 rounded mb-6" />
-            <div className="flex items-center gap-4 mb-6">
-              <div className="h-6 w-20 bg-gray-300 rounded-full" />
-              <div className="h-4 w-28 bg-gray-300 rounded" />
-              <div className="h-4 w-16 bg-gray-300 rounded" />
-            </div>
-            <div className="h-12 w-40 bg-gray-300 rounded-lg" />
-          </div>
-          <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-gray-300" />
+          </aside>
+
+          {/* ===== POSTS AREA ===== */}
+          <main className="flex-1 min-w-0">
+            {loading ? (
+              <>
+                <div className="h-4 w-40 bg-gray-200 rounded animate-pulse mb-6" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {Array.from({ length: 6 }).map((_, i) => <PostCardSkeleton key={i} />)}
+                </div>
+              </>
+            ) : posts.length === 0 ? (
+              <div className="text-center py-20">
+                <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-600 mb-2">ไม่พบบทความ</h3>
+                <p className="text-gray-400 mb-4">ลองเปลี่ยนหมวดหมู่หรือคำค้นหา</p>
+                {isFiltered && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="inline-flex items-center gap-2 text-sm text-orange-600 hover:text-orange-700 border border-orange-300 px-4 py-2 rounded-lg"
+                  >
+                    <X className="w-4 h-4" /> ล้างตัวกรอง
+                  </button>
+                )}
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  <p className="text-sm text-gray-500">
+                    แสดง <span className="font-semibold text-gray-700">{posts.length}</span> จาก <span className="font-semibold text-gray-700">{total}</span> บทความ
+                  </p>
+                </div>
+
+                {/* Post Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {posts.map(post => (
+                    <PostCard key={post.id} post={post} formatDate={formatDate} />
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {lastPage > 1 && (
+                  <div className="flex items-center justify-center gap-2 mt-10">
+                    <button
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage <= 1}
+                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    {Array.from({ length: lastPage }, (_, i) => i + 1)
+                      .filter(p => p === 1 || p === lastPage || Math.abs(p - currentPage) <= 2)
+                      .reduce<(number | string)[]>((acc, p, idx, arr) => {
+                        if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('...');
+                        acc.push(p);
+                        return acc;
+                      }, [])
+                      .map((item, idx) =>
+                        typeof item === 'string' ? (
+                          <span key={`dots-${idx}`} className="px-2 text-gray-400">...</span>
+                        ) : (
+                          <button
+                            key={item}
+                            onClick={() => setCurrentPage(item)}
+                            className={`w-10 h-10 rounded-lg text-sm font-medium transition ${
+                              currentPage === item
+                                ? 'bg-orange-500 text-white'
+                                : 'border border-gray-300 hover:bg-gray-100'
+                            }`}
+                          >
+                            {item}
+                          </button>
+                        )
+                      )}
+                    <button
+                      onClick={() => setCurrentPage(p => Math.min(lastPage, p + 1))}
+                      disabled={currentPage >= lastPage}
+                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </main>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
 

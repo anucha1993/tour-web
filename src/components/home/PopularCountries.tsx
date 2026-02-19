@@ -106,7 +106,7 @@ export default function PopularCountries({ slug = "homepage" }: PopularCountries
         {!isLoading && !error && countries.length > 0 && (
           <div className={`grid gap-4 ${
             countries.length <= 3 
-              ? 'grid-cols-1 md:grid-cols-3' 
+              ? 'grid-cols-1 md:grid-cols-4' 
               : countries.length === 4 
                 ? 'grid-cols-2 md:grid-cols-4' 
                 : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-6'
@@ -115,7 +115,7 @@ export default function PopularCountries({ slug = "homepage" }: PopularCountries
               <Link
                 key={country.id}
                 href={country.link_url || `/tours?country=${country.iso2.toLowerCase()}`}
-                className="group relative aspect-[3/4] rounded-xl overflow-hidden bg-[var(--color-gray-200)]"
+                className="group relative aspect-[3/3] rounded-xl overflow-hidden bg-[var(--color-gray-200)]"
               >
                 {/* Background Image */}
                 {country.image_url ? (

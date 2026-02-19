@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Search, MapPin, Calendar, X, ChevronDown, Clock, TrendingUp } from "lucide-react";
+import { Search, MapPin, Calendar, X, ChevronDown, Clock, TrendingUp, Banknote, SlidersHorizontal } from "lucide-react";
 import { API_URL } from "@/lib/config";
 import { searchApi } from "@/lib/api";
 
@@ -44,6 +44,19 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
   const [selectedAutoIndex, setSelectedAutoIndex] = useState(-1);
   const keywordRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Advanced filter toggle
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Price
+  const [showPriceDropdown, setShowPriceDropdown] = useState(false);
+  const [priceMin, setPriceMin] = useState("");
+  const [priceMax, setPriceMax] = useState("");
+  const [selectedPriceLabel, setSelectedPriceLabel] = useState("");
+  const [customPriceMin, setCustomPriceMin] = useState("");
+  const [customPriceMax, setCustomPriceMax] = useState("");
+  const [showCustomPrice, setShowCustomPrice] = useState(false);
+  const priceDropdownRef = useRef<HTMLDivElement>(null);
 
   // Date
   const [showDateDropdown, setShowDateDropdown] = useState(false);
@@ -101,6 +114,7 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
     const handleClickOutside = (e: MouseEvent) => {
       if (countryDropdownRef.current && !countryDropdownRef.current.contains(e.target as Node)) setShowCountryDropdown(false);
       if (dateDropdownRef.current && !dateDropdownRef.current.contains(e.target as Node)) setShowDateDropdown(false);
+      if (priceDropdownRef.current && !priceDropdownRef.current.contains(e.target as Node)) setShowPriceDropdown(false);
       if (keywordRef.current && !keywordRef.current.contains(e.target as Node)) setShowAutocomplete(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -134,6 +148,25 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
   const handleClearCountry = () => { setSelectedCountry(null); setCountrySearchText(""); };
   const handleSelectDatePreset = (p: typeof datePresets[0]) => { setDepartureDateFrom(p.from); setDepartureDateTo(p.to); setSelectedDateLabel(p.label); setShowDateDropdown(false); setShowCustomDates(false); };
   const handleClearDate = () => { setDepartureDateFrom(""); setDepartureDateTo(""); setSelectedDateLabel(""); setShowCustomDates(false); setCustomDateFrom(""); setCustomDateTo(""); };
+  const pricePresets = [
+    { label: 'ต่ำกว่า 10,000 บาท',     min: '',      max: '10000' },
+    { label: '10,000 – 20,000 บาท',   min: '10000', max: '20000' },
+    { label: '20,000 – 30,000 บาท',   min: '20000', max: '30000' },
+    { label: '30,000 – 50,000 บาท',   min: '30000', max: '50000' },
+    { label: 'มากกว่า 50,000 บาท',    min: '50000', max: '' },
+  ];
+  const handleSelectPricePreset = (p: typeof pricePresets[0]) => { setPriceMin(p.min); setPriceMax(p.max); setSelectedPriceLabel(p.label); setShowPriceDropdown(false); setShowCustomPrice(false); };
+  const handleClearPrice = () => { setPriceMin(''); setPriceMax(''); setSelectedPriceLabel(''); setCustomPriceMin(''); setCustomPriceMax(''); setShowCustomPrice(false); };
+  const handleApplyCustomPrice = () => {
+    if (customPriceMin || customPriceMax) {
+      setPriceMin(customPriceMin); setPriceMax(customPriceMax);
+      const minFmt = customPriceMin ? `฿${Number(customPriceMin).toLocaleString()}` : '';
+      const maxFmt = customPriceMax ? `฿${Number(customPriceMax).toLocaleString()}` : '';
+      setSelectedPriceLabel(minFmt && maxFmt ? `${minFmt} – ${maxFmt}` : minFmt ? `มากกว่า ${minFmt}` : `ต่ำกว่า ${maxFmt}`);
+      setShowPriceDropdown(false); setShowCustomPrice(false);
+    }
+  };
+
   const handleApplyCustomDates = () => {
     if (customDateFrom && customDateTo) { setDepartureDateFrom(customDateFrom); setDepartureDateTo(customDateTo); setSelectedDateLabel(`${fmtDateThai(customDateFrom)} - ${fmtDateThai(customDateTo)}`); setShowDateDropdown(false); setShowCustomDates(false); }
     else if (customDateFrom) { setDepartureDateFrom(customDateFrom); setDepartureDateTo(""); setSelectedDateLabel(`ตั้งแต่ ${fmtDateThai(customDateFrom)}`); setShowDateDropdown(false); setShowCustomDates(false); }
@@ -172,19 +205,21 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
     const params = new URLSearchParams();
     if (departureDateFrom) params.set("departure_date_from", departureDateFrom);
     if (departureDateTo) params.set("departure_date_to", departureDateTo);
+    if (priceMin) params.set("price_min", priceMin);
+    if (priceMax) params.set("price_max", priceMax);
     if (keyword.trim()) params.set("search", keyword.trim());
     const qs = params.toString();
 
     if (selectedCountry) {
       router.push(`/tours/country/${selectedCountry.slug}${qs ? `?${qs}` : ""}`);
     } else if (keyword.trim()) {
-      router.push(`/search?q=${encodeURIComponent(keyword.trim())}${departureDateFrom ? `&departure_date_from=${departureDateFrom}` : ""}${departureDateTo ? `&departure_date_to=${departureDateTo}` : ""}`);
+      router.push(`/search?q=${encodeURIComponent(keyword.trim())}${departureDateFrom ? `&departure_date_from=${departureDateFrom}` : ""}${departureDateTo ? `&departure_date_to=${departureDateTo}` : ""}${priceMin ? `&price_min=${priceMin}` : ""}${priceMax ? `&price_max=${priceMax}` : ""}`);
     } else {
       router.push(`/tours/international${qs ? `?${qs}` : ""}`);
     }
     onSearch?.();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [keyword, departureDateFrom, departureDateTo, selectedCountry, router, onSearch]);
+  }, [keyword, departureDateFrom, departureDateTo, priceMin, priceMax, selectedCountry, router, onSearch]);
 
   const searchWithKeyword = (kw: string) => {
     setKeyword(kw);
@@ -194,10 +229,12 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
     if (departureDateFrom) params.set("departure_date_from", departureDateFrom);
     if (departureDateTo) params.set("departure_date_to", departureDateTo);
     params.set("search", kw);
+    if (priceMin) params.set("price_min", priceMin);
+    if (priceMax) params.set("price_max", priceMax);
     if (selectedCountry) {
       router.push(`/tours/country/${selectedCountry.slug}?${params.toString()}`);
     } else {
-      router.push(`/search?q=${encodeURIComponent(kw)}${departureDateFrom ? `&departure_date_from=${departureDateFrom}` : ""}${departureDateTo ? `&departure_date_to=${departureDateTo}` : ""}`);
+      router.push(`/search?q=${encodeURIComponent(kw)}${departureDateFrom ? `&departure_date_from=${departureDateFrom}` : ""}${departureDateTo ? `&departure_date_to=${departureDateTo}` : ""}${priceMin ? `&price_min=${priceMin}` : ""}${priceMax ? `&price_max=${priceMax}` : ""}`);
     }
     onSearch?.();
   };
@@ -211,7 +248,8 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
 
   return (
     <div>
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      {/* ── Row 1: Keyword + Country + Button ── */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Keyword Search */}
         <div className="md:col-span-2">
           <label className={labelCls}>ค้นหาทัวร์</label>
@@ -352,77 +390,183 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
           </div>
         </div>
 
-        {/* Date Picker */}
-        <div>
-          <label className={labelCls}>เลือกช่วงวันที่เดินทาง</label>
-          <div className="relative" ref={dateDropdownRef}>
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-gray-400)] z-10" />
-            <div onClick={() => setShowDateDropdown(!showDateDropdown)}
-              className={`${inputCls} pl-10 pr-16 cursor-pointer text-sm min-h-[48px] flex items-center`}>
-              <span className={selectedDateLabel ? "text-gray-800" : "text-gray-400"}>
-                {selectedDateLabel || "เลือกช่วงวัน"}
-              </span>
-            </div>
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
-              {selectedDateLabel && (
-                <button onClick={(e) => { e.stopPropagation(); handleClearDate(); }} className="p-1 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 cursor-pointer">
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-              <button onClick={() => setShowDateDropdown(!showDateDropdown)} className="p-1 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 cursor-pointer">
-                <ChevronDown className={`w-4 h-4 transition-transform ${showDateDropdown ? "rotate-180" : ""}`} />
-              </button>
-            </div>
-
-            {showDateDropdown && (
-              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[280px]">
-                {datePresets.map((preset) => (
-                  <div key={preset.id} className={`px-4 py-2.5 cursor-pointer transition-colors text-sm ${departureDateFrom === preset.from && departureDateTo === preset.to ? "bg-blue-500 text-white hover:bg-blue-600" : "text-gray-800 hover:bg-blue-50"}`}
-                    onClick={() => handleSelectDatePreset(preset)}>
-                    {preset.label}
-                  </div>
-                ))}
-                <div className="border-t border-gray-100">
-                  <div className={`px-4 py-2.5 cursor-pointer transition-colors text-sm font-medium flex items-center justify-between ${showCustomDates ? "text-blue-600 bg-blue-50" : "text-gray-800 hover:bg-blue-50"}`}
-                    onClick={() => setShowCustomDates(!showCustomDates)}>
-                    <span>กำหนดเอง</span>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${showCustomDates ? "rotate-180" : ""}`} />
-                  </div>
-                  {showCustomDates && (
-                    <div className="border-t border-gray-100 p-4 bg-gray-50 space-y-3">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">วันที่เริ่มต้น</label>
-                        <input type="date" value={customDateFrom} onChange={(e) => setCustomDateFrom(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 text-sm text-gray-800 bg-white" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">วันที่สิ้นสุด</label>
-                        <input type="date" value={customDateTo} min={customDateFrom || undefined} onChange={(e) => setCustomDateTo(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 text-sm text-gray-800 bg-white" />
-                      </div>
-                      {customDateFrom && customDateTo && (
-                        <div className="text-xs text-gray-500 text-center">{fmtDateThai(customDateFrom)} - {fmtDateThai(customDateTo)}</div>
-                      )}
-                      <div className="flex gap-2">
-                        <button onClick={handleClearDate} className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">ล้าง</button>
-                        <button onClick={handleApplyCustomDates} disabled={!customDateFrom}
-                          className="flex-1 px-3 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">เลือก</button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Search Button */}
-        <div className="flex items-end">
-          <button onClick={handleSearch}
-            className="w-full btn-primary flex items-center justify-center gap-2 py-3 cursor-pointer">
+        <div className="flex items-end gap-2">
+          <button
+            onClick={handleSearch}
+            className="flex-1 btn-primary flex items-center justify-center gap-2 py-3 cursor-pointer"
+          >
             <Search className="w-5 h-5" />
             <span>ค้นหาทัวร์</span>
           </button>
+          {/* Advanced toggle */}
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(v => !v)}
+            className={`flex items-center justify-center gap-1.5 px-3 py-3 rounded-lg border text-sm font-medium transition-all cursor-pointer ${
+              showAdvanced || selectedDateLabel || selectedPriceLabel
+                ? 'border-[var(--color-primary)] bg-orange-50 text-[var(--color-primary)]'
+                : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:text-gray-700'
+            }`}
+            title="ตัวกรองเพิ่มเติม"
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            {(selectedDateLabel || selectedPriceLabel) && (
+              <span className="w-2 h-2 rounded-full bg-[var(--color-primary)] flex-shrink-0" />
+            )}
+
+          </button>
+        </div>
+      </div>
+
+      {/* ── Row 2: Advanced filters (date + price) ── */}
+      <div
+        className={`overflow-hidden transition-all duration-300 ${
+          showAdvanced ? 'max-h-[500px] opacity-100 mt-3' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+
+          {/* Date Picker */}
+          <div>
+            <label className={labelCls}>ช่วงวันที่เดินทาง</label>
+            <div className="relative" ref={dateDropdownRef}>
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-gray-400)] z-10" />
+              <div
+                onClick={() => setShowDateDropdown(!showDateDropdown)}
+                className={`${inputCls} pl-10 pr-16 cursor-pointer text-sm min-h-[48px] flex items-center`}
+              >
+                <span className={selectedDateLabel ? "text-gray-800" : "text-gray-400"}>
+                  {selectedDateLabel || "เลือกช่วงวัน"}
+                </span>
+              </div>
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+                {selectedDateLabel && (
+                  <button onClick={(e) => { e.stopPropagation(); handleClearDate(); }} className="p-1 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 cursor-pointer">
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+                <button onClick={() => setShowDateDropdown(!showDateDropdown)} className="p-1 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 cursor-pointer">
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showDateDropdown ? "rotate-180" : ""}`} />
+                </button>
+              </div>
+              {showDateDropdown && (
+                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[280px]">
+                  {datePresets.map((preset) => (
+                    <div key={preset.id} className={`px-4 py-2.5 cursor-pointer transition-colors text-sm ${departureDateFrom === preset.from && departureDateTo === preset.to ? "bg-blue-500 text-white hover:bg-blue-600" : "text-gray-800 hover:bg-blue-50"}`}
+                      onClick={() => handleSelectDatePreset(preset)}>
+                      {preset.label}
+                    </div>
+                  ))}
+                  <div className="border-t border-gray-100">
+                    <div className={`px-4 py-2.5 cursor-pointer transition-colors text-sm font-medium flex items-center justify-between ${showCustomDates ? "text-blue-600 bg-blue-50" : "text-gray-800 hover:bg-blue-50"}`}
+                      onClick={() => setShowCustomDates(!showCustomDates)}>
+                      <span>กำหนดเอง</span>
+                      <ChevronDown className={`w-4 h-4 transition-transform ${showCustomDates ? "rotate-180" : ""}`} />
+                    </div>
+                    {showCustomDates && (
+                      <div className="border-t border-gray-100 p-4 bg-gray-50 space-y-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">วันที่เริ่มต้น</label>
+                          <input type="date" value={customDateFrom} onChange={(e) => setCustomDateFrom(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 text-sm text-gray-800 bg-white" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">วันที่สิ้นสุด</label>
+                          <input type="date" value={customDateTo} min={customDateFrom || undefined} onChange={(e) => setCustomDateTo(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 text-sm text-gray-800 bg-white" />
+                        </div>
+                        {customDateFrom && customDateTo && (
+                          <div className="text-xs text-gray-500 text-center">{fmtDateThai(customDateFrom)} - {fmtDateThai(customDateTo)}</div>
+                        )}
+                        <div className="flex gap-2">
+                          <button onClick={handleClearDate} className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">ล้าง</button>
+                          <button onClick={handleApplyCustomDates} disabled={!customDateFrom}
+                            className="flex-1 px-3 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">เลือก</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Price Range */}
+          <div>
+            <label className={labelCls}>ช่วงราคา</label>
+            <div className="relative" ref={priceDropdownRef}>
+              <Banknote className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-gray-400)] z-10" />
+              <div
+                onClick={() => setShowPriceDropdown(!showPriceDropdown)}
+                className={`${inputCls} pl-10 pr-8 cursor-pointer text-sm min-h-[48px] flex items-center`}
+              >
+                <span className={selectedPriceLabel ? "text-gray-800" : "text-gray-400"}>
+                  {selectedPriceLabel || "ทุกราคา"}
+                </span>
+              </div>
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+                {selectedPriceLabel && (
+                  <button onClick={(e) => { e.stopPropagation(); handleClearPrice(); }} className="p-1 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 cursor-pointer">
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+                <button onClick={() => setShowPriceDropdown(!showPriceDropdown)} className="p-1 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 cursor-pointer">
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showPriceDropdown ? "rotate-180" : ""}`} />
+                </button>
+              </div>
+              {showPriceDropdown && (
+                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[240px]">
+                  {pricePresets.map((p) => (
+                    <div
+                      key={p.label}
+                      className={`px-4 py-2.5 cursor-pointer transition-colors text-sm ${
+                        priceMin === p.min && priceMax === p.max && selectedPriceLabel
+                          ? 'bg-blue-500 text-white hover:bg-blue-600'
+                          : 'text-gray-800 hover:bg-blue-50'
+                      }`}
+                      onClick={() => handleSelectPricePreset(p)}
+                    >
+                      {p.label}
+                    </div>
+                  ))}
+                  <div className="border-t border-gray-100">
+                    <div
+                      className={`px-4 py-2.5 cursor-pointer transition-colors text-sm font-medium flex items-center justify-between ${showCustomPrice ? 'text-blue-600 bg-blue-50' : 'text-gray-800 hover:bg-blue-50'}`}
+                      onClick={() => setShowCustomPrice(!showCustomPrice)}
+                    >
+                      <span>กำหนดเอง</span>
+                      <ChevronDown className={`w-4 h-4 transition-transform ${showCustomPrice ? 'rotate-180' : ''}`} />
+                    </div>
+                    {showCustomPrice && (
+                      <div className="border-t border-gray-100 p-4 bg-gray-50 space-y-3">
+                        <div className="flex gap-2">
+                          <div className="flex-1">
+                            <label className="block text-xs font-medium text-gray-600 mb-1">ราคาต่ำสุด (฿)</label>
+                            <input type="number" min="0" step="1000" placeholder="0"
+                              value={customPriceMin} onChange={(e) => setCustomPriceMin(e.target.value)}
+                              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 text-sm text-gray-800 bg-white" />
+                          </div>
+                          <div className="flex-1">
+                            <label className="block text-xs font-medium text-gray-600 mb-1">ราคาสูงสุด (฿)</label>
+                            <input type="number" min="0" step="1000" placeholder="ไม่จำกัด"
+                              value={customPriceMax} onChange={(e) => setCustomPriceMax(e.target.value)}
+                              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 text-sm text-gray-800 bg-white" />
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button onClick={handleClearPrice} className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">ล้าง</button>
+                          <button onClick={handleApplyCustomPrice} disabled={!customPriceMin && !customPriceMax}
+                            className="flex-1 px-3 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">เลือก</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
         </div>
       </div>
 

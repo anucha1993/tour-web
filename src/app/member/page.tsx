@@ -1,6 +1,8 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { useFavorites } from "@/contexts/FavoritesContext";
+import { notificationApi, PromotionNotification } from "@/lib/api";
 import {
   HeartIcon,
   ClipboardDocumentListIcon,
@@ -9,41 +11,13 @@ import {
   ClockIcon,
   CheckBadgeIcon,
   CalendarIcon,
+  BellIcon,
+  TrophyIcon,
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import Image from "next/image";
-
-// Mockup favorite tours
-const mockFavoriteTours = [
-  {
-    id: 1,
-    name: "ทัวร์ญี่ปุ่น โตเกียว ฟูจิ 6 วัน 4 คืน",
-    slug: "japan-tokyo-fuji-6d4n",
-    thumbnail: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400",
-    price: 45900,
-    duration: "6 วัน 4 คืน",
-    destination: "ญี่ปุ่น",
-  },
-  {
-    id: 2,
-    name: "ทัวร์เกาหลี โซล เกาะนามิ 5 วัน 3 คืน",
-    slug: "korea-seoul-nami-5d3n",
-    thumbnail: "https://images.unsplash.com/photo-1517154421773-0529f29ea451?w=400",
-    price: 25900,
-    duration: "5 วัน 3 คืน",
-    destination: "เกาหลีใต้",
-  },
-  {
-    id: 3,
-    name: "ทัวร์เวียดนาม ดานัง ฮอยอัน 4 วัน 3 คืน",
-    slug: "vietnam-danang-hoian-4d3n",
-    thumbnail: "https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=400",
-    price: 12900,
-    duration: "4 วัน 3 คืน",
-    destination: "เวียดนาม",
-  },
-];
+import { useEffect, useState } from "react";
 
 interface QuickLink {
   href: string;
@@ -82,10 +56,36 @@ const quickLinks: QuickLink[] = [
     description: "จัดการที่อยู่",
     color: "bg-purple-500",
   },
+  {
+    href: "/member/points",
+    icon: TrophyIcon,
+    label: "คะแนนสะสม",
+    description: "ดูแต้มและสิทธิประโยชน์",
+    color: "bg-yellow-500",
+  },
+  {
+    href: "/member/notifications",
+    icon: BellIcon,
+    label: "โปรโมชั่นสำหรับคุณ",
+    description: "ข้อเสนอพิเศษและโปรโมชั่น",
+    color: "bg-orange-500",
+  },
 ];
 
 export default function MemberDashboard() {
   const { member } = useAuth();
+  const { favorites, removeFavorite } = useFavorites();
+  const [notifications, setNotifications] = useState<PromotionNotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    notificationApi.getAll().then((res) => {
+      if (res.success && Array.isArray(res.data)) {
+        setNotifications(res.data.slice(0, 3));
+        setUnreadCount(res.unread_count ?? 0);
+      }
+    });
+  }, []);
 
   if (!member) {
     return null;
@@ -132,10 +132,7 @@ export default function MemberDashboard() {
       {/* Favorite Tours Section */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold text-gray-900">ทัวร์ที่ถูกใจ</h2>
-            <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">Mockup</span>
-          </div>
+          <h2 className="text-lg font-semibold text-gray-900">ทัวร์ที่ถูกใจ</h2>
           <Link 
             href="/member/wishlist" 
             className="text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] text-sm font-medium"
@@ -143,7 +140,7 @@ export default function MemberDashboard() {
             ดูทั้งหมด →
           </Link>
         </div>
-        {mockFavoriteTours.length === 0 ? (
+        {favorites.length === 0 ? (
           <div className="bg-white rounded-xl p-8 text-center border border-gray-100">
             <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
               <HeartIcon className="w-8 h-8 text-gray-400" />
@@ -158,45 +155,123 @@ export default function MemberDashboard() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {mockFavoriteTours.map((tour) => (
+            {favorites.slice(0, 3).map((tour) => (
               <Link
                 key={tour.id}
                 href={`/tours/${tour.slug}`}
                 className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group border border-gray-100"
               >
-                <div className="relative aspect-[4/3]">
-                  <Image
-                    src={tour.thumbnail}
-                    alt={tour.name}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
+                <div className="relative aspect-square">
+                  {tour.image_url ? (
+                    <Image
+                      src={tour.image_url}
+                      alt={tour.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-100 to-orange-200">
+                      <MapPinIcon className="w-12 h-12 text-orange-400" />
+                    </div>
+                  )}
                   <button 
-                    className="absolute top-3 right-3 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-sm"
-                    onClick={(e) => e.preventDefault()}
+                    className="absolute top-3 right-3 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-colors"
+                    onClick={(e) => { e.preventDefault(); removeFavorite(tour.id); }}
                   >
                     <HeartSolidIcon className="w-5 h-5 text-red-500" />
                   </button>
-                  <div className="absolute bottom-3 left-3">
-                    <span className="bg-white/90 backdrop-blur-sm text-gray-700 text-xs px-2 py-1 rounded-full">
-                      {tour.destination}
-                    </span>
-                  </div>
+                  {tour.country_name && (
+                    <div className="absolute bottom-3 left-3">
+                      <span className="bg-white/90 backdrop-blur-sm text-gray-700 text-xs px-2 py-1 rounded-full">
+                        {tour.country_name}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className="p-4">
                   <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 group-hover:text-[var(--color-primary)] transition-colors">
-                    {tour.name}
+                    {tour.title}
                   </h3>
                   <div className="flex items-center gap-1 mt-2 text-gray-500 text-xs">
                     <CalendarIcon className="w-3.5 h-3.5" />
-                    <span>{tour.duration}</span>
+                    <span>{tour.days} วัน {tour.nights} คืน</span>
                   </div>
-                  <div className="mt-3 flex items-baseline gap-1">
-                    <span className="text-[var(--color-primary)] font-bold text-lg">
-                      ฿{tour.price.toLocaleString()}
+                  {tour.price != null && (
+                    <div className="mt-3 flex items-baseline gap-1">
+                      <span className="text-[var(--color-primary)] font-bold text-lg">
+                        ฿{tour.price.toLocaleString()}
+                      </span>
+                      <span className="text-gray-400 text-xs">/ท่าน</span>
+                    </div>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Promotions / Notifications Section */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-gray-900">โปรโมชั่นสำหรับคุณ</h2>
+            {unreadCount > 0 && (
+              <span className="px-2 py-0.5 bg-orange-500 text-white text-xs font-bold rounded-full">
+                {unreadCount} ใหม่
+              </span>
+            )}
+          </div>
+          <Link
+            href="/member/notifications"
+            className="text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] text-sm font-medium"
+          >
+            ดูทั้งหมด →
+          </Link>
+        </div>
+
+        {notifications.length === 0 ? (
+          <div className="bg-white rounded-xl p-6 text-center border border-gray-100">
+            <BellIcon className="w-10 h-10 mx-auto text-gray-200 mb-2" />
+            <p className="text-gray-400 text-sm">ยังไม่มีโปรโมชั่นสำหรับคุณในขณะนี้</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {notifications.map((n) => (
+              <Link
+                key={n.id}
+                href={`/member/notifications/${n.id}`}
+                className={`group bg-white rounded-xl border overflow-hidden shadow-sm hover:shadow-md transition-all ${
+                  n.is_read ? "border-gray-100" : "border-orange-200"
+                }`}
+              >
+                {n.banner_url ? (
+                  <div className="relative h-28 w-full bg-gray-100">
+                    <Image src={n.banner_url} alt={n.title} fill className="object-cover" />
+                  </div>
+                ) : (
+                  <div className="h-28 w-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-4xl">
+                    {n.type === "flash_sale" ? "⚡" : n.type === "birthday" ? "🎂" : "🎁"}
+                  </div>
+                )}
+                <div className="p-3">
+                  {!n.is_read && (
+                    <span className="inline-block mb-1 px-1.5 py-0.5 bg-orange-100 text-orange-600 text-[10px] font-bold rounded-full">
+                      ใหม่
                     </span>
-                    <span className="text-gray-400 text-xs">/ท่าน</span>
-                  </div>
+                  )}
+                  <p className="text-sm font-semibold text-gray-900 line-clamp-2 group-hover:text-[var(--color-primary)] transition-colors">
+                    {n.title}
+                  </p>
+                  {n.ends_at && (
+                    <p className="text-[10px] text-gray-400 mt-1">
+                      หมดอายุ{" "}
+                      {new Date(n.ends_at).toLocaleDateString("th-TH", {
+                        day: "numeric",
+                        month: "short",
+                      })}
+                    </p>
+                  )}
                 </div>
               </Link>
             ))}

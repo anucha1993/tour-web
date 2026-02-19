@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { notificationApi } from "@/lib/api";
 import {
   HeartIcon,
   ClipboardDocumentListIcon,
@@ -20,6 +21,7 @@ import {
   ChevronRightIcon,
   ShieldCheckIcon,
   TrophyIcon,
+  BellIcon,
 } from "@heroicons/react/24/outline";
 
 interface MenuItem {
@@ -27,6 +29,7 @@ interface MenuItem {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   isMockup?: boolean;
+  badgeKey?: string;
 }
 
 interface MenuGroup {
@@ -38,12 +41,13 @@ const menuGroups: MenuGroup[] = [
   {
     title: "การจองทัวร์",
     items: [
-      { href: "/member/wishlist", icon: HeartIcon, label: "ทัวร์ที่ถูกใจ", isMockup: true },
+      { href: "/member/wishlist", icon: HeartIcon, label: "ทัวร์ที่ถูกใจ"},
       { href: "/member/bookings", icon: ClipboardDocumentListIcon, label: "รายการจอง", isMockup: true },
       { href: "/member/quotations", icon: DocumentTextIcon, label: "ใบเสนอราคา", isMockup: true },
       { href: "/member/payment-history", icon: BanknotesIcon, label: "ประวัติการชำระเงิน", isMockup: true },
       { href: "/member/reviews", icon: StarIcon, label: "รีวิวของฉัน" },
       { href: "/member/points", icon: TrophyIcon, label: "คะแนนสะสม" },
+      { href: "/member/notifications", icon: BellIcon, label: "โปรโมชั่นสำหรับคุณ", badgeKey: "notifications" },
     ],
   },
   {
@@ -74,12 +78,53 @@ export default function MemberLayout({
   const pathname = usePathname();
   const { member, isLoading, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const res = await notificationApi.getUnreadCount();
+      setUnreadNotifications(res.count ?? 0);
+    } catch {
+      // silently ignore
+    }
+  }, []);
+
+  const badges: Record<string, number> = { notifications: unreadNotifications };
 
   useEffect(() => {
     if (!isLoading && !member) {
       router.push("/login?redirect=" + encodeURIComponent(pathname));
     }
   }, [member, isLoading, router, pathname]);
+
+  useEffect(() => {
+    if (member) {
+      fetchUnreadCount();
+    }
+  }, [member, fetchUnreadCount]);
+
+  // refresh count when landing on the notifications page
+  useEffect(() => {
+    if (pathname === "/member/notifications" && member) {
+      const timer = setTimeout(() => fetchUnreadCount(), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [pathname, member, fetchUnreadCount]);
+
+  // listen for badge updates from notifications page and detail page
+  useEffect(() => {
+    const onChanged = (e: Event) => {
+      const count = (e as CustomEvent<{ count: number }>).detail?.count;
+      if (typeof count === 'number') setUnreadNotifications(count);
+    };
+    const onRefresh = () => fetchUnreadCount();
+    window.addEventListener('notification-count-changed', onChanged);
+    window.addEventListener('notification-count-changed-refresh', onRefresh);
+    return () => {
+      window.removeEventListener('notification-count-changed', onChanged);
+      window.removeEventListener('notification-count-changed-refresh', onRefresh);
+    };
+  }, [fetchUnreadCount]);
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -208,6 +253,11 @@ export default function MemberLayout({
                         {item.isMockup && (
                           <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">
                             Mockup
+                          </span>
+                        )}
+                        {item.badgeKey && (badges[item.badgeKey] ?? 0) > 0 && (
+                          <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full text-[11px] font-bold bg-orange-500 text-white">
+                            {(badges[item.badgeKey] ?? 0) > 99 ? '99+' : badges[item.badgeKey]}
                           </span>
                         )}
                         <ChevronRightIcon className="w-4 h-4 text-gray-400" />

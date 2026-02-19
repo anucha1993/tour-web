@@ -130,15 +130,38 @@ function TourCard({ tour }: { tour: TourTabTour }) {
           )}
         </div>
 
-        {/* Departure */}
-        {tour.departure_date && (
+        {/* Departure periods */}
+        {tour.periods_preview && tour.periods_preview.length > 0 ? (
+          <div className="mt-1.5">
+            <div className="flex flex-wrap gap-1">
+              {tour.periods_preview.map((p) => {
+                const startFmt = new Date(p.start + 'T12:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+                const endFmt = p.end && p.end !== p.start ? new Date(p.end + 'T12:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }) : null;
+                const label = endFmt ? `📅 ${startFmt} - ${endFmt}` : `📅 ${startFmt}`;
+                return (
+                  <span
+                    key={p.start}
+                    className="inline-flex items-center text-[10px] font-medium bg-blue-50 text-blue-600 border border-blue-100 rounded px-1.5 py-0.5"
+                  >
+                    {label}
+                  </span>
+                );
+              })}
+              {(tour.total_periods ?? 0) > (tour.periods_preview?.length ?? 0) && (
+                <span className="inline-flex items-center text-[10px] font-medium bg-gray-100 text-gray-500 border border-gray-200 rounded px-1.5 py-0.5">
+                  +{(tour.total_periods ?? 0) - (tour.periods_preview?.length ?? 0)} รอบ
+                </span>
+              )}
+            </div>
+          </div>
+        ) : tour.departure_date ? (
           <div className="mt-1.5 text-xs text-[var(--color-gray-500)]">
-            📅 {new Date(tour.departure_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}
+            📅 {new Date(tour.departure_date + 'T12:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}
             {tour.max_departure_date && tour.max_departure_date !== tour.departure_date && (
-              <> - {new Date(tour.max_departure_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}</>
+              <> - {new Date(tour.max_departure_date + 'T12:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}</>
             )}
           </div>
-        )}
+        ) : null}
 
         {/* Hotel star */}
         {tour.hotel_star && tour.hotel_star > 0 && (
@@ -275,10 +298,12 @@ export default function TourTabs() {
           </div>
 
           {/* Tabs skeleton */}
-          <div className="inline-flex items-center gap-1 p-1 bg-gray-100 rounded-full mb-8">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className={`h-9 rounded-full animate-pulse ${i === 0 ? 'w-28 bg-white shadow-sm' : 'w-24 bg-gray-200'}`} />
-            ))}
+          <div className="w-full overflow-x-auto scrollbar-hide mb-8">
+            <div className="inline-flex items-center gap-1 p-1 bg-gray-100 rounded-full min-w-max">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className={`h-9 rounded-full animate-pulse ${i === 0 ? 'w-28 bg-white shadow-sm' : 'w-24 bg-gray-200'}`} />
+              ))}
+            </div>
           </div>
 
           {/* Cards skeleton - 2 rows × 4 cols */}
@@ -336,29 +361,59 @@ export default function TourTabs() {
         </div>
 
         {/* Tabs */}
-        <div className="inline-flex items-center gap-1 p-1 bg-gray-100 rounded-full mb-8">
-          {tabs.map((tab, index) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(index)}
-              className={`relative flex items-center gap-1.5 px-5 py-2 rounded-full font-medium text-sm transition-all ${
-                activeTab === index
-                  ? 'bg-white text-[var(--color-gray-800)] shadow-sm'
-                  : 'text-[var(--color-gray-500)] hover:text-[var(--color-gray-700)]'
-              }`}
-            >
-              {tab.name}
-              {tab.badge_text && (
-                <span 
-                  className={`px-1.5 py-0.5 text-xs rounded-full text-white ${
-                    BADGE_COLORS[tab.badge_color || 'orange'] || BADGE_COLORS.orange
+        <div className="relative flex items-center gap-1 mb-8">
+          {/* Left fade + arrow */}
+          <div className="pointer-events-none absolute left-0 top-0 h-full w-8 bg-gradient-to-r from-[var(--color-gray-50)] to-transparent z-10 sm:hidden" />
+          <button
+            onClick={() => {
+              const el = document.getElementById('tour-tabs-scroll');
+              if (el) el.scrollBy({ left: -120, behavior: 'smooth' });
+            }}
+            className="sm:hidden flex-shrink-0 w-7 h-7 rounded-full bg-white shadow border border-gray-200 flex items-center justify-center z-20 text-gray-500"
+            aria-label="Scroll tabs left"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+
+          <div id="tour-tabs-scroll" className="flex-1 overflow-x-auto scrollbar-hide">
+            <div className="inline-flex items-center gap-1 p-1 bg-gray-100 rounded-full min-w-max">
+              {tabs.map((tab, index) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(index)}
+                  className={`relative flex items-center gap-1.5 px-3 sm:px-5 py-2 rounded-full font-medium text-sm transition-all whitespace-nowrap ${
+                    activeTab === index
+                      ? 'bg-white text-[var(--color-gray-800)] shadow-sm'
+                      : 'text-[var(--color-gray-500)] hover:text-[var(--color-gray-700)]'
                   }`}
                 >
-                  {tab.badge_text}
-                </span>
-              )}
-            </button>
-          ))}
+                  {tab.name}
+                  {tab.badge_text && (
+                    <span
+                      className={`px-1.5 py-0.5 text-xs rounded-full text-white ${
+                        BADGE_COLORS[tab.badge_color || 'orange'] || BADGE_COLORS.orange
+                      }`}
+                    >
+                      {tab.badge_text}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Right fade + arrow */}
+          <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-[var(--color-gray-50)] to-transparent z-10 sm:hidden" />
+          <button
+            onClick={() => {
+              const el = document.getElementById('tour-tabs-scroll');
+              if (el) el.scrollBy({ left: 120, behavior: 'smooth' });
+            }}
+            className="sm:hidden flex-shrink-0 w-7 h-7 rounded-full bg-white shadow border border-gray-200 flex items-center justify-center z-20 text-gray-500"
+            aria-label="Scroll tabs right"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Tab Description */}

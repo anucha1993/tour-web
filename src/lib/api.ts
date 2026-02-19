@@ -68,6 +68,10 @@ class ApiClient {
       const data = await response.json();
 
       if (!response.ok) {
+        // Auto-clear invalid token on 401 — let AuthContext/layout handle redirect
+        if (response.status === 401) {
+          this.setToken(null);
+        }
         return {
           success: false,
           message: data.message || 'เกิดข้อผิดพลาด',
@@ -222,6 +226,8 @@ export interface TourTabTour {
   available_seats?: number;
   view_count?: number;
   hotel_star?: number | null;
+  periods_preview?: { start: string; end: string }[];
+  total_periods?: number;
 }
 
 export interface TourTabData {
@@ -755,6 +761,7 @@ export interface InternationalTourFilters {
   cities?: { id: number; name_th: string; country_id: number; country_name: string; tour_count: number }[];
   airlines?: { id: number; code: string; name: string; image: string | null }[];
   departure_months?: { value: string; label: string }[];
+  festivals?: { id: number; name: string; slug: string; badge_text?: string | null; badge_color?: string | null; badge_icon?: string | null; start_date: string; end_date: string }[];
 }
 
 export interface InternationalTourSettings {
@@ -1205,8 +1212,28 @@ export interface BlogPost {
   view_count: number;
   tags: string[] | null;
   reading_time_min: number | null;
+  country_ids: number[] | null;
+  city_ids: number[] | null;
   category?: { id: number; name: string; slug: string } | null;
   created_at: string;
+}
+
+export interface BlogFilterCountry {
+  id: number;
+  name_th: string;
+  name_en: string;
+  iso2: string;
+  region: string | null;
+  flag_emoji: string | null;
+  posts_count: number;
+}
+
+export interface BlogFilterCity {
+  id: number;
+  name_th: string;
+  name_en: string;
+  country_id: number;
+  posts_count: number;
 }
 
 export interface BlogPageSettings {
@@ -1224,7 +1251,7 @@ export const blogApi = {
   getCategories: () =>
     api.get<{ data: BlogCategory[] }>('/blog/categories'),
 
-  getPosts: (params?: { category?: string; tag?: string; featured?: boolean; search?: string; page?: number; per_page?: number }) => {
+  getPosts: (params?: { category?: string; tag?: string; featured?: boolean; search?: string; page?: number; per_page?: number; country_id?: number; city_id?: number }) => {
     const sp = new URLSearchParams();
     if (params?.category) sp.append('category', params.category);
     if (params?.tag) sp.append('tag', params.tag);
@@ -1232,6 +1259,8 @@ export const blogApi = {
     if (params?.search) sp.append('search', params.search);
     if (params?.page) sp.append('page', String(params.page));
     if (params?.per_page) sp.append('per_page', String(params.per_page));
+    if (params?.country_id) sp.append('country_id', String(params.country_id));
+    if (params?.city_id) sp.append('city_id', String(params.city_id));
     const qs = sp.toString();
     return api.get<{ data: BlogPost[]; current_page: number; last_page: number; total: number }>(
       `/blog/posts${qs ? `?${qs}` : ''}`
@@ -1240,6 +1269,9 @@ export const blogApi = {
 
   getPost: (slug: string) =>
     api.get<{ data: BlogPost; related: BlogPost[] }>(`/blog/posts/${slug}`),
+
+  getFilters: () =>
+    api.get<{ success: boolean; countries: BlogFilterCountry[]; cities: BlogFilterCity[] }>('/blog/filters'),
 };
 
 // ===================== About Page =====================
@@ -1523,6 +1555,48 @@ export const memberPointsApi = {
       };
       message: string;
     }>('/web/points/redeem', { points, booking_code: bookingCode }),
+};
+
+// ============================================================
+// Promotion Notifications API
+// ============================================================
+
+export interface PromotionNotification {
+  id: number;
+  title: string;
+  description: string | null;
+  how_to_use: string | null;
+  banner_url: string | null;
+  type: 'promotion' | 'flash_sale' | 'birthday' | 'special' | 'custom';
+  is_read: boolean;
+  is_claimed: boolean;
+  claim_code: string | null;
+  max_claims: number | null;
+  total_claims: number;
+  remaining_claims: number | null;
+  starts_at: string | null;
+  ends_at: string | null;
+  created_at: string;
+}
+
+export const notificationApi = {
+  getAll: () =>
+    api.get<{ data: PromotionNotification[]; unread_count: number }>('/web/notifications'),
+
+  getOne: (id: number) =>
+    api.get<{ data: PromotionNotification }>(`/web/notifications/${id}`),
+
+  getUnreadCount: () =>
+    api.get<{ count: number }>('/web/notifications/unread-count'),
+
+  markRead: (id: number) =>
+    api.post<{ success: boolean }>(`/web/notifications/${id}/read`),
+
+  markAllRead: () =>
+    api.post<{ success: boolean; marked: number }>('/web/notifications/read-all'),
+
+  claim: (id: number) =>
+    api.post<{ success: boolean; is_claimed: boolean; claim_code: string; message: string; limit_reached?: boolean }>(`/web/notifications/${id}/claim`),
 };
 
 export default api;

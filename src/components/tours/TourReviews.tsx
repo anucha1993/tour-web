@@ -223,57 +223,60 @@ export default function TourReviews({
     );
   }
 
+  const ratingLabel = (r: number) => {
+    if (r >= 4.8) return 'ยอดเยี่ยม';
+    if (r >= 4.5) return 'ดีมาก';
+    if (r >= 4.0) return 'ดี';
+    if (r >= 3.5) return 'พอใจ';
+    if (r >= 3.0) return 'ปานกลาง';
+    return 'ต้องปรับปรุง';
+  };
+
   return (
     <div>
       {/* Summary Section */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-5 sm:p-6 mb-6">
-        <div className="flex flex-col sm:flex-row gap-6">
-          {/* Overall Rating */}
-          <div className="text-center sm:text-left flex-shrink-0">
-            <div className="text-5xl font-bold text-gray-900">{summary.average_rating}</div>
-            <StarRating rating={summary.average_rating} size="md" />
-            <p className="text-sm text-gray-500 mt-1">
-              จาก {summary.total_reviews} รีวิว
-            </p>
-          </div>
-
-          {/* Rating Distribution */}
-          <div className="flex-1 space-y-1.5">
-            {[5, 4, 3, 2, 1].map((star) => (
-              <button
-                key={star}
-                onClick={() => onRatingFilter(activeRating === star ? null : star)}
-                className={`w-full transition-opacity ${
-                  activeRating !== null && activeRating !== star ? 'opacity-40' : ''
-                }`}
-              >
-                <RatingBar
-                  star={star}
-                  count={summary.rating_distribution[star] || 0}
-                  total={summary.total_reviews}
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Category Averages */}
-        {Object.keys(summary.category_averages).length > 0 && (
-          <div className="mt-5 pt-5 border-t border-blue-100">
-            <h4 className="text-sm font-medium text-gray-700 mb-3">คะแนนรายหมวด</h4>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {Object.entries(summary.category_averages).map(([key, avg]) => (
-                <div key={key} className="flex items-center justify-between bg-white/60 rounded-lg px-3 py-2">
-                  <span className="text-xs text-gray-600">{CATEGORY_LABELS[key] || key}</span>
-                  <div className="flex items-center gap-1">
-                    <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
-                    <span className="text-sm font-semibold">{avg}</span>
-                  </div>
-                </div>
-              ))}
+      <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-6 mb-6 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-start gap-6 sm:gap-8">
+          {/* Overall Rating — inline style */}
+          <div className="flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <span className="text-5xl font-bold text-gray-900 leading-none">{summary.average_rating}</span>
+              <div>
+                <StarRating rating={summary.average_rating} size="lg" />
+                <div className="text-sm font-semibold text-gray-700 mt-0.5">{ratingLabel(summary.average_rating)}</div>
+              </div>
             </div>
+            <p className="text-xs text-gray-400 mt-2">จาก {summary.total_reviews} รีวิว</p>
           </div>
-        )}
+
+          {/* Divider */}
+          {Object.keys(summary.category_averages).length > 0 && (
+            <div className="hidden sm:block w-px bg-gray-100 self-stretch" />
+          )}
+
+          {/* Category Averages */}
+          {Object.keys(summary.category_averages).length > 0 && (
+            <div className="ml-auto">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2.5">
+                {Object.entries(summary.category_averages).map(([key, avg]) => {
+                  const pct = Math.min(100, (Number(avg) / 5) * 100);
+                  return (
+                    <div key={key} className="flex items-center gap-3">
+                      <span className="text-sm text-gray-600 w-28 shrink-0">{CATEGORY_LABELS[key] || key}</span>
+                      <div className="w-36 h-2 bg-gray-100 rounded-full overflow-hidden shrink-0">
+                        <div
+                          className="h-full bg-orange-400 rounded-full transition-all duration-500"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <span className="text-sm font-semibold text-gray-800 w-8 text-right shrink-0">{avg}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Sort & Filter Bar */}

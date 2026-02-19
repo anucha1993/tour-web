@@ -389,6 +389,7 @@ export default function CountryToursPage() {
     price_min: searchParams.get('price_min') || undefined,
     price_max: searchParams.get('price_max') || undefined,
     min_seats: searchParams.get('min_seats') || undefined,
+    festival_id: searchParams.get('festival_id') || undefined,
   });
   const [sortBy, setSortBy] = useState(searchParams.get('sort_by') || '');
   const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);

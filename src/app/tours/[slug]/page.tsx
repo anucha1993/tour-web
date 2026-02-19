@@ -11,22 +11,144 @@ import {
   Coffee, Sun, Moon, FileText, Download,
   Eye, Sparkles, ShoppingBag, UtensilsCrossed, Gift,
   Check, Minus, AlertCircle, ArrowLeft, Building2,
-  ImageIcon, Play, Video,
+  ImageIcon, Play, Video, BookOpen, ArrowRight,
 } from 'lucide-react';
 import {
   tourDetailApi,
   reviewApi,
+  blogApi,
   TourDetail,
   TourDetailPeriod,
   TourDetailItinerary,
   TourDetailVideo,
   ReviewSummary,
+  BlogPost,
 } from '@/lib/api';
 import FavoriteButton from '@/components/home/FavoriteButton';
 import BookingModal from '@/components/tours/BookingModal';
 import TourTabBadges from '@/components/shared/TourTabBadges';
 import ReviewSection from '@/components/tours/ReviewSection';
 import RelatedToursCarousel from '@/components/tours/RelatedToursCarousel';
+
+// ===== Related Blog Posts Component =====
+function RelatedBlogPosts({ cities, countryName }: {
+  cities: { id: number; name: string; name_en: string; country_id: number }[];
+  countryName: string;
+}) {
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [cityName, setCityName] = useState<string>('');
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (cities.length === 0) return;
+    // Try cities in order until we get posts
+    const tryNext = (idx: number) => {
+      if (idx >= cities.length) { setLoaded(true); return; }
+      const city = cities[idx];
+      blogApi.getPosts({ city_id: city.id, per_page: 6 })
+        .then(res => {
+          const raw = res as unknown as { data: BlogPost[]; total: number };
+          if (raw?.data && raw.data.length > 0) {
+            setPosts(raw.data);
+            setCityName(city.name);
+            setLoaded(true);
+          } else {
+            tryNext(idx + 1);
+          }
+        })
+        .catch(() => tryNext(idx + 1));
+    };
+    tryNext(0);
+  }, [cities]);
+
+  if (!loaded || posts.length === 0) return null;
+
+  const label = cityName || countryName;
+
+  const formatDate = (d: string | null) => {
+    if (!d) return '';
+    return new Date(d).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 mt-8">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-orange-500" />
+            <h2 className="text-lg font-bold text-gray-800">บทความน่าอ่านเกี่ยวกับ {label}</h2>
+          </div>
+          <Link
+            href={`/blog?city=${cityName}`}
+            className="text-sm text-orange-500 hover:text-orange-600 font-medium flex items-center gap-1 transition"
+          >
+            ดูทั้งหมด <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        {/* Post Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {posts.map(post => (
+            <Link key={post.id} href={`/blog/${post.slug}`} className="group">
+              <article className="flex flex-col h-full rounded-xl border border-gray-100 overflow-hidden hover:border-orange-200 hover:shadow-md transition-all duration-300">
+                {/* Cover */}
+                <div className="relative aspect-[16/9] bg-gray-100 overflow-hidden">
+                  {post.cover_image_url ? (
+                    <Image
+                      src={post.cover_image_url}
+                      alt={post.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-100 to-orange-50">
+                      <BookOpen className="w-10 h-10 text-orange-300" />
+                    </div>
+                  )}
+                  {post.is_featured && (
+                    <span className="absolute top-2 left-2 bg-orange-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                      แนะนำ
+                    </span>
+                  )}
+                </div>
+                {/* Content */}
+                <div className="flex flex-col flex-1 p-3">
+                  {post.category && (
+                    <span className="text-xs text-orange-600 font-medium mb-1">{post.category.name}</span>
+                  )}
+                  <h3 className="text-sm font-semibold text-gray-800 line-clamp-2 group-hover:text-orange-600 transition-colors mb-1">
+                    {post.title}
+                  </h3>
+                  {post.excerpt && (
+                    <p className="text-xs text-gray-500 line-clamp-2 flex-1">{post.excerpt}</p>
+                  )}
+                  <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {formatDate(post.published_at)}
+                    </span>
+                    {post.reading_time_min && (
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {post.reading_time_min} นาที
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1">
+                      <Eye className="w-3 h-3" />
+                      {post.view_count.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </article>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ===== Helper Components =====
 
@@ -821,7 +943,7 @@ export default function TourDetailPage() {
   const [tour, setTour] = useState<TourDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<DetailTab>('detail');
+  const [activeTab, setActiveTab] = useState<DetailTab>('periods');
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingPeriod, setBookingPeriod] = useState<TourDetailPeriod | null>(null);
   const [highlightSlideIndex, setHighlightSlideIndex] = useState(0);
@@ -929,8 +1051,8 @@ export default function TourDetailPage() {
   const isAllSoldOut = tour.periods.length === 0 || tour.periods.every(p => p.available === 0 || p.sale_status === 'sold_out');
 
   const TABS: { id: DetailTab; label: string; icon: React.ElementType; count?: number }[] = [
-    { id: 'detail', label: 'รายละเอียดทัวร์', icon: FileText },
     { id: 'periods', label: 'ช่วงเวลาการเดินทาง', icon: Calendar, count: tour.periods.length || undefined },
+    { id: 'detail', label: 'รายละเอียดทัวร์', icon: FileText },
     { id: 'itinerary', label: 'โปรแกรมทัวร์', icon: MapPin, count: tour.itineraries.length || undefined },
     { id: 'conditions', label: 'เงื่อนไข', icon: Shield },
   ];
@@ -1598,6 +1720,14 @@ export default function TourDetailPage() {
           <ReviewSection tourSlug={tour.slug} />
         </div>
       </div>
+
+      {/* ===== Related Blog Posts ===== */}
+      {tour.cities.length > 0 && (
+        <RelatedBlogPosts
+          cities={tour.cities}
+          countryName={tour.primary_country?.name || ''}
+        />
+      )}
 
       {/* ===== Related Tours Carousel ===== */}
       <div className="max-w-7xl mx-auto px-4 mt-8 mb-8">

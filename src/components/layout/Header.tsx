@@ -8,6 +8,7 @@ import { Menu, X, ChevronDown, Phone, Search, Clock, MessageCircle, Facebook, In
 import { useAuth } from '@/contexts/AuthContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { API_URL } from '@/lib/config';
+import NotificationBell from '@/components/layout/NotificationBell';
 
 // Lazy load SearchOverlay - only loaded when user opens search
 const SearchOverlay = dynamic(() => import('@/components/shared/SearchOverlay'), { ssr: false });
@@ -481,6 +482,9 @@ export default function Header() {
                 </span>
               )}
             </button>
+
+            {/* Notification Bell - visible when logged in */}
+            {member && <NotificationBell />}
 
             {/* User/Login button */}
             {!authLoading && (

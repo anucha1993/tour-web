@@ -53,11 +53,14 @@ export default function MemberWishlist() {
     try {
       const response = await wishlistApi.getAll();
       if (response.success) {
-        // Handle different response formats
-        const data = (response as { data?: WishlistItem[], wishlists?: WishlistItem[] }).data 
-          || (response as { wishlists?: WishlistItem[] }).wishlists 
-          || [];
-        setWishlists(Array.isArray(data) ? data : []);
+        // Backend returns paginated: { success, data: { data: [...], current_page, ... } }
+        const paginatedOrArray = (response as any).data;
+        const items: WishlistItem[] = Array.isArray(paginatedOrArray)
+          ? paginatedOrArray
+          : Array.isArray(paginatedOrArray?.data)
+          ? paginatedOrArray.data
+          : [];
+        setWishlists(items);
       }
     } catch (error) {
       console.error("Failed to fetch wishlists:", error);

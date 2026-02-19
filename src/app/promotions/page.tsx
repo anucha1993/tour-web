@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -15,7 +15,8 @@ import {
   Sparkles,
   Search,
 } from 'lucide-react';
-import { tourTabsApi, TourTabData, TourTabTour, InternationalTourFilters } from '@/lib/api';
+import { tourTabsApi, festivalToursApi, internationalToursApi, FestivalHolidayPublic, FestivalBadge, TourTabData, TourTabTour, InternationalTourFilters } from '@/lib/api';
+import FlashSale from '@/components/home/FlashSale';
 import FavoriteButton from '@/components/home/FavoriteButton';
 import TourTabBadges from '@/components/shared/TourTabBadges';
 import TourSearchForm, { SearchParams } from '@/components/shared/TourSearchForm';
@@ -295,20 +296,38 @@ function buildFiltersFromTours(tabs: TourTabData[]): InternationalTourFilters {
 
 export default function PromotionsPage() {
   const [promotionTabs, setPromotionTabs] = useState<TourTabData[]>([]);
+  const [festivals, setFestivals] = useState<FestivalHolidayPublic[]>([]);
+  const [festivalBadges, setFestivalBadges] = useState<FestivalBadge[]>([]);
+  const [allCities, setAllCities] = useState<{ id: number; name_th: string; country_id: number; country_name: string; tour_count: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [activeSearchParams, setActiveSearchParams] = useState<SearchParams>({});
   const [sortBy, setSortBy] = useState<SortOption>('default');
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function fetchPromotions() {
       try {
-        const response = await tourTabsApi.promotions();
-        if (response.success && response.data) {
-          setPromotionTabs(response.data);
-          if (response.data.length > 0) {
-            setActiveSection(response.data[0].slug);
+        const [promoRes, festivalRes, badgeRes, intlRes] = await Promise.all([
+          tourTabsApi.promotions(),
+          festivalToursApi.list(),
+          festivalToursApi.badges(),
+          internationalToursApi.list({ per_page: 1 }),
+        ]);
+        if (promoRes.success && promoRes.data) {
+          setPromotionTabs(promoRes.data);
+          if (promoRes.data.length > 0) {
+            setActiveSection(promoRes.data[0].slug);
           }
+        }
+        if (festivalRes.data) {
+          setFestivals(festivalRes.data);
+        }
+        if (badgeRes.data) {
+          setFestivalBadges(badgeRes.data);
+        }
+        if (intlRes?.filters?.cities) {
+          setAllCities(intlRes.filters.cities);
         }
       } catch (error) {
         console.error('Failed to fetch promotions:', error);
@@ -320,11 +339,33 @@ export default function PromotionsPage() {
     fetchPromotions();
   }, []);
 
-  // Build filters from loaded data for TourSearchForm
-  const filters = useMemo(() => buildFiltersFromTours(promotionTabs), [promotionTabs]);
+  // Build filters from loaded data for TourSearchForm (merge with festivals)
+  const filters = useMemo(() => {
+    const base = buildFiltersFromTours(promotionTabs);
+    return {
+      ...base,
+      cities: allCities,
+      festivals: festivals.map(f => ({
+        id: f.id,
+        name: f.name,
+        slug: f.slug,
+        badge_text: f.badge_text,
+        badge_color: f.badge_color,
+        badge_icon: f.badge_icon,
+        start_date: f.start_date,
+        end_date: f.end_date,
+      })),
+    };
+  }, [promotionTabs, festivals, allCities]);
 
   const handleSearch = (params: SearchParams) => {
     setActiveSearchParams(params);
+    setTimeout(() => {
+      if (resultsRef.current) {
+        const top = resultsRef.current.getBoundingClientRect().top + window.scrollY - 80;
+        window.scrollTo({ top, behavior: 'smooth' });
+      }
+    }, 50);
   };
 
   const clearFilters = () => {
@@ -390,6 +431,28 @@ export default function PromotionsPage() {
       });
     }
 
+    // Festival filter — use exact tour_ids from festival badges API
+    if (p.festival_id) {
+      const festivalId = Number(p.festival_id);
+      // First try to match via festivalBadges (has tour_ids)
+      const badge = festivalBadges.find(fb => fb.id === festivalId);
+      if (badge && badge.tour_ids.length > 0) {
+        filtered = filtered.filter(t => badge.tour_ids.includes(t.id));
+      } else {
+        // Fallback: date overlap if badge data unavailable
+        const festival = festivals.find(f => f.id === festivalId);
+        if (festival) {
+          const festStart = festival.start_date;
+          const festEnd = festival.end_date;
+          filtered = filtered.filter(t => {
+            if (!t.departure_date) return false;
+            const depEnd = t.max_departure_date || t.departure_date;
+            return t.departure_date <= festEnd && depEnd >= festStart;
+          });
+        }
+      }
+    }
+
     // Price range
     if (p.price_min) {
       const min = Number(p.price_min);
@@ -421,7 +484,7 @@ export default function PromotionsPage() {
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23ffffff%22%20fill-opacity%3D%220.4%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E')]" />
         </div>
-        <div className="container mx-auto px-4 pt-10 pb-28 lg:pt-14 lg:pb-36 relative z-10">
+        <div className="container-custom pt-10 pb-28 lg:pt-14 lg:pb-36 relative z-10">
           <div className="text-center text-white">
             <div className="flex items-center justify-center gap-2 mb-3">
               <Sparkles className="w-6 h-6" />
@@ -438,7 +501,7 @@ export default function PromotionsPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6">
+      <div className="container-custom py-6">
         {/* Search Form - overlapping hero */}
         <div className="-mt-24 lg:-mt-30 relative z-20 mb-6">
           {isInitialLoad ? (
@@ -473,7 +536,7 @@ export default function PromotionsPage() {
               showFilters={{
                 search: true,
                 country: true,
-                city: false,
+                city: true,
                 airline: true,
                 departureMonth: true,
                 priceRange: true,
@@ -482,8 +545,13 @@ export default function PromotionsPage() {
           )}
         </div>
 
+        {/* Flash Sale */}
+        <div className="mb-8">
+          <FlashSale />
+        </div>
+
         {/* Results header + Sort */}
-        <div className="flex items-center justify-between mb-4">
+        <div ref={resultsRef} className="flex items-center justify-between mb-4">
           <span className="text-base text-gray-600">
             {loading ? (
               <span className="flex items-center gap-1"><Loader2 className="w-4 h-4 animate-spin" /> กำลังค้นหา...</span>

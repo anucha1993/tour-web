@@ -18,6 +18,7 @@ export interface SearchParams {
   price_max?: string;
   min_seats?: string;
   sort_by?: string;
+  festival_id?: string;
 }
 
 interface TourSearchFormProps {
@@ -82,7 +83,9 @@ export default function TourSearchForm({
   const filters = rawFilters as AnyFilters;
   const [search, setSearch] = useState(initialValues.search || '');
   const [countryId, setCountryId] = useState(initialValues.country_id || '');
-  const [cityId, setCityId] = useState(initialValues.city_id || '');
+  const [cityIds, setCityIds] = useState<string[]>(
+    initialValues.city_id ? initialValues.city_id.split(',').filter(Boolean) : []
+  );
   const [airlineId, setAirlineId] = useState(initialValues.airline_id || '');
   const [dateFrom, setDateFrom] = useState(initialValues.departure_date_from || '');
   const [dateTo, setDateTo] = useState(initialValues.departure_date_to || '');
@@ -90,6 +93,7 @@ export default function TourSearchForm({
   const [priceMin, setPriceMin] = useState(initialValues.price_min || '');
   const [priceMax, setPriceMax] = useState(initialValues.price_max || '');
   const [minSeats, setMinSeats] = useState(initialValues.min_seats || '');
+  const [festivalId, setFestivalId] = useState(initialValues.festival_id || '');
   const [selectedMonths, setSelectedMonths] = useState<string[]>(
     initialValues.departure_month ? [initialValues.departure_month] : []
   );
@@ -171,7 +175,7 @@ export default function TourSearchForm({
 
   const handleCountryChange = (val: string) => {
     setCountryId(val);
-    setCityId('');
+    setCityIds([]);
   };
 
   const toggleMonth = (m: string) => {
@@ -191,7 +195,7 @@ export default function TourSearchForm({
     const p: SearchParams = {};
     if (search.trim()) p.search = search.trim();
     if (countryId) p.country_id = countryId;
-    if (cityId) p.city_id = cityId;
+    if (cityIds.length > 0) p.city_id = cityIds.join(',');
     if (airlineId) p.airline_id = airlineId;
     if (dateFrom) p.departure_date_from = dateFrom;
     if (dateTo) p.departure_date_to = dateTo;
@@ -199,18 +203,19 @@ export default function TourSearchForm({
     if (priceMin) p.price_min = priceMin;
     if (priceMax) p.price_max = priceMax;
     if (minSeats) p.min_seats = minSeats;
+    if (festivalId) p.festival_id = festivalId;
     return p;
   };
 
   const handleSearch = () => { setShowMonthDrop(false); onSearch(buildParams()); };
   const handleClear = () => {
-    setSearch(''); setCountryId(''); setCityId(''); setAirlineId('');
+    setSearch(''); setCountryId(''); setCityIds([]); setAirlineId('');
     setDateFrom(''); setDateTo(''); setReturnDate('');
     setPriceMin(''); setPriceMax(''); setMinSeats('');
-    setSelectedMonths([]); onClear();
+    setSelectedMonths([]); setFestivalId(''); onClear();
   };
 
-  const hasActive = [search, countryId, cityId, airlineId, dateFrom, dateTo, returnDate, priceMin, priceMax, minSeats].some(Boolean);
+  const hasActive = [search, countryId, cityIds.length > 0 ? '1' : '', airlineId, dateFrom, dateTo, returnDate, priceMin, priceMax, minSeats, festivalId].some(Boolean);
   const advancedCount = [dateFrom && !selectedMonths.length ? dateFrom : '', dateTo && !selectedMonths.length ? dateTo : '', returnDate, priceMin, priceMax, minSeats].filter(Boolean).length;
 
   const monthLabel = selectedMonths.length > 0
@@ -456,25 +461,57 @@ export default function TourSearchForm({
       {/* ═══ City badges (เมื่อเลือกประเทศแล้ว หรือเมื่อซ่อน country filter) ═══ */}
       {show.city && (countryId || !show.country) && filteredCities.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
-          {filteredCities.map(c => (
+          {filteredCities.map(c => {
+            const isSelected = cityIds.includes(String(c.id));
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => {
+                  const newIds = isSelected
+                    ? cityIds.filter(id => id !== String(c.id))
+                    : [...cityIds, String(c.id)];
+                  setCityIds(newIds);
+                  const p = buildParams();
+                  if (newIds.length > 0) p.city_id = newIds.join(','); else delete p.city_id;
+                  onSearch(p);
+                }}
+                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                  isSelected
+                    ? 'bg-orange-500 text-white border-orange-500'
+                    : 'bg-white text-orange-600 border-orange-300 hover:bg-orange-50'
+                }`}
+              >
+                {c.name_th}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ═══ Festival / Holiday badges ═══ */}
+      {(filters.festivals ?? []).length > 0 && (
+        <div className="flex flex-wrap gap-1.5 items-center">
+          <span className="text-xs text-gray-400">🎉 เทศกาล:</span>
+          {(filters.festivals ?? []).map((f) => (
             <button
-              key={c.id}
+              key={f.id}
               type="button"
               onClick={() => {
-                const newCityId = cityId === String(c.id) ? '' : String(c.id);
-                setCityId(newCityId);
-                // trigger search ทันทีเมื่อกด badge
+                const newId = festivalId === String(f.id) ? '' : String(f.id);
+                setFestivalId(newId);
                 const p = buildParams();
-                if (newCityId) p.city_id = newCityId; else delete p.city_id;
+                if (newId) p.festival_id = newId; else delete p.festival_id;
                 onSearch(p);
               }}
               className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                cityId === String(c.id)
-                  ? 'bg-orange-500 text-white border-orange-500'
-                  : 'bg-white text-orange-600 border-orange-300 hover:bg-orange-50'
+                festivalId === String(f.id)
+                  ? 'bg-purple-500 text-white border-purple-500'
+                  : 'bg-white text-purple-600 border-purple-300 hover:bg-purple-50'
               }`}
             >
-              {c.name_th}
+              {f.badge_icon && <span className="mr-1">{f.badge_icon}</span>}
+              {f.badge_text || f.name}
             </button>
           ))}
         </div>
