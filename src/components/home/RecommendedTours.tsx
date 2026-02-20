@@ -143,7 +143,18 @@ function RecommendedTourCard({ tour, index }: { tour: TourTabTour; index: number
         </div>
 
         {/* Price */}
-        <div className="mt-3 pt-3 border-t border-gray-100 flex items-end justify-between">
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          {!isSoldOut && tour.active_promotions && tour.active_promotions.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-1.5">
+              {tour.active_promotions.map((promo, i) => (
+                <span key={i} className="inline-flex items-center gap-0.5 text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded">
+                  <Sparkles className="w-3 h-3" />
+                  {promo.name}
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="flex items-end justify-between">
           <div>
             <p className="text-[10px] uppercase tracking-wider text-gray-400 mb-0.5">เริ่มต้น</p>
             {originalPrice && discountAdult > 0 ? (
@@ -171,6 +182,7 @@ function RecommendedTourCard({ tour, index }: { tour: TourTabTour; index: number
               ดูรายละเอียด
               <ArrowRight className="w-3.5 h-3.5" />
             </span>
+          </div>
           </div>
         </div>
       </div>

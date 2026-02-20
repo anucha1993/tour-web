@@ -29,6 +29,7 @@ import BookingModal from '@/components/tours/BookingModal';
 import TourTabBadges from '@/components/shared/TourTabBadges';
 import ReviewSection from '@/components/tours/ReviewSection';
 import RelatedToursCarousel from '@/components/tours/RelatedToursCarousel';
+import { useTourBadges } from '@/contexts/TourBadgesContext';
 
 // ===== Related Blog Posts Component =====
 function RelatedBlogPosts({ cities, countryName }: {
@@ -467,9 +468,10 @@ function VideoReviewSection({ videos }: { videos: TourDetailVideo[] }) {
 }
 
 // ===== Period / Price Table =====
-function PeriodTable({ periods, onBookPeriod }: { periods: TourDetailPeriod[]; onBookPeriod?: (period: TourDetailPeriod) => void }) {
+function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPeriod[]; onBookPeriod?: (period: TourDetailPeriod) => void; tourId: number }) {
   const [expanded, setExpanded] = useState(false);
   const display = expanded ? periods : periods.slice(0, 6);
+  const { getPeriodBadges } = useTourBadges();
 
   if (periods.length === 0) {
     return (
@@ -538,24 +540,50 @@ function PeriodTable({ periods, onBookPeriod }: { periods: TourDetailPeriod[]; o
                       {' - '}
                       {endD.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}
                     </div>
-                    {isPromoActive(offer) && (
-                      <div className="flex items-center gap-1 mt-1">
-                        <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">
-                          <Sparkles className="w-3 h-3" />
-                          {offer!.promo_name}
-                        </span>
-                        {(offer!.promo_start_date || offer!.promo_end_date) && (
-                          <span className="text-xs text-gray-400">
-                            {offer!.promo_start_date && offer!.promo_end_date
-                              ? `${formatPromoDate(offer!.promo_start_date)} - ${formatPromoDate(offer!.promo_end_date)}`
-                              : offer!.promo_end_date
-                                ? `ถึง ${formatPromoDate(offer!.promo_end_date)}`
-                                : `ตั้งแต่ ${formatPromoDate(offer!.promo_start_date!)}`
-                            }
-                          </span>
-                        )}
-                      </div>
-                    )}
+                    {(() => {
+                      const periodBadges = getPeriodBadges(tourId, offer?.discount_adult || 0, period.id);
+                      const hasPromo = isPromoActive(offer);
+                      if (!hasPromo && periodBadges.length === 0) return null;
+                      return (
+                        <div className="flex flex-wrap items-center gap-1 mt-1">
+                          {hasPromo && (
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-full px-2 py-0.5">
+                              <Sparkles className="w-3 h-3" />
+                              {offer!.promo_name}
+                            </span>
+                          )}
+                          {periodBadges.map((badge, bi) => (
+                            <span
+                              key={bi}
+                              className={`inline-flex items-center gap-0.5 text-xs font-bold text-white px-2 py-0.5 rounded-full ${
+                                {
+                                  red: 'bg-gradient-to-r from-red-600 to-orange-500',
+                                  orange: 'bg-gradient-to-r from-orange-500 to-yellow-400 !text-yellow-900',
+                                  yellow: 'bg-gradient-to-r from-amber-400 to-yellow-300 !text-yellow-900',
+                                  green: 'bg-gradient-to-r from-green-500 to-emerald-400',
+                                  blue: 'bg-gradient-to-r from-blue-500 to-cyan-400',
+                                  purple: 'bg-gradient-to-r from-purple-500 to-pink-400',
+                                  pink: 'bg-gradient-to-r from-pink-500 to-rose-400',
+                                }[badge.color] || 'bg-gray-500'
+                              }`}
+                            >
+                              {badge.icon && <span>{badge.icon}</span>}
+                              {badge.text}
+                            </span>
+                          ))}
+                          {hasPromo && (offer!.promo_start_date || offer!.promo_end_date) && (
+                            <span className="text-xs text-gray-400">
+                              {offer!.promo_start_date && offer!.promo_end_date
+                                ? `${formatPromoDate(offer!.promo_start_date)} - ${formatPromoDate(offer!.promo_end_date)}`
+                                : offer!.promo_end_date
+                                  ? `ถึง ${formatPromoDate(offer!.promo_end_date)}`
+                                  : `ตั้งแต่ ${formatPromoDate(offer!.promo_start_date!)}`
+                              }
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-3 text-right">
                     {offer ? (
@@ -629,24 +657,50 @@ function PeriodTable({ periods, onBookPeriod }: { periods: TourDetailPeriod[]; o
                   {statusLabels[effectiveStatus] || effectiveStatus}
                 </span>
               </div>
-              {isPromoActive(offer) && (
-                <div className="flex items-center gap-1.5 mb-2">
-                  <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">
-                    <Sparkles className="w-3 h-3" />
-                    {offer!.promo_name}
-                  </span>
-                  {(offer!.promo_start_date || offer!.promo_end_date) && (
-                    <span className="text-xs text-gray-400">
-                      {offer!.promo_start_date && offer!.promo_end_date
-                        ? `${formatPromoDate(offer!.promo_start_date)} - ${formatPromoDate(offer!.promo_end_date)}`
-                        : offer!.promo_end_date
-                          ? `ถึง ${formatPromoDate(offer!.promo_end_date)}`
-                          : `ตั้งแต่ ${formatPromoDate(offer!.promo_start_date!)}`
-                      }
-                    </span>
-                  )}
-                </div>
-              )}
+              {(() => {
+                const periodBadges = getPeriodBadges(tourId, offer?.discount_adult || 0, period.id);
+                const hasPromo = isPromoActive(offer);
+                if (!hasPromo && periodBadges.length === 0) return null;
+                return (
+                  <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                    {hasPromo && (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-full px-2 py-0.5">
+                        <Sparkles className="w-3 h-3" />
+                        {offer!.promo_name}
+                      </span>
+                    )}
+                    {periodBadges.map((badge, bi) => (
+                      <span
+                        key={bi}
+                        className={`inline-flex items-center gap-0.5 text-xs font-bold text-white px-2 py-0.5 rounded-full ${
+                          {
+                            red: 'bg-gradient-to-r from-red-600 to-orange-500',
+                            orange: 'bg-gradient-to-r from-orange-500 to-yellow-400 !text-yellow-900',
+                            yellow: 'bg-gradient-to-r from-amber-400 to-yellow-300 !text-yellow-900',
+                            green: 'bg-gradient-to-r from-green-500 to-emerald-400',
+                            blue: 'bg-gradient-to-r from-blue-500 to-cyan-400',
+                            purple: 'bg-gradient-to-r from-purple-500 to-pink-400',
+                            pink: 'bg-gradient-to-r from-pink-500 to-rose-400',
+                          }[badge.color] || 'bg-gray-500'
+                        }`}
+                      >
+                        {badge.icon && <span>{badge.icon}</span>}
+                        {badge.text}
+                      </span>
+                    ))}
+                    {hasPromo && (offer!.promo_start_date || offer!.promo_end_date) && (
+                      <span className="text-xs text-gray-400">
+                        {offer!.promo_start_date && offer!.promo_end_date
+                          ? `${formatPromoDate(offer!.promo_start_date)} - ${formatPromoDate(offer!.promo_end_date)}`
+                          : offer!.promo_end_date
+                            ? `ถึง ${formatPromoDate(offer!.promo_end_date)}`
+                            : `ตั้งแต่ ${formatPromoDate(offer!.promo_start_date!)}`
+                        }
+                      </span>
+                    )}
+                  </div>
+                );
+              })()}
               {offer ? (
                 <div className="flex items-end justify-between">
                   <div>
@@ -1692,7 +1746,7 @@ export default function TourDetailPage() {
 
               {/* ---- Periods Tab ---- */}
               {activeTab === 'periods' && (
-                <PeriodTable periods={tour.periods} onBookPeriod={(period) => { setBookingPeriod(period); setBookingOpen(true); }} />
+                <PeriodTable periods={tour.periods} tourId={tour.id} onBookPeriod={(period) => { setBookingPeriod(period); setBookingOpen(true); }} />
               )}
 
               {/* ---- Itinerary Tab ---- */}

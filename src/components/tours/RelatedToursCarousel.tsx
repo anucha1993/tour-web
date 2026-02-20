@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
   MapPin, Calendar, Star, Plane, ChevronLeft, ChevronRight,
-  Eye, Hotel, Clock,
+  Eye, Hotel, Clock, Sparkles,
 } from 'lucide-react';
 import { tourDetailApi, TourTabTour } from '@/lib/api';
 import FavoriteButton from '@/components/home/FavoriteButton';
@@ -155,6 +155,16 @@ function RelatedTourCard({ tour }: { tour: TourTabTour }) {
 
         {/* Price - pushed to bottom */}
         <div className="mt-auto pt-2.5">
+          {!isSoldOut && tour.active_promotions && tour.active_promotions.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-1.5">
+              {tour.active_promotions.map((promo, i) => (
+                <span key={i} className="inline-flex items-center gap-0.5 text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded">
+                  <Sparkles className="w-3 h-3" />
+                  {promo.name}
+                </span>
+              ))}
+            </div>
+          )}
           <div className="flex items-end justify-between border-t border-gray-100 pt-2.5">
             <div>
               <p className="text-[10px] text-[var(--color-gray-400)] uppercase tracking-wider mb-0.5">เริ่มต้น</p>

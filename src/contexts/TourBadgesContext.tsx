@@ -80,33 +80,21 @@ export function TourBadgesProvider({ children }: { children: ReactNode }) {
 
   const getPeriodBadges = (tourId: number, discountAdult: number, periodId?: number): BadgeInfo[] => {
     const badges: BadgeInfo[] = [];
-    // Tour tab badges
+    // Tour tab badges — if tour is in the tab's list, show badge on all periods
     for (const tab of badgeTabs) {
       if (!tab.tour_ids.includes(tourId)) continue;
-      const isPeriodMode = tab.display_modes?.includes('period');
-      const hasCondition = tab.discount_min_amount && tab.discount_min_amount > 0;
-      if (hasCondition) {
-        if (discountAdult >= tab.discount_min_amount!) {
-          badges.push({
-            text: tab.badge_text,
-            color: tab.badge_color,
-            icon: tab.badge_icon || undefined,
-          });
-        }
-      } else if (isPeriodMode) {
-        badges.push({
-          text: tab.badge_text,
-          color: tab.badge_color,
-          icon: tab.badge_icon || undefined,
-        });
-      }
+      badges.push({
+        text: tab.badge_text,
+        color: tab.badge_color,
+        icon: tab.badge_icon || undefined,
+      });
     }
-    // Festival badges (period mode)
+    // Festival badges (period + card mode)
     for (const festival of festivalBadges) {
       if (!festival.badge_text) continue;
-      if (!festival.display_modes?.includes('period')) continue;
+      if (!festival.display_modes?.includes('period') && !festival.display_modes?.includes('card')) continue;
       if (!festival.tour_ids.includes(tourId)) continue;
-      // If periodId provided, check against matching period_ids
+      // If periodId provided and festival has specific period_ids, check match
       if (periodId && festival.period_ids.length > 0) {
         if (festival.period_ids.includes(periodId)) {
           badges.push({
@@ -115,8 +103,16 @@ export function TourBadgesProvider({ children }: { children: ReactNode }) {
             icon: festival.badge_icon || undefined,
           });
         }
-      } else if (!periodId) {
-        // No periodId provided, show if tour matches
+        // If period not in the list, still show if festival is in card mode (tour-level)
+        else if (festival.display_modes?.includes('card')) {
+          badges.push({
+            text: festival.badge_text,
+            color: festival.badge_color,
+            icon: festival.badge_icon || undefined,
+          });
+        }
+      } else {
+        // No specific period_ids or no periodId — show if tour matches
         badges.push({
           text: festival.badge_text,
           color: festival.badge_color,

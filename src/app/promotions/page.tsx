@@ -175,6 +175,16 @@ function PromotionTourCard({ tour, tabBadge }: { tour: TourTabTour; tabBadge?: {
         )}
 
         <div className="mt-2 pt-2 border-t border-gray-100">
+          {!isSoldOut && tour.active_promotions && tour.active_promotions.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-1.5">
+              {tour.active_promotions.map((promo, i) => (
+                <span key={i} className="inline-flex items-center gap-0.5 text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded">
+                  <Sparkles className="w-3 h-3" />
+                  {promo.name}
+                </span>
+              ))}
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-[var(--color-gray-500)]">เริ่มต้น</p>

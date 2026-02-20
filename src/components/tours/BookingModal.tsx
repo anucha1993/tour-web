@@ -5,7 +5,7 @@ import {
   X, Minus as MinusIcon, Plus, Phone,
   Loader2, CheckCircle2, AlertCircle, ChevronDown,
 } from 'lucide-react';
-import { bookingApi, TourDetail, TourDetailPeriod } from '@/lib/api';
+import { bookingApi, BookingResponse, TourDetail, TourDetailPeriod } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface BookingModalProps {
@@ -52,7 +52,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
   // Submit state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
-  const [debugResponse, setDebugResponse] = useState<Record<string, unknown> | null>(null);
+  const [bookingResult, setBookingResult] = useState<BookingResponse | null>(null);
   const [isOtpLoading, setIsOtpLoading] = useState(false);
 
   // Pre-fill for logged-in members
@@ -177,7 +177,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
       });
 
       if (res.success) {
-        setDebugResponse(res.booking_data as Record<string, unknown>);
+        setBookingResult(res.booking);
       } else {
         setSubmitError(res.message || 'เกิดข้อผิดพลาดในการจอง');
       }
@@ -273,7 +273,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
   ];
 
   return (
-    <div className="fixed inset-0 z-500 flex items-start justify-center overflow-y-auto py-4 sm:py-6" onClick={onClose}>
+    <div className="fixed inset-0 z-500 flex items-start justify-center overflow-y-auto pt-28 sm:pt-32 pb-4 sm:pb-6" onClick={onClose}>
       {/* Backdrop */}
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm pointer-events-none" />
 
@@ -306,25 +306,35 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
           </div>
         )}
 
-        {/* Debug Response overlay */}
-        {debugResponse && (
+        {/* Booking Success overlay */}
+        {bookingResult && (
           <div className="absolute inset-0 z-10 bg-white rounded-2xl flex flex-col">
             <div className="bg-green-500 px-6 py-4 rounded-t-2xl flex items-center justify-between">
               <div className="flex items-center gap-2 text-white">
                 <CheckCircle2 className="w-5 h-5" />
-                <h3 className="font-bold">DEBUG: ข้อมูลการจองทัวร์</h3>
+                <h3 className="font-bold">จองทัวร์สำเร็จ!</h3>
               </div>
-              <button onClick={() => { setDebugResponse(null); onClose(); }} className="text-white/80 hover:text-white cursor-pointer">
+              <button onClick={() => { setBookingResult(null); onClose(); }} className="text-white/80 hover:text-white cursor-pointer">
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <div className="flex-1 overflow-auto p-6">
-              <pre className="text-xs bg-gray-50 p-4 rounded-lg overflow-auto whitespace-pre-wrap font-mono mb-4">
-                {JSON.stringify(debugResponse, null, 2)}
-              </pre>
+            <div className="flex-1 overflow-auto p-6 flex flex-col items-center justify-center text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <CheckCircle2 className="w-10 h-10 text-green-500" />
+              </div>
+              <h4 className="text-lg font-bold text-gray-800 mb-1">รหัสการจอง</h4>
+              <div className="text-2xl font-mono font-bold text-green-600 mb-3">{bookingResult.booking_code}</div>
+              <p className="text-gray-600 text-sm mb-1">{bookingResult.tour_title}</p>
+              <p className="text-xs text-gray-500 mb-3">{bookingResult.period}</p>
+              <div className="bg-gray-50 rounded-xl px-5 py-2 inline-flex items-center gap-2">
+                <span className="text-gray-500 text-sm">ยอดรวม</span>
+                <span className="text-lg font-bold text-orange-500">฿{Number(bookingResult.total_amount).toLocaleString()}</span>
+              </div>
+              <p className="text-sm text-gray-500 mt-3">สถานะ: <span className="font-semibold text-orange-500">{bookingResult.status_label}</span></p>
+              <p className="text-xs text-gray-400 mt-2">กรุณารอเจ้าหน้าที่ติดต่อกลับเพื่อยืนยันการจอง</p>
               <button
-                onClick={() => { setDebugResponse(null); onClose(); }}
-                className="w-full py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition cursor-pointer"
+                onClick={() => { setBookingResult(null); onClose(); }}
+                className="mt-5 w-full max-w-xs py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition cursor-pointer"
               >
                 ปิด
               </button>

@@ -228,6 +228,7 @@ export interface TourTabTour {
   hotel_star?: number | null;
   periods_preview?: { start: string; end: string }[];
   total_periods?: number;
+  active_promotions?: { name: string; start_date: string | null; end_date: string | null }[];
 }
 
 export interface TourTabData {
@@ -488,6 +489,18 @@ export interface Member {
 }
 
 // Booking API
+// Booking response type
+export interface BookingResponse {
+  id: number;
+  booking_code: string;
+  tour_title: string;
+  period: string;
+  flash_price?: number;
+  total_amount: number;
+  status: string;
+  status_label: string;
+}
+
 export const bookingApi = {
   // Request OTP for booking (guest only)
   requestOtp: (phone: string) =>
@@ -497,7 +510,7 @@ export const bookingApi = {
   verifyOtp: (otp_request_id: number, otp: string) =>
     api.post<{ phone_msisdn: string }>('/web/booking/verify-otp', { otp_request_id, otp }),
 
-  // Submit booking (debug mode)
+  // Submit regular booking
   submit: (data: {
     tour_id: number;
     period_id: number;
@@ -514,7 +527,26 @@ export const bookingApi = {
     consent_terms: boolean;
     otp_request_id?: number;
     otp_verified?: boolean;
-  }) => api.post<{ debug: boolean; booking_data: Record<string, unknown> }>('/web/booking/submit', data),
+  }) => api.post<{ booking: BookingResponse }>('/web/booking/submit', data),
+
+  // Submit flash sale booking (requires auth)
+  submitFlashSale: (data: {
+    flash_sale_item_id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone: string;
+    qty_adult: number;
+    qty_adult_single: number;
+    qty_child_bed: number;
+    qty_child_nobed: number;
+    special_request?: string;
+    consent_terms: boolean;
+  }) => api.post<{ booking: BookingResponse }>('/web/booking/flash-sale', data),
+
+  // Get my bookings
+  myBookings: (page = 1) =>
+    api.get<{ data: { data: BookingResponse[] } }>(`/web/bookings?page=${page}`),
 };
 
 // ===================== Tour Reviews =====================
@@ -1364,6 +1396,8 @@ export const aboutApi = {
 
 export interface FlashSalePublicItem {
   id: number;
+  flash_sale_item_id: number;
+  period_id: number;
   slug: string;
   title: string;
   tour_code: string;

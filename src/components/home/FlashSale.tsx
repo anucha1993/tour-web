@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -10,8 +10,11 @@ import {
   Calendar,
   Plane,
   ExternalLink,
+  ShoppingCart,
 } from 'lucide-react';
 import { flashSaleApi, FlashSalePublic, FlashSalePublicItem } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
+import FlashSaleBookingModal from './FlashSaleBookingModal';
 
 // ─── Countdown Timer Hook ───
 function useCountdown(endDate: string) {
@@ -121,7 +124,7 @@ function formatDateThai(dateStr: string) {
 }
 
 // ─── Table Row ───
-function FlashRow({ item, index }: { item: FlashSalePublicItem; index: number }) {
+function FlashRow({ item, index, onBook }: { item: FlashSalePublicItem; index: number; onBook: (item: FlashSalePublicItem) => void }) {
   const router = useRouter();
   const flashPrice = Number(item.flash_price);
   const originalPrice = Number(item.original_price_snapshot || item.original_price || 0);
@@ -129,16 +132,15 @@ function FlashRow({ item, index }: { item: FlashSalePublicItem; index: number })
 
   return (
     <tr
-      onClick={() => router.push(`/tours/${item.slug}`)}
-      className={`group cursor-pointer ${item.is_sold_out ? 'opacity-60' : ''}`}
+      className={`group ${item.is_sold_out ? 'opacity-60' : ''}`}
     >
       {/* Row number */}
       <td className="px-2 py-2.5 text-center text-xs text-gray-400 border-b border-gray-100 group-hover:bg-orange-50/50 transition-colors">
         {index + 1}
       </td>
 
-      {/* Tour: Image + Title + Code */}
-      <td className="px-2 py-2.5 border-b border-gray-100 group-hover:bg-orange-50/50 transition-colors">
+      {/* Tour: Image + Title + Code — clickable to tour detail */}
+      <td className="px-2 py-2.5 border-b border-gray-100 group-hover:bg-orange-50/50 transition-colors cursor-pointer" onClick={() => router.push(`/tours/${item.slug}`)}>
         <div className="flex items-center gap-2.5">
           <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
             {item.image_url ? (
@@ -242,32 +244,39 @@ function FlashRow({ item, index }: { item: FlashSalePublicItem; index: number })
 
       {/* Action */}
       <td className="px-2 py-2.5 border-b border-gray-100 group-hover:bg-orange-50/50 transition-colors text-center">
-        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-red-50 text-red-500 group-hover:bg-red-500 group-hover:text-white transition-colors">
-          <ExternalLink className="w-3.5 h-3.5" />
-        </span>
+        {item.is_sold_out ? (
+          <span className="text-[10px] text-gray-400 font-semibold">SOLD OUT</span>
+        ) : (
+          <button
+            onClick={(e) => { e.stopPropagation(); onBook(item); }}
+            className="inline-flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs font-bold rounded-full hover:from-red-600 hover:to-orange-600 transition shadow-sm cursor-pointer whitespace-nowrap"
+          >
+            <ShoppingCart className="w-3 h-3" />
+            จองเลย
+          </button>
+        )}
       </td>
     </tr>
   );
 }
 
 // ─── Mobile Card Row (stacked layout for small screens) ───
-function MobileFlashRow({ item, index }: { item: FlashSalePublicItem; index: number }) {
+function MobileFlashRow({ item, index, onBook }: { item: FlashSalePublicItem; index: number; onBook: (item: FlashSalePublicItem) => void }) {
   const flashPrice = Number(item.flash_price);
   const originalPrice = Number(item.original_price_snapshot || item.original_price || 0);
   const discountPercent = Number(item.discount_percent || 0);
 
   return (
-    <Link
-      href={`/tours/${item.slug}`}
-      className={`flex items-center gap-3 px-3 py-3 border-b border-gray-100 hover:bg-orange-50/50 transition-colors ${
+    <div
+      className={`flex items-center gap-3 px-3 py-3 border-b border-gray-100 ${
         item.is_sold_out ? 'opacity-60' : ''
       }`}
     >
       {/* Index */}
       <span className="text-xs text-gray-400 w-5 text-center flex-shrink-0">{index + 1}</span>
 
-      {/* Thumbnail */}
-      <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+      {/* Thumbnail — link to tour */}
+      <Link href={`/tours/${item.slug}`} className="relative w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
         {item.image_url ? (
           <Image src={item.image_url} alt={item.title} fill className="object-cover" sizes="56px" />
         ) : (
@@ -280,10 +289,10 @@ function MobileFlashRow({ item, index }: { item: FlashSalePublicItem; index: num
             <span className="text-[7px] font-bold text-white">SOLD</span>
           </div>
         )}
-      </div>
+      </Link>
 
       {/* Info */}
-      <div className="flex-1 min-w-0">
+      <Link href={`/tours/${item.slug}`} className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-gray-800 line-clamp-1">{item.title}</p>
         <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-gray-400">
           <span className="font-mono">{item.tour_code}</span>
@@ -296,12 +305,12 @@ function MobileFlashRow({ item, index }: { item: FlashSalePublicItem; index: num
             <RowCountdown endDate={item.flash_end_date} />
           </div>
         )}
-      </div>
+      </Link>
 
-      {/* Price */}
-      <div className="text-right flex-shrink-0">
+      {/* Price + Book button */}
+      <div className="text-right flex-shrink-0 flex flex-col items-end gap-1">
         {discountPercent > 0 && (
-          <span className="inline-block bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full mb-0.5">
+          <span className="inline-block bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
             -{discountPercent}%
           </span>
         )}
@@ -309,8 +318,17 @@ function MobileFlashRow({ item, index }: { item: FlashSalePublicItem; index: num
           <p className="text-[10px] text-gray-400 line-through">฿{originalPrice.toLocaleString()}</p>
         )}
         <p className="text-sm font-bold text-red-500">฿{flashPrice.toLocaleString()}</p>
+        {!item.is_sold_out && (
+          <button
+            onClick={() => onBook(item)}
+            className="mt-0.5 inline-flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold rounded-full hover:from-red-600 hover:to-orange-600 transition cursor-pointer"
+          >
+            <ShoppingCart className="w-2.5 h-2.5" />
+            จองเลย
+          </button>
+        )}
       </div>
-    </Link>
+    </div>
   );
 }
 
@@ -318,6 +336,10 @@ function MobileFlashRow({ item, index }: { item: FlashSalePublicItem; index: num
 export default function FlashSale() {
   const [flashSales, setFlashSales] = useState<FlashSalePublic[]>([]);
   const [loading, setLoading] = useState(true);
+  const [bookingItem, setBookingItem] = useState<FlashSalePublicItem | null>(null);
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -333,6 +355,15 @@ export default function FlashSale() {
     };
     fetchData();
   }, []);
+
+  // Auth gate: if not logged in → redirect to login with return URL
+  const handleBook = (item: FlashSalePublicItem) => {
+    if (!isAuthenticated) {
+      router.push(`/login?redirect=${encodeURIComponent(pathname || '/')}&flash_booking=1`);
+      return;
+    }
+    setBookingItem(item);
+  };
 
   // Don't render anything if no flash sales - no skeleton needed since this is below fold
   if (!loading && flashSales.length === 0) return null;
@@ -397,7 +428,7 @@ export default function FlashSale() {
                   </thead>
                   <tbody>
                     {sale.items.map((item, idx) => (
-                      <FlashRow key={`${item.id}-${item.period_start_date}`} item={item} index={idx} />
+                      <FlashRow key={`${item.id}-${item.period_start_date}`} item={item} index={idx} onBook={handleBook} />
                     ))}
                   </tbody>
                 </table>
@@ -413,7 +444,7 @@ export default function FlashSale() {
             <div className="sm:hidden bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="max-h-[480px] overflow-y-auto">
                 {sale.items.map((item, idx) => (
-                  <MobileFlashRow key={`${item.id}-${item.period_start_date}`} item={item} index={idx} />
+                  <MobileFlashRow key={`${item.id}-${item.period_start_date}`} item={item} index={idx} onBook={handleBook} />
                 ))}
               </div>
               {sale.items.length > 10 && (
@@ -425,6 +456,15 @@ export default function FlashSale() {
           </div>
         </section>
       ))}
+
+      {/* Flash Sale Booking Modal */}
+      {bookingItem && (
+        <FlashSaleBookingModal
+          item={bookingItem}
+          isOpen={!!bookingItem}
+          onClose={() => setBookingItem(null)}
+        />
+      )}
     </>
   );
 }
