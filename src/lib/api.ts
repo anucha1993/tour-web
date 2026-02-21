@@ -226,7 +226,14 @@ export interface TourTabTour {
   available_seats?: number;
   view_count?: number;
   hotel_star?: number | null;
-  periods_preview?: { start: string; end: string }[];
+  periods_preview?: { 
+    start: string; 
+    end: string; 
+    price_adult?: number | null; 
+    net_price_adult?: number | null; 
+    discount_adult?: number | null;
+    available?: number;
+  }[];
   total_periods?: number;
   active_promotions?: { name: string; start_date: string | null; end_date: string | null }[];
 }

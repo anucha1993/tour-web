@@ -131,29 +131,47 @@ function TourCard({ tour }: { tour: TourTabTour }) {
           )}
         </div>
 
-        {/* Departure periods */}
+        {/* Departure periods - Table format */}
         {tour.periods_preview && tour.periods_preview.length > 0 ? (
-          <div className="mt-1.5">
-            <div className="flex flex-wrap gap-1">
-              {tour.periods_preview.map((p) => {
-                const startFmt = new Date(p.start + 'T12:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
-                const endFmt = p.end && p.end !== p.start ? new Date(p.end + 'T12:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }) : null;
-                const label = endFmt ? `📅 ${startFmt} - ${endFmt}` : `📅 ${startFmt}`;
-                return (
-                  <span
-                    key={p.start}
-                    className="inline-flex items-center text-[10px] font-medium bg-blue-50 text-blue-600 border border-blue-100 rounded px-1.5 py-0.5"
-                  >
-                    {label}
-                  </span>
-                );
-              })}
-              {(tour.total_periods ?? 0) > (tour.periods_preview?.length ?? 0) && (
-                <span className="inline-flex items-center text-[10px] font-medium bg-gray-100 text-gray-500 border border-gray-200 rounded px-1.5 py-0.5">
-                  +{(tour.total_periods ?? 0) - (tour.periods_preview?.length ?? 0)} รอบ
+          <div className="mt-2">
+            <table className="w-full text-[10px]">
+              <thead>
+                <tr className="text-[var(--color-gray-500)] border-b border-gray-100">
+                  <th className="text-left py-1 font-medium">วันเดินทาง</th>
+                  <th className="text-right py-1 font-medium">ราคาปกติ</th>
+                  <th className="text-right py-1 font-medium">ราคาขาย</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tour.periods_preview.slice(0, 4).map((p) => {
+                  const startFmt = new Date(p.start + 'T12:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+                  const endFmt = p.end ? new Date(p.end + 'T12:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }) : null;
+                  const originalPrice = p.price_adult ?? price;
+                  const salePrice = p.net_price_adult ?? price;
+                  const hasDiscount = originalPrice && salePrice && Number(originalPrice) > Number(salePrice);
+                  return (
+                    <tr key={p.start} className="border-b border-gray-50 hover:bg-blue-50/50">
+                      <td className="py-1 text-[var(--color-gray-700)]">
+                        {startFmt}{endFmt && ` - ${endFmt}`}
+                      </td>
+                      <td className={`py-1 text-right ${hasDiscount ? 'text-[var(--color-gray-400)] line-through' : 'text-[var(--color-gray-600)]'}`}>
+                        {originalPrice ? `฿${Number(originalPrice).toLocaleString()}` : '-'}
+                      </td>
+                      <td className={`py-1 text-right font-semibold ${hasDiscount ? 'text-red-500' : 'text-[var(--color-primary)]'}`}>
+                        {salePrice ? `฿${Number(salePrice).toLocaleString()}` : '-'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {(tour.total_periods ?? 0) > 4 && (
+              <div className="text-center mt-1">
+                <span className="text-[10px] text-[var(--color-gray-500)]">
+                  +{(tour.total_periods ?? 0) - 4} รอบเพิ่มเติม
                 </span>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         ) : tour.departure_date ? (
           <div className="mt-1.5 text-xs text-[var(--color-gray-500)]">
