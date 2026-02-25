@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "NODE_OPTIONS='--max-old-space-size=2048' next build",
+    "build:low": "NODE_OPTIONS='--max-old-space-size=1024' next build",
     "start": "next start",
     "start:prod": "NODE_ENV=production node server.js",
     "lint": "eslint"
