@@ -790,6 +790,8 @@ export interface InternationalTourItem {
   food_highlights: string[];
   hashtags: string[];
   departure_airports: string[];
+  themes?: string[];
+  special_highlights?: string[];
   country: { id: number; name_th: string; iso2: string } | null;
   cities: { id: number; name_th: string; slug: string }[];
   hotel_star?: number | null;
@@ -807,6 +809,9 @@ export interface InternationalTourFilters {
   airlines?: { id: number; code: string; name: string; image: string | null }[];
   departure_months?: { value: string; label: string }[];
   festivals?: { id: number; name: string; slug: string; badge_text?: string | null; badge_color?: string | null; badge_icon?: string | null; start_date: string; end_date: string }[];
+  promotions?: string[];
+  themes?: string[];
+  special_highlights?: string[];
 }
 
 export interface InternationalTourSettings {
@@ -875,6 +880,10 @@ export interface DomesticTourFilters {
   cities?: { id: number; name_th: string; country_id: number; country_name: string; tour_count: number }[];
   airlines?: { id: number; code: string; name: string; image: string | null }[];
   departure_months?: { value: string; label: string }[];
+  festivals?: { id: number; name: string; slug: string; badge_text: string | null; badge_color: string | null; badge_icon: string | null; start_date: string | null; end_date: string | null }[];
+  promotions?: string[];
+  themes?: string[];
+  special_highlights?: string[];
 }
 
 export interface DomesticTourSettings {
@@ -1077,8 +1086,17 @@ export interface TourPackageDetail {
 }
 
 export const tourPackagesApi = {
-  list: () =>
-    api.get<{ data: TourPackagePublic[] }>('/tours/packages'),
+  list: (params?: { country_id?: number }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.country_id) searchParams.append('country_id', String(params.country_id));
+    const qs = searchParams.toString();
+    return api.get<{
+      data: TourPackagePublic[];
+      filters?: {
+        countries: Array<{ id: number; name_th: string; iso2: string; slug: string }>;
+      };
+    }>(`/tours/packages${qs ? `?${qs}` : ''}`);
+  },
 
   getBySlug: (slug: string) => {
     const decodedSlug = decodeURIComponent(slug);

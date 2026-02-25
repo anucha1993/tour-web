@@ -19,6 +19,9 @@ export interface SearchParams {
   min_seats?: string;
   sort_by?: string;
   festival_id?: string;
+  promotion?: string;
+  theme?: string;
+  special_highlight?: string;
 }
 
 interface TourSearchFormProps {
@@ -94,6 +97,9 @@ export default function TourSearchForm({
   const [priceMax, setPriceMax] = useState(initialValues.price_max || '');
   const [minSeats, setMinSeats] = useState(initialValues.min_seats || '');
   const [festivalId, setFestivalId] = useState(initialValues.festival_id || '');
+  const [promotion, setPromotion] = useState(initialValues.promotion || '');
+  const [theme, setTheme] = useState(initialValues.theme || '');
+  const [specialHighlight, setSpecialHighlight] = useState(initialValues.special_highlight || '');
   const [selectedMonths, setSelectedMonths] = useState<string[]>(
     initialValues.departure_month ? [initialValues.departure_month] : []
   );
@@ -204,6 +210,9 @@ export default function TourSearchForm({
     if (priceMax) p.price_max = priceMax;
     if (minSeats) p.min_seats = minSeats;
     if (festivalId) p.festival_id = festivalId;
+    if (promotion) p.promotion = promotion;
+    if (theme) p.theme = theme;
+    if (specialHighlight) p.special_highlight = specialHighlight;
     return p;
   };
 
@@ -212,10 +221,12 @@ export default function TourSearchForm({
     setSearch(''); setCountryId(''); setCityIds([]); setAirlineId('');
     setDateFrom(''); setDateTo(''); setReturnDate('');
     setPriceMin(''); setPriceMax(''); setMinSeats('');
-    setSelectedMonths([]); setFestivalId(''); onClear();
+    setSelectedMonths([]); setFestivalId('');
+    setPromotion(''); setTheme(''); setSpecialHighlight('');
+    onClear();
   };
 
-  const hasActive = [search, countryId, cityIds.length > 0 ? '1' : '', airlineId, dateFrom, dateTo, returnDate, priceMin, priceMax, minSeats, festivalId].some(Boolean);
+  const hasActive = [search, countryId, cityIds.length > 0 ? '1' : '', airlineId, dateFrom, dateTo, returnDate, priceMin, priceMax, minSeats, festivalId, promotion, theme, specialHighlight].some(Boolean);
   const advancedCount = [dateFrom && !selectedMonths.length ? dateFrom : '', dateTo && !selectedMonths.length ? dateTo : '', returnDate, priceMin, priceMax, minSeats].filter(Boolean).length;
 
   const monthLabel = selectedMonths.length > 0
@@ -512,6 +523,87 @@ export default function TourSearchForm({
             >
               {f.badge_icon && <span className="mr-1">{f.badge_icon}</span>}
               {f.badge_text || f.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ═══ Promotion badges ═══ */}
+      {(filters.promotions ?? []).length > 0 && (
+        <div className="flex flex-wrap gap-1.5 items-center">
+          <span className="text-xs text-gray-400">🏷️ โปรโมชั่น:</span>
+          {(filters.promotions ?? []).map((name) => (
+            <button
+              key={name}
+              type="button"
+              onClick={() => {
+                const newVal = promotion === name ? '' : name;
+                setPromotion(newVal);
+                const p = buildParams();
+                if (newVal) p.promotion = newVal; else delete p.promotion;
+                onSearch(p);
+              }}
+              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                promotion === name
+                  ? 'bg-pink-500 text-white border-pink-500'
+                  : 'bg-white text-pink-600 border-pink-300 hover:bg-pink-50'
+              }`}
+            >
+              ✨ {name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ═══ Theme badges ═══ */}
+      {(filters.themes ?? []).length > 0 && (
+        <div className="flex flex-wrap gap-1.5 items-center">
+          <span className="text-xs text-gray-400">📂 หมวดหมู่:</span>
+          {(filters.themes ?? []).map((name) => (
+            <button
+              key={name}
+              type="button"
+              onClick={() => {
+                const newVal = theme === name ? '' : name;
+                setTheme(newVal);
+                const p = buildParams();
+                if (newVal) p.theme = newVal; else delete p.theme;
+                onSearch(p);
+              }}
+              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                theme === name
+                  ? 'bg-blue-500 text-white border-blue-500'
+                  : 'bg-white text-blue-600 border-blue-300 hover:bg-blue-50'
+              }`}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ═══ Special Highlight badges ═══ */}
+      {(filters.special_highlights ?? []).length > 0 && (
+        <div className="flex flex-wrap gap-1.5 items-center">
+          <span className="text-xs text-gray-400">⭐ ไฮไลท์พิเศษ:</span>
+          {(filters.special_highlights ?? []).map((name) => (
+            <button
+              key={name}
+              type="button"
+              onClick={() => {
+                const newVal = specialHighlight === name ? '' : name;
+                setSpecialHighlight(newVal);
+                const p = buildParams();
+                if (newVal) p.special_highlight = newVal; else delete p.special_highlight;
+                onSearch(p);
+              }}
+              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                specialHighlight === name
+                  ? 'bg-emerald-500 text-white border-emerald-500'
+                  : 'bg-white text-emerald-600 border-emerald-300 hover:bg-emerald-50'
+              }`}
+            >
+              {name}
             </button>
           ))}
         </div>

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Package, Globe, Hash } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ArrowLeft, Package, Globe, Hash, ChevronDown, X } from 'lucide-react';
 import { tourPackagesApi, TourPackagePublic } from '@/lib/api';
 
 function PackageCard({ pkg }: { pkg: TourPackagePublic }) {
@@ -85,31 +86,56 @@ function PackageCard({ pkg }: { pkg: TourPackagePublic }) {
   );
 }
 
-export default function TourPackagesPage() {
+function TourPackagesContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
   const [packages, setPackages] = useState<TourPackagePublic[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageSettings, setPageSettings] = useState<{
     cover_image_url: string | null;
     cover_image_position: string;
   } | null>(null);
+  const [countries, setCountries] = useState<Array<{ id: number; name_th: string; iso2: string; slug: string }>>([]);
+  const [selectedCountry, setSelectedCountry] = useState<number | null>(
+    searchParams.get('country_id') ? Number(searchParams.get('country_id')) : null
+  );
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [packagesRes, settingsRes] = await Promise.all([
+        tourPackagesApi.list(selectedCountry ? { country_id: selectedCountry } : undefined),
+        tourPackagesApi.pageSettings(),
+      ]);
+      if (packagesRes?.data) setPackages(packagesRes.data);
+      if (packagesRes?.filters?.countries) setCountries(packagesRes.filters.countries);
+      if (settingsRes?.cover_image_url !== undefined) setPageSettings(settingsRes);
+    } catch (error) {
+      console.error('Failed to fetch packages:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedCountry]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [packagesRes, settingsRes] = await Promise.all([
-          tourPackagesApi.list(),
-          tourPackagesApi.pageSettings(),
-        ]);
-        if (packagesRes?.data) setPackages(packagesRes.data);
-        if (settingsRes?.cover_image_url !== undefined) setPageSettings(settingsRes);
-      } catch (error) {
-        console.error('Failed to fetch packages:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
-  }, []);
+  }, [fetchData]);
+
+  // Update URL when filter changes
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (selectedCountry) params.set('country_id', String(selectedCountry));
+    const newUrl = params.toString() ? `?${params.toString()}` : '/tours/packages';
+    router.replace(newUrl, { scroll: false });
+  }, [selectedCountry, router]);
+
+  const selectedCountryData = countries.find(c => c.id === selectedCountry);
+
+  const handleClearFilter = () => {
+    setSelectedCountry(null);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -178,9 +204,17 @@ export default function TourPackagesPage() {
           <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
             <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-700 mb-2">
-              ยังไม่มีแพ็คเกจทัวร์ที่เปิดให้บริการ
+              {selectedCountry ? 'ไม่พบแพ็คเกจทัวร์ในประเทศที่เลือก' : 'ยังไม่มีแพ็คเกจทัวร์ที่เปิดให้บริการ'}
             </h3>
-            <p className="text-gray-500">กรุณากลับมาตรวจสอบอีกครั้งในภายหลัง</p>
+            <p className="text-gray-500">
+              {selectedCountry ? (
+                <button onClick={handleClearFilter} className="text-blue-600 hover:underline">
+                  ดูแพ็คเกจทั้งหมด
+                </button>
+              ) : (
+                'กรุณากลับมาตรวจสอบอีกครั้งในภายหลัง'
+              )}
+            </p>
           </div>
         ) : (
           <>
@@ -188,7 +222,78 @@ export default function TourPackagesPage() {
               <span className="text-base text-gray-600">
                 <strong className="text-gray-900">{packages.length}</strong>{' '}
                 แพ็คเกจ
+                {selectedCountryData && (
+                  <span className="ml-1">ใน{selectedCountryData.name_th}</span>
+                )}
               </span>
+              
+              {/* Country Filter Dropdown */}
+              {countries.length > 0 && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                    className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors min-w-[180px]"
+                  >
+                    {selectedCountryData ? (
+                      <>
+                        {selectedCountryData.iso2 && (
+                          <img
+                            src={`https://flagcdn.com/20x15/${selectedCountryData.iso2}.png`}
+                            alt=""
+                            className="w-5 h-4 object-cover rounded-sm"
+                          />
+                        )}
+                        <span className="flex-1 text-left text-gray-900">{selectedCountryData.name_th}</span>
+                      </>
+                    ) : (
+                      <span className="flex-1 text-left text-gray-500">ทุกประเทศ</span>
+                    )}
+                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showCountryDropdown ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  {showCountryDropdown && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setShowCountryDropdown(false)}
+                      />
+                      <div className="absolute z-20 top-full right-0 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-auto">
+                        <button
+                          onClick={() => {
+                            setSelectedCountry(null);
+                            setShowCountryDropdown(false);
+                          }}
+                          className={`w-full px-4 py-2.5 text-left hover:bg-gray-50 flex items-center gap-2 ${!selectedCountry ? 'bg-blue-50 text-blue-700' : 'text-gray-700'}`}
+                        >
+                          <Globe className="w-4 h-4" />
+                          <span>ทุกประเทศ</span>
+                          {!selectedCountry && <span className="ml-auto text-blue-600">✓</span>}
+                        </button>
+                        {countries.map((country) => (
+                          <button
+                            key={country.id}
+                            onClick={() => {
+                              setSelectedCountry(country.id);
+                              setShowCountryDropdown(false);
+                            }}
+                            className={`w-full px-4 py-2.5 text-left hover:bg-gray-50 flex items-center gap-2 ${selectedCountry === country.id ? 'bg-blue-50 text-blue-700' : 'text-gray-700'}`}
+                          >
+                            {country.iso2 && (
+                              <img
+                                src={`https://flagcdn.com/20x15/${country.iso2}.png`}
+                                alt=""
+                                className="w-5 h-4 object-cover rounded-sm"
+                              />
+                            )}
+                            <span>{country.name_th}</span>
+                            {selectedCountry === country.id && <span className="ml-auto text-blue-600">✓</span>}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {packages.map((pkg) => (
@@ -199,5 +304,17 @@ export default function TourPackagesPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function TourPackagesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500" />
+      </div>
+    }>
+      <TourPackagesContent />
+    </Suspense>
   );
 }

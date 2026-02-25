@@ -14,6 +14,8 @@ import {
   Loader2,
   ArrowLeft,
   Sparkles,
+  Copy,
+  Check,
 } from 'lucide-react';
 import {
   domesticToursApi,
@@ -90,9 +92,19 @@ const PromotionBadges = ({ tour }: { tour: DomesticTourItem }) => {
         </span>
       )}
       {tour.active_promotions?.map((promo, i) => (
-        <span key={i} className="inline-flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded">
+        <span key={`promo-${i}`} className="inline-flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded">
           <Sparkles className="w-3 h-3" />
           {promo.name}
+        </span>
+      ))}
+      {tour.themes?.map((theme, i) => (
+        <span key={`theme-${i}`} className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
+          {theme}
+        </span>
+      ))}
+      {tour.special_highlights?.map((sh, i) => (
+        <span key={`sh-${i}`} className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+          {sh}
         </span>
       ))}
     </div>
@@ -112,6 +124,21 @@ const BADGE_BG_CLASSES: Record<string, string> = {
 function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: DomesticTourSettings }) {
   const { getPeriodBadges } = useTourBadges();
   const [showAllPeriods, setShowAllPeriods] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyShortText = () => {
+    const airlineNames = tour.transports?.map(t => t.airline?.name).filter(Boolean).join(', ') || '-';
+    const periodLines = (tour.periods || []).map(p => {
+      const price = p.offer?.net_price_adult ? formatPrice(p.offer.net_price_adult) : 'ติดต่อฝ่ายขาย';
+      return `${formatDateRange(p.start_date, p.end_date)} | ราคา ${price} | เหลือ ${p.available} ที่นั่ง`;
+    }).join('\n');
+    const url = `${window.location.origin}/tours/${tour.slug}`;
+    const text = `รหัสทัวร์: ${tour.tour_code}\n${tour.title}\nสายการบิน: ${airlineNames}\n\nรอบเดินทาง:\n${periodLines}\n\nราคาเริ่มต้น: ${formatPrice(tour.min_price || tour.display_price) || 'ติดต่อฝ่ายขาย'} บาท\n\nดูรายละเอียด: ${url}`;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const maxDisplay = settings.max_periods_display || 6;
   const visiblePeriods = (tour.periods || []).slice(0, showAllPeriods ? undefined : maxDisplay);
   const hasDiscount = tour.discount_amount && tour.discount_amount > 0;
@@ -241,9 +268,19 @@ function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: Domest
         </div>
       </div>
 
-      {/* Share buttons */}
+      {/* Share & Copy buttons */}
       <div className="flex items-center gap-1 justify-end px-2 lg:px-4 pt-1 mt-0 lg:mt-[-20px]">
-        <span className="text-xs text-gray-400 mr-0.5">แชร์</span>
+        <button
+          onClick={handleCopyShortText}
+          className={`cursor-pointer flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+            copied ? 'bg-green-100 text-green-700' : 'bg-purple-50 hover:bg-purple-100 text-purple-600'
+          }`}
+          title="คัดลอกข้อความสั้น"
+        >
+          {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+          {copied ? 'คัดลอกแล้ว!' : 'Copy ข้อความ'}
+        </button>
+        <span className="text-xs text-gray-400 mr-0.5 ml-1">แชร์</span>
         <a
           href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/tours/${tour.slug}`)}`}
           target="_blank"
@@ -293,11 +330,11 @@ function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: Domest
             <table className="w-full text-xs lg:text-base text-center">
               <thead>
                 <tr className="text-white font-semibold bg-orange-400">
-                  <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium rounded-tl-lg whitespace-nowrap">เดินทาง</th>
-                  <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium whitespace-nowrap">ผู้ใหญ่ (พัก2-3ท่าน)</th>
-                  <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium whitespace-nowrap">ผู้ใหญ่ (พักเดี่ยว)</th>
+                  <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium rounded-tl-lg whitespace-nowrap">วันเดินทาง</th>
+                  <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium whitespace-nowrap">ราคาผู้ใหญ่</th>
+                  <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium whitespace-nowrap">ราคาเด็ก</th>
+                  <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium whitespace-nowrap">พักเดี่ยว</th>
                   <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium">ที่นั่ง</th>
-                  <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium">จอง</th>
                   <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium rounded-tr-lg">รับได้</th>
                   {settings.show_commission && <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium rounded-tr-lg">คอมมิชชั่น</th>}
                 </tr>
@@ -321,6 +358,7 @@ function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: Domest
                           })()}
                         </div>
                       </td>
+                      {/* ราคาผู้ใหญ่ */}
                       <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center whitespace-nowrap">
                         {period.offer ? (
                           period.offer.net_price_adult ? (
@@ -331,6 +369,13 @@ function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: Domest
                           ) : <span className="text-xs text-orange-500 font-medium">ติดต่อฝ่ายขาย</span>
                         ) : <span className="text-xs text-orange-500 font-medium">ติดต่อฝ่ายขาย</span>}
                       </td>
+                      {/* ราคาเด็ก */}
+                      <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center whitespace-nowrap">
+                        {period.offer?.price_child ? (
+                          <span className={`font-bold ${isClosed ? '' : 'text-gray-500'}`}>{formatPrice(period.offer.price_child)}</span>
+                        ) : <span className="text-xs text-orange-500 font-medium">ติดต่อฝ่ายขาย</span>}
+                      </td>
+                      {/* พักเดี่ยว */}
                       <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center whitespace-nowrap">
                         {period.offer ? (
                           (period.offer.net_price_single ?? period.offer.price_single) ? (
@@ -341,8 +386,9 @@ function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: Domest
                           ) : <span className="text-xs text-orange-500 font-medium">ติดต่อฝ่ายขาย</span>
                         ) : <span className="text-xs text-orange-500 font-medium">ติดต่อฝ่ายขาย</span>}
                       </td>
+                      {/* ที่นั่ง (capacity) */}
                       <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center">{period.capacity}</td>
-                      <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center">{period.booked}</td>
+                      {/* รับได้ (ที่นั่งคงเหลือ) */}
                       <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center"><PeriodStatusBadge period={period} /></td>
                       {settings.show_commission && <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center text-green-600">{period.offer?.commission_agent || '-'}</td>}
                     </tr>
@@ -389,6 +435,10 @@ function DomesticToursContent() {
     price_min: searchParams.get('price_min') || undefined,
     price_max: searchParams.get('price_max') || undefined,
     min_seats: searchParams.get('min_seats') || undefined,
+    festival_id: searchParams.get('festival_id') || undefined,
+    promotion: searchParams.get('promotion') || undefined,
+    theme: searchParams.get('theme') || undefined,
+    special_highlight: searchParams.get('special_highlight') || undefined,
   });
   const [sortBy, setSortBy] = useState(searchParams.get('sort_by') || '');
   const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);
