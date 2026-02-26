@@ -96,12 +96,13 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
     // Reset all room selections first
     let triple = 0;
     let twin = 0;
-    let single = 0;
+    let double_ = 0;
+    const single = 0;
 
     let remaining = totalPassengers;
 
     // Distribute passengers to rooms
-    // Priority: Triple (3) → Twin (2) → Twin for 1 person (default)
+    // Priority: Triple (3) → Twin (2) → Double for 1 person (default)
     if (remaining >= 3) {
       triple = Math.floor(remaining / 3);
       remaining = remaining % 3;
@@ -110,15 +111,15 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
       twin = Math.floor(remaining / 2);
       remaining = remaining % 2;
     }
-    // Default: 1 person = Twin (พักคู่) not Single
+    // Default: 1 person = Double (พักคู่) not Single
     if (remaining === 1) {
-      twin += 1;
+      double_ += 1;
       remaining = 0;
     }
 
     setQtyTriple(triple);
     setQtyTwin(twin);
-    setQtyDouble(0); // Reset double
+    setQtyDouble(double_);
     setQtySingle(single);
   }, [totalPassengers]);
 
@@ -371,6 +372,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
       totalPrice: 0,
       hasPrice: true,
       capacityPerRoom: 3,
+      iconCount: 3,
     },
     {
       label: 'พักคู่ (TWIN)',
@@ -382,6 +384,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
       totalPrice: 0,
       hasPrice: true,
       capacityPerRoom: 2,
+      iconCount: 2,
     },
     {
       label: 'พักคู่ (DOUBLE)',
@@ -393,6 +396,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
       totalPrice: 0,
       hasPrice: true,
       capacityPerRoom: 2,
+      iconCount: 1,
     },
     {
       label: 'พักเดี่ยว (SINGLE)',
@@ -404,6 +408,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
       totalPrice: pricing.totalSingle,
       hasPrice: true, // Always show single option
       capacityPerRoom: 1,
+      iconCount: 1,
     },
   ];
 
@@ -578,11 +583,17 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
               {roomRows.map((row, idx) => (
                 <div key={idx} className="grid grid-cols-[1fr_100px] items-center px-3 py-2">
                   <div className="flex items-center gap-2">
-                    <svg viewBox="0 0 24 24" className="w-5 h-5 flex-shrink-0 fill-orange-500">
-                      <path d="M7 14c1.66 0 3-1.34 3-3S8.66 8 7 8s-3 1.34-3 3 1.34 3 3 3zm0-4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm12-3h-8v8H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4zm2 8h-8V9h6c1.1 0 2 .9 2 2v4z"/>
-                    </svg>
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium text-gray-700">{row.label}</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm font-medium text-gray-700 w-[130px]">{row.label}</span>
+                        <div className="flex items-center gap-0.5">
+                          {Array.from({ length: row.iconCount }).map((_, i) => (
+                            <svg key={i} viewBox="0 0 24 24" className="w-[16px] h-[16px] flex-shrink-0 fill-orange-500">
+                              <path d="M7 14c1.66 0 3-1.34 3-3S8.66 8 7 8s-3 1.34-3 3 1.34 3 3 3zm0-4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm12-3h-8v8H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4zm2 8h-8V9h6c1.1 0 2 .9 2 2v4z"/>
+                            </svg>
+                          ))}
+                        </div>
+                      </div>
                       {row.unitPrice > 0 ? (
                         <span className="text-xs text-orange-500">+{row.unitPrice.toLocaleString()} บาท/ห้อง</span>
                       ) : (
