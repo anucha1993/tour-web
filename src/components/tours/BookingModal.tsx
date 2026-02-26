@@ -26,11 +26,17 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
   const selectedPeriod = tour.periods.find(p => p.id === selectedPeriodId) || null;
   const offer = selectedPeriod?.offer || null;
 
-  // Quantities
+  // Quantities - Passengers
   const [qtyAdult, setQtyAdult] = useState(1);
-  const [qtyAdultSingle, setQtyAdultSingle] = useState(0);
   const [qtyChildBed, setQtyChildBed] = useState(0);
   const [qtyChildNoBed, setQtyChildNoBed] = useState(0);
+  const [qtyInfant, setQtyInfant] = useState(0);
+
+  // Quantities - Room Types
+  const [qtyTriple, setQtyTriple] = useState(0);
+  const [qtyTwin, setQtyTwin] = useState(0);
+  const [qtyDouble, setQtyDouble] = useState(0);
+  const [qtySingle, setQtySingle] = useState(0);
 
   // Customer info
   const [firstName, setFirstName] = useState('');
@@ -82,24 +88,82 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
     return () => clearInterval(timer);
   }, [otpCountdown]);
 
+  // Total passengers (excluding infants for room calculation)
+  const totalPassengers = qtyAdult + qtyChildBed + qtyChildNoBed;
+
+  // Auto-select room types based on passenger count
+  useEffect(() => {
+    // Reset all room selections first
+    let triple = 0;
+    let twin = 0;
+    let single = 0;
+
+    let remaining = totalPassengers;
+
+    // Distribute passengers to rooms
+    // Priority: Triple (3) → Twin (2) → Twin for 1 person (default)
+    if (remaining >= 3) {
+      triple = Math.floor(remaining / 3);
+      remaining = remaining % 3;
+    }
+    if (remaining >= 2) {
+      twin = Math.floor(remaining / 2);
+      remaining = remaining % 2;
+    }
+    // Default: 1 person = Twin (พักคู่) not Single
+    if (remaining === 1) {
+      twin += 1;
+      remaining = 0;
+    }
+
+    setQtyTriple(triple);
+    setQtyTwin(twin);
+    setQtyDouble(0); // Reset double
+    setQtySingle(single);
+  }, [totalPassengers]);
+
   // Pricing calculations
   const calcPricing = useCallback(() => {
-    if (!offer) return { priceAdult: 0, priceSingle: 0, priceChildBed: 0, priceChildNoBed: 0, totalAdult: 0, totalSingle: 0, totalChildBed: 0, totalChildNoBed: 0, grandTotal: 0 };
+    if (!offer) return { 
+      priceAdult: 0, priceSingle: 0, priceChildBed: 0, priceChildNoBed: 0, priceInfant: 0,
+      priceTriple: 0, priceTwin: 0, priceDouble: 0,
+      totalAdult: 0, totalChildBed: 0, totalChildNoBed: 0, totalInfant: 0,
+      totalTriple: 0, totalTwin: 0, totalDouble: 0, totalSingle: 0,
+      grandTotal: 0 
+    };
 
     const priceAdult = offer.net_price_adult;
-    const priceSingle = offer.price_single ? (offer.price_single - (offer.discount_single || 0)) : 0;
+    const priceSingle = offer.net_price_single || 0;
     const priceChildBed = offer.price_child ? (offer.price_child - (offer.discount_child_bed || 0)) : 0;
     const priceChildNoBed = offer.price_child_nobed ? (offer.price_child_nobed - (offer.discount_child_nobed || 0)) : 0;
+    const priceInfant = offer.price_infant || 0;
 
-    const adultNonSingle = Math.max(qtyAdult - qtyAdultSingle, 0);
-    const totalAdult = adultNonSingle * priceAdult;
-    const totalSingle = qtyAdultSingle * (priceAdult + priceSingle);
+    // Room type prices (using adult price as base, single adds supplement)
+    const priceTriple = priceAdult; // Triple room per person
+    const priceTwin = priceAdult; // Twin room per person
+    const priceDouble = priceAdult; // Double room per person
+
+    const totalAdult = qtyAdult * priceAdult;
     const totalChildBed = qtyChildBed * priceChildBed;
     const totalChildNoBed = qtyChildNoBed * priceChildNoBed;
-    const grandTotal = totalAdult + totalSingle + totalChildBed + totalChildNoBed;
+    const totalInfant = qtyInfant * priceInfant;
 
-    return { priceAdult, priceSingle, priceChildBed, priceChildNoBed, totalAdult, totalSingle, totalChildBed, totalChildNoBed, grandTotal };
-  }, [offer, qtyAdult, qtyAdultSingle, qtyChildBed, qtyChildNoBed]);
+    // Room supplements
+    const totalTriple = 0; // No supplement for triple
+    const totalTwin = 0; // No supplement for twin
+    const totalDouble = 0; // No supplement for double
+    const totalSingle = qtySingle * priceSingle; // Single room supplement
+
+    const grandTotal = totalAdult + totalChildBed + totalChildNoBed + totalInfant + totalSingle;
+
+    return { 
+      priceAdult, priceSingle, priceChildBed, priceChildNoBed, priceInfant,
+      priceTriple, priceTwin, priceDouble,
+      totalAdult, totalChildBed, totalChildNoBed, totalInfant,
+      totalTriple, totalTwin, totalDouble, totalSingle,
+      grandTotal 
+    };
+  }, [offer, qtyAdult, qtyChildBed, qtyChildNoBed, qtyInfant, qtySingle]);
 
   const pricing = calcPricing();
 
@@ -166,7 +230,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
         email: email.trim(),
         phone: phone.trim(),
         qty_adult: qtyAdult,
-        qty_adult_single: qtyAdultSingle,
+        qty_adult_single: qtySingle, // Single room count
         qty_child_bed: qtyChildBed,
         qty_child_nobed: qtyChildNoBed,
         sale_code: saleCode || undefined,
@@ -232,28 +296,19 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
     return `${s.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })} - ${e.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}`;
   };
 
-  // Always show all 4 passenger types
+  // Passenger types (ผู้เดินทาง)
   const passengerRows = [
     {
-      label: 'ผู้ใหญ่ (พัก2-3ท่าน)',
+      label: 'ผู้ใหญ่',
       qty: qtyAdult,
       setQty: setQtyAdult,
       min: 1,
       unitPrice: pricing.priceAdult,
-      totalPrice: Math.max(qtyAdult - qtyAdultSingle, 0) * pricing.priceAdult,
+      totalPrice: pricing.totalAdult,
       hasPrice: !!offer && pricing.priceAdult > 0,
     },
     {
-      label: 'ผู้ใหญ่ (พักเดี่ยว)',
-      qty: qtyAdultSingle,
-      setQty: (v: number) => setQtyAdultSingle(Math.min(v, qtyAdult)),
-      min: 0,
-      unitPrice: pricing.priceAdult + pricing.priceSingle,
-      totalPrice: pricing.totalSingle,
-      hasPrice: !!offer && !!offer.price_single && offer.price_single > 0,
-    },
-    {
-      label: 'เด็ก (มีเตียง)',
+      label: 'เด็กมีเตียง',
       qty: qtyChildBed,
       setQty: setQtyChildBed,
       min: 0,
@@ -262,13 +317,93 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
       hasPrice: !!offer && !!offer.price_child && offer.price_child > 0,
     },
     {
-      label: 'เด็ก (ไม่มีเตียง)',
+      label: 'เด็กไม่มีเตียง',
       qty: qtyChildNoBed,
       setQty: setQtyChildNoBed,
       min: 0,
       unitPrice: pricing.priceChildNoBed,
       totalPrice: pricing.totalChildNoBed,
       hasPrice: !!offer && !!offer.price_child_nobed && offer.price_child_nobed > 0,
+    },
+    {
+      label: 'ทารก',
+      qty: qtyInfant,
+      setQty: setQtyInfant,
+      min: 0,
+      unitPrice: pricing.priceInfant,
+      totalPrice: pricing.totalInfant,
+      hasPrice: !!offer && !!offer.price_infant && offer.price_infant > 0,
+    },
+  ];
+
+  // Calculate current room capacity used
+  const currentRoomCapacity = (qtyTriple * 3) + (qtyTwin * 2) + (qtyDouble * 2) + (qtySingle * 1);
+
+  // Room change handler with validation
+  const handleRoomChange = (roomType: 'triple' | 'twin' | 'double' | 'single', newValue: number, currentValue: number) => {
+    const capacityMap = { triple: 3, twin: 2, double: 2, single: 1 };
+    const capacity = capacityMap[roomType];
+    const diff = newValue - currentValue;
+    const newTotalCapacity = currentRoomCapacity + (diff * capacity);
+
+    // Cannot exceed total passengers
+    if (newTotalCapacity > totalPassengers) {
+      return; // Don't allow the change
+    }
+
+    switch (roomType) {
+      case 'triple': setQtyTriple(newValue); break;
+      case 'twin': setQtyTwin(newValue); break;
+      case 'double': setQtyDouble(newValue); break;
+      case 'single': setQtySingle(newValue); break;
+    }
+  };
+
+  // Room types (ห้องพัก)
+  const roomRows = [
+    {
+      label: 'พัก 3 ท่าน (TRIPLE)',
+      qty: qtyTriple,
+      setQty: (v: number) => handleRoomChange('triple', v, qtyTriple),
+      min: 0,
+      max: Math.floor(totalPassengers / 3), // Max based on passenger count
+      unitPrice: 0, // No additional charge
+      totalPrice: 0,
+      hasPrice: true,
+      capacityPerRoom: 3,
+    },
+    {
+      label: 'พักคู่ (TWIN)',
+      qty: qtyTwin,
+      setQty: (v: number) => handleRoomChange('twin', v, qtyTwin),
+      min: 0,
+      max: Math.floor(totalPassengers / 2), // Max based on passenger count
+      unitPrice: 0, // No additional charge
+      totalPrice: 0,
+      hasPrice: true,
+      capacityPerRoom: 2,
+    },
+    {
+      label: 'พักคู่ (DOUBLE)',
+      qty: qtyDouble,
+      setQty: (v: number) => handleRoomChange('double', v, qtyDouble),
+      min: 0,
+      max: Math.floor(totalPassengers / 2), // Max based on passenger count
+      unitPrice: 0, // No additional charge
+      totalPrice: 0,
+      hasPrice: true,
+      capacityPerRoom: 2,
+    },
+    {
+      label: 'พักเดี่ยว (SINGLE)',
+      qty: qtySingle,
+      setQty: (v: number) => handleRoomChange('single', v, qtySingle),
+      min: 0,
+      max: totalPassengers, // Max based on passenger count
+      unitPrice: pricing.priceSingle,
+      totalPrice: pricing.totalSingle,
+      hasPrice: true, // Always show single option
+      capacityPerRoom: 1,
     },
   ];
 
@@ -384,51 +519,104 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
           </div>
         </div>
 
-        {/* ===== Two-column content ===== */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 min-h-0">
+        {/* ===== Row 1: ผู้เดินทาง + ห้องพัก ===== */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 border-b border-gray-200">
 
-          {/* ========== LEFT: รายละเอียดการจอง ========== */}
+          {/* ========== LEFT: ผู้เดินทาง ========== */}
           <div className="px-5 sm:px-6 py-5 lg:border-r border-gray-200">
-            <h3 className="text-xl font-bold text-gray-800 mb-5">รายละเอียดการจอง</h3>
+            <h3 className="text-lg font-bold text-gray-800 mb-3">ผู้เดินทาง</h3>
 
             {/* Table header (orange gradient) */}
-            <div className="grid grid-cols-[1fr_110px_80px_80px] items-center bg-gradient-to-r from-orange-400 to-orange-500 rounded-t-xl px-4 py-2">
+            <div className="grid grid-cols-[1fr_100px] items-center bg-gradient-to-r from-orange-400 to-orange-500 rounded-t-xl px-3 py-2">
               <span></span>
-              <span className="text-white font-bold text-sm text-center">จำนวน</span>
-              <span className="text-white font-bold text-sm text-center">ราคา</span>
-              <span className="text-white font-bold text-sm text-center">รวม</span>
+              <span className="text-white font-bold text-xs text-center">จำนวน</span>
             </div>
 
-            {/* 4 passenger rows (always visible) */}
+            {/* Passenger rows */}
             <div className="border border-t-0 border-gray-200 rounded-b-xl divide-y divide-gray-100">
               {passengerRows.map((row, idx) => (
-                <div key={idx} className={`grid grid-cols-[1fr_110px_80px_80px] items-center px-4 py-3 ${!row.hasPrice ? 'opacity-60' : ''}`}>
+                <div key={idx} className={`grid grid-cols-[1fr_100px] items-center px-3 py-2 ${!row.hasPrice ? 'opacity-60' : ''}`}>
                   <div className="flex items-center gap-2">
                     <PersonIcon />
-                    <span className="text-sm font-medium text-gray-700">{row.label}</span>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-gray-700">{row.label}</span>
+                      {row.hasPrice && row.unitPrice > 0 && (
+                        <span className="text-xs text-orange-500">{row.unitPrice.toLocaleString()} บาท</span>
+                      )}
+                      {!row.hasPrice && (
+                        <span className="text-xs text-orange-500">ติดต่อฝ่ายขาย</span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex justify-center">
                     <Stepper value={row.qty} onChange={row.setQty} min={row.min} disabled={!row.hasPrice} />
-                  </div>
-                  <div className="text-center text-sm text-gray-600 tabular-nums">
-                    {row.hasPrice ? (row.unitPrice > 0 ? row.unitPrice.toLocaleString() : '-') : '-'}
-                  </div>
-                  <div className={`text-center text-sm font-semibold tabular-nums ${!row.hasPrice ? 'text-orange-500 !text-[11px] leading-tight' : 'text-gray-800'}`}>
-                    {row.hasPrice ? (row.totalPrice > 0 ? row.totalPrice.toLocaleString() : '-') : 'ติดต่อฝ่ายขาย'}
                   </div>
                 </div>
               ))}
             </div>
 
             {/* Grand total */}
-            <div className="mt-3 bg-gradient-to-r from-orange-400 to-orange-500 rounded-xl px-5 py-3 flex items-center justify-end">
+            <div className="mt-4 bg-gradient-to-r from-orange-400 to-orange-500 rounded-xl px-5 py-3 flex items-center justify-end">
               <span className="text-white font-bold text-lg">
                 รวม : {pricing.grandTotal > 0 ? `${pricing.grandTotal.toLocaleString()} บาท` : '-'}
               </span>
             </div>
+          </div>
 
-            {/* Booking conditions (small bullet points) */}
-            <div className="mt-5 text-[11px] text-gray-500 leading-[1.8] space-y-0">
+          {/* ========== RIGHT: ห้องพัก ========== */}
+          <div className="px-5 sm:px-6 py-5 border-t lg:border-t-0">
+            <h3 className="text-lg font-bold text-gray-800 mb-3">ห้องพัก</h3>
+
+            {/* Room header (orange gradient) */}
+            <div className="grid grid-cols-[1fr_100px] items-center bg-gradient-to-r from-orange-400 to-orange-500 rounded-t-xl px-3 py-2">
+              <span></span>
+              <span className="text-white font-bold text-xs text-center">จำนวน</span>
+            </div>
+
+            {/* Room rows */}
+            <div className="border border-t-0 border-gray-200 rounded-b-xl divide-y divide-gray-100">
+              {roomRows.map((row, idx) => (
+                <div key={idx} className="grid grid-cols-[1fr_100px] items-center px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 flex-shrink-0 fill-orange-500">
+                      <path d="M7 14c1.66 0 3-1.34 3-3S8.66 8 7 8s-3 1.34-3 3 1.34 3 3 3zm0-4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm12-3h-8v8H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4zm2 8h-8V9h6c1.1 0 2 .9 2 2v4z"/>
+                    </svg>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-gray-700">{row.label}</span>
+                      {row.unitPrice > 0 ? (
+                        <span className="text-xs text-orange-500">+{row.unitPrice.toLocaleString()} บาท/ห้อง</span>
+                      ) : (
+                        <span className="text-xs text-gray-400">ไม่มีค่าใช้จ่าย</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex justify-center">
+                    <Stepper value={row.qty} onChange={row.setQty} min={row.min} max={row.max} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Room allocation info */}
+            <div className="mt-3 text-xs text-gray-500">
+              <p>จัดสรรห้องพัก: {currentRoomCapacity}/{totalPassengers} คน</p>
+              {currentRoomCapacity < totalPassengers && (
+                <p className="text-orange-500">ยังต้องจัดสรรห้องพักอีก {totalPassengers - currentRoomCapacity} คน</p>
+              )}
+              {pricing.totalSingle > 0 && (
+                <p className="text-orange-600 font-medium">ค่าพักเดี่ยว: +{pricing.totalSingle.toLocaleString()} บาท</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ===== Row 2: เงื่อนไข + ข้อมูลผู้เดินทาง ===== */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 min-h-0">
+
+          {/* ========== LEFT: เงื่อนไข ========== */}
+          <div className="px-5 sm:px-6 py-5 lg:border-r border-gray-200">
+            <h3 className="text-lg font-bold text-gray-800 mb-3">เงื่อนไขการจอง</h3>
+            <div className="text-[14px] text-gray-500 leading-[1.7] space-y-0">
               <p>• การจองทัวร์นี้ยังไม่ใช่การคอนเฟิร์มที่นั่งทันที กรุณารอการตอบกลับจากเจ้าหน้าที่เท่านั้น</p>
               <p>• หากลูกค้าจองทัวร์ในช่วงวันจันทร์-ศุกร์ เวลา 09.00 น-18.00 น. หากระยะเวลาจองผ่านมากกว่า 5 นาทีและยังไม่มีเจ้าหน้าที่ติดต่อกลับ รบกวนลูกค้าแจ้งมาที่ไลน์ @nexttripholiday หรือโทร 02-136-9144 พร้อมแจ้งรหัสการจอง</p>
               <p>• ลูกค้าสามารถเปลี่ยนแปลงวันที่เดินทางได้ กรุณาติดต่อพนักงานขายที่ทำการจอง</p>
@@ -438,45 +626,15 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
               <p>• การจองจะเสร็จสมบูรณ์เมื่อลูกค้าได้รับการยืนยันที่นั่งเป็นเอกสารและลูกค้าได้ชำระยอดเงิน เท่านั้น</p>
               <p>• บริษัทฯ ขอสงวนสิทธิ์ในการเปลี่ยนแปลงข้อกำหนดและเงื่อนไขต่าง ๆ ของส่วนลดพิเศษโดยมิต้องแจ้งให้ทราบล่วงหน้า</p>
             </div>
-
-            {/* Consent checkbox + Submit button (bottom of left column) */}
-            <div className="mt-5 pt-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={consentTerms}
-                  onChange={(e) => setConsentTerms(e.target.checked)}
-                  className="w-5 h-5 rounded border-gray-300 text-blue-500 focus:ring-blue-400 cursor-pointer accent-blue-500"
-                />
-                <span className="text-sm text-gray-700 font-medium">ฉันอ่านเงื่อนไขแล้ว</span>
-              </label>
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={isSubmitting || !consentTerms || (!isAuthenticated && otpStep !== 'verified')}
-                className="px-8 py-3 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg cursor-pointer flex items-center gap-2 text-sm whitespace-nowrap"
-              >
-                {isSubmitting ? (
-                  <><Loader2 className="w-5 h-5 animate-spin" /> กำลังส่ง...</>
-                ) : (
-                  'ส่งใบจองทัวร์'
-                )}
-              </button>
-            </div>
-            {submitError && (
-              <div className="mt-2 flex items-center gap-2 text-red-500 text-sm">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />{submitError}
-              </div>
-            )}
           </div>
 
-          {/* ========== RIGHT: ข้อมูลผู้เดินทาง ========== */}
-          <div className="px-5 sm:px-6 py-5 border-t lg:border-t-0 border-gray-200">
-            <h3 className="text-xl font-bold text-gray-800 mb-5">ข้อมูลผู้เดินทาง</h3>
+          {/* ========== RIGHT (Row 2): ข้อมูลผู้เดินทาง ========== */}
+          <div className="px-5 sm:px-6 py-5 border-t lg:border-t-0">
+            <h3 className="text-lg font-bold text-gray-800 mb-3">ข้อมูลผู้เดินทาง</h3>
 
-            <div className="space-y-5">
+            <div className="space-y-3">
               {/* ชื่อ / นามสกุล */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-sm font-bold text-gray-700">ชื่อผู้ติดต่อ<span className="text-red-500">*</span></label>
                   <input
@@ -500,7 +658,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
               </div>
 
               {/* อีเมล / เบอร์โทร + OTP */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-sm font-bold text-gray-700">อีเมล<span className="text-red-500">*</span></label>
                   <input
@@ -619,9 +777,39 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
                   value={specialRequest}
                   onChange={(e) => setSpecialRequest(e.target.value)}
                   placeholder="ความต้องการพิเศษ"
-                  rows={5}
+                  rows={3}
                   className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none transition resize-none placeholder:text-gray-400"
                 />
+              </div>
+
+              {/* Consent checkbox + Submit button */}
+              <div className="pt-4 border-t border-gray-100 space-y-3">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={consentTerms}
+                    onChange={(e) => setConsentTerms(e.target.checked)}
+                    className="w-5 h-5 rounded border-gray-300 text-blue-500 focus:ring-blue-400 cursor-pointer accent-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 font-medium">ฉันอ่านเงื่อนไขแล้ว</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting || !consentTerms || (!isAuthenticated && otpStep !== 'verified')}
+                  className="w-full py-3 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg cursor-pointer flex items-center justify-center gap-2 text-sm"
+                >
+                  {isSubmitting ? (
+                    <><Loader2 className="w-5 h-5 animate-spin" /> กำลังส่ง...</>
+                  ) : (
+                    'ส่งใบจองทัวร์'
+                  )}
+                </button>
+                {submitError && (
+                  <div className="flex items-center gap-2 text-red-500 text-sm">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />{submitError}
+                  </div>
+                )}
               </div>
             </div>
           </div>

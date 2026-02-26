@@ -302,6 +302,7 @@ export interface TourDetailOffer {
   price_joinland: number | null;
   price_single: number | null;
   discount_single: number;
+  net_price_single: number | null;
   deposit: number | null;
   promo_name: string | null;
   promo_start_date: string | null;
