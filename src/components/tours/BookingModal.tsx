@@ -44,6 +44,8 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [saleCode, setSaleCode] = useState('');
+  const [salesUsers, setSalesUsers] = useState<{ id: number; name: string }[]>([]);
+  const [salesLoading, setSalesLoading] = useState(true);
   const [specialRequest, setSpecialRequest] = useState('');
   const [consentTerms, setConsentTerms] = useState(false);
 
@@ -72,6 +74,20 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
     }
   }, [isAuthenticated, member]);
 
+  // Fetch sales users
+  useEffect(() => {
+    setSalesLoading(true);
+    bookingApi.getSales().then(res => {
+      if (res.success && res.data) {
+        setSalesUsers(res.data);
+      }
+    }).catch(() => {
+      // Ignore error, optional feature
+    }).finally(() => {
+      setSalesLoading(false);
+    });
+  }, []);
+
   // Update period when initial changes
   useEffect(() => {
     if (initialPeriod) {
@@ -90,38 +106,6 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
 
   // Total passengers (excluding infants for room calculation)
   const totalPassengers = qtyAdult + qtyChildBed + qtyChildNoBed;
-
-  // Auto-select room types based on passenger count
-  useEffect(() => {
-    // Reset all room selections first
-    let triple = 0;
-    let twin = 0;
-    let double_ = 0;
-    const single = 0;
-
-    let remaining = totalPassengers;
-
-    // Distribute passengers to rooms
-    // Priority: Triple (3) → Twin (2) → Double for 1 person (default)
-    if (remaining >= 3) {
-      triple = Math.floor(remaining / 3);
-      remaining = remaining % 3;
-    }
-    if (remaining >= 2) {
-      twin = Math.floor(remaining / 2);
-      remaining = remaining % 2;
-    }
-    // Default: 1 person = Double (พักคู่) not Single
-    if (remaining === 1) {
-      double_ += 1;
-      remaining = 0;
-    }
-
-    setQtyTriple(triple);
-    setQtyTwin(twin);
-    setQtyDouble(double_);
-    setQtySingle(single);
-  }, [totalPassengers]);
 
   // Pricing calculations
   const calcPricing = useCallback(() => {
@@ -211,6 +195,11 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
     }
   };
 
+  // Calculate total rooms selected (for validation)
+  // 1 person can use max 1 room (TWIN/DOUBLE fits 1-2, TRIPLE fits 1-3, SINGLE fits 1)
+  const totalRooms = qtyTriple + qtyTwin + qtyDouble + qtySingle;
+  const isRoomOverCount = totalRooms > totalPassengers;
+
   const handleSubmit = async () => {
     if (!selectedPeriodId) { setSubmitError('กรุณาเลือกรอบเดินทาง'); return; }
     if (!firstName.trim()) { setSubmitError('กรุณากรอกชื่อผู้ติดต่อ'); return; }
@@ -219,6 +208,8 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
     if (!phone.trim()) { setSubmitError('กรุณากรอกเบอร์โทรศัพท์'); return; }
     if (!isAuthenticated && otpStep !== 'verified') { setSubmitError('กรุณายืนยัน OTP ก่อน'); return; }
     if (!consentTerms) { setSubmitError('กรุณายอมรับเงื่อนไข'); return; }
+    // Validate total rooms doesn't exceed passengers (1 person = max 1 room)
+    if (isRoomOverCount) { setSubmitError(`จำนวนห้องพักเกินจำนวนผู้เดินทาง (${totalRooms} ห้อง / ${totalPassengers} คน)`); return; }
 
     setSubmitError('');
     setIsSubmitting(true);
@@ -234,6 +225,10 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
         qty_adult_single: qtySingle, // Single room count
         qty_child_bed: qtyChildBed,
         qty_child_nobed: qtyChildNoBed,
+        qty_infant: qtyInfant,
+        qty_triple: qtyTriple,
+        qty_twin: qtyTwin,
+        qty_double: qtyDouble,
         sale_code: saleCode || undefined,
         special_request: specialRequest || undefined,
         consent_terms: true,
@@ -284,13 +279,12 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
   // Person icon SVG (orange silhouette like reference image)
   const PersonIcon = () => (
     <svg viewBox="0 0 20 32" className="w-[14px] h-[22px] flex-shrink-0 fill-orange-500">
-      <circle cx="10" cy="6.5" r="5.5" />
+      <circle cx="10" cy="6.5" r="5.5" /> 
       <path d="M10 14C4 14 0 17.5 0 21.5V26c0 1.5 1 3 3 3h14c2 0 3-1.5 3-3v-4.5C20 17.5 16 14 10 14z" />
     </svg>
   );
 
   if (!isOpen) return null;
-
   const formatPeriodLabel = (p: TourDetailPeriod) => {
     const s = new Date(p.start_date);
     const e = new Date(p.end_date);
@@ -337,21 +331,9 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
     },
   ];
 
-  // Calculate current room capacity used
-  const currentRoomCapacity = (qtyTriple * 3) + (qtyTwin * 2) + (qtyDouble * 2) + (qtySingle * 1);
-
-  // Room change handler with validation
-  const handleRoomChange = (roomType: 'triple' | 'twin' | 'double' | 'single', newValue: number, currentValue: number) => {
-    const capacityMap = { triple: 3, twin: 2, double: 2, single: 1 };
-    const capacity = capacityMap[roomType];
-    const diff = newValue - currentValue;
-    const newTotalCapacity = currentRoomCapacity + (diff * capacity);
-
-    // Cannot exceed total passengers
-    if (newTotalCapacity > totalPassengers) {
-      return; // Don't allow the change
-    }
-
+  // Room change handler - no strict capacity validation
+  // DOUBLE/TWIN are included in tour price, SINGLE is additional purchase
+  const handleRoomChange = (roomType: 'triple' | 'twin' | 'double' | 'single', newValue: number) => {
     switch (roomType) {
       case 'triple': setQtyTriple(newValue); break;
       case 'twin': setQtyTwin(newValue); break;
@@ -361,14 +343,16 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
   };
 
   // Room types (ห้องพัก)
+  // DOUBLE/TWIN/TRIPLE included in tour price, SINGLE is additional purchase
+  const maxRooms = Math.max(10, totalPassengers); // Allow reasonable room selection
   const roomRows = [
     {
       label: 'พัก 3 ท่าน (TRIPLE)',
       qty: qtyTriple,
-      setQty: (v: number) => handleRoomChange('triple', v, qtyTriple),
+      setQty: (v: number) => handleRoomChange('triple', v),
       min: 0,
-      max: Math.floor(totalPassengers / 3), // Max based on passenger count
-      unitPrice: 0, // No additional charge
+      max: maxRooms,
+      unitPrice: 0, // No additional charge - included in tour price
       totalPrice: 0,
       hasPrice: true,
       capacityPerRoom: 3,
@@ -377,10 +361,10 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
     {
       label: 'พักคู่ (TWIN)',
       qty: qtyTwin,
-      setQty: (v: number) => handleRoomChange('twin', v, qtyTwin),
+      setQty: (v: number) => handleRoomChange('twin', v),
       min: 0,
-      max: Math.floor(totalPassengers / 2), // Max based on passenger count
-      unitPrice: 0, // No additional charge
+      max: maxRooms,
+      unitPrice: 0, // No additional charge - included in tour price
       totalPrice: 0,
       hasPrice: true,
       capacityPerRoom: 2,
@@ -389,10 +373,10 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
     {
       label: 'พักคู่ (DOUBLE)',
       qty: qtyDouble,
-      setQty: (v: number) => handleRoomChange('double', v, qtyDouble),
+      setQty: (v: number) => handleRoomChange('double', v),
       min: 0,
-      max: Math.floor(totalPassengers / 2), // Max based on passenger count
-      unitPrice: 0, // No additional charge
+      max: maxRooms,
+      unitPrice: 0, // No additional charge - included in tour price
       totalPrice: 0,
       hasPrice: true,
       capacityPerRoom: 2,
@@ -401,12 +385,12 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
     {
       label: 'พักเดี่ยว (SINGLE)',
       qty: qtySingle,
-      setQty: (v: number) => handleRoomChange('single', v, qtySingle),
+      setQty: (v: number) => handleRoomChange('single', v),
       min: 0,
-      max: totalPassengers, // Max based on passenger count
+      max: maxRooms,
       unitPrice: pricing.priceSingle,
       totalPrice: pricing.totalSingle,
-      hasPrice: true, // Always show single option
+      hasPrice: true, // Always show - additional purchase for single room supplement
       capacityPerRoom: 1,
       iconCount: 1,
     },
@@ -610,9 +594,9 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
 
             {/* Room allocation info */}
             <div className="mt-3 text-xs text-gray-500">
-              <p>จัดสรรห้องพัก: {currentRoomCapacity}/{totalPassengers} คน</p>
-              {currentRoomCapacity < totalPassengers && (
-                <p className="text-orange-500">ยังต้องจัดสรรห้องพักอีก {totalPassengers - currentRoomCapacity} คน</p>
+              <p>เลือกห้องพัก: {totalRooms} ห้อง / ผู้เดินทาง {totalPassengers} คน</p>
+              {isRoomOverCount && (
+                <p className="text-red-500 font-medium">⚠️ ห้องพักเกินจำนวนผู้เดินทาง {totalRooms - totalPassengers} ห้อง</p>
               )}
               {pricing.totalSingle > 0 && (
                 <p className="text-orange-600 font-medium">ค่าพักเดี่ยว: +{pricing.totalSingle.toLocaleString()} บาท</p>
@@ -770,16 +754,28 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
               )}
 
               {/* เลือก Sale */}
-              <div>
-                <label className="text-sm font-bold text-gray-700">เลือก Sale</label>
-                <input
-                  type="text"
-                  value={saleCode}
-                  onChange={(e) => setSaleCode(e.target.value)}
-                  placeholder="กรุณาเลือกหากท่านติดต่อผู้ขายไว้"
-                  className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none transition placeholder:text-gray-400"
-                />
-              </div>
+              {(salesLoading || salesUsers.length > 0) && (
+                <div>
+                  <label className="text-sm font-bold text-gray-700">เลือก Sale</label>
+                  <select
+                    value={saleCode}
+                    onChange={(e) => setSaleCode(e.target.value)}
+                    disabled={salesLoading}
+                    className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none transition bg-white cursor-pointer disabled:bg-gray-50"
+                  >
+                    {salesLoading ? (
+                      <option value="">กำลังโหลด...</option>
+                    ) : (
+                      <>
+                        <option value="">-- กรุณาเลือกหากท่านติดต่อผู้ขายไว้ --</option>
+                        {salesUsers.map(sale => (
+                          <option key={sale.id} value={sale.name}>{sale.name}</option>
+                        ))}
+                      </>
+                    )}
+                  </select>
+                </div>
+              )}
 
               {/* ความต้องการพิเศษ */}
               <div>

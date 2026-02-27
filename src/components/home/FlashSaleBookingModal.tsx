@@ -17,11 +17,18 @@ interface FlashSaleBookingModalProps {
 export default function FlashSaleBookingModal({ item, isOpen, onClose }: FlashSaleBookingModalProps) {
   const { member, isAuthenticated } = useAuth();
 
-  // Quantities
+  // Quantities - Passengers
   const [qtyAdult, setQtyAdult] = useState(1);
   const [qtyAdultSingle, setQtyAdultSingle] = useState(0);
   const [qtyChildBed, setQtyChildBed] = useState(0);
   const [qtyChildNoBed, setQtyChildNoBed] = useState(0);
+  const [qtyInfant, setQtyInfant] = useState(0);
+
+  // Quantities - Room Types
+  const [qtyTriple, setQtyTriple] = useState(0);
+  const [qtyTwin, setQtyTwin] = useState(0);
+  const [qtyDouble, setQtyDouble] = useState(0);
+  const [qtySingle, setQtySingle] = useState(0);
 
   // Customer info (pre-filled from member)
   const [firstName, setFirstName] = useState('');
@@ -68,12 +75,20 @@ export default function FlashSaleBookingModal({ item, isOpen, onClose }: FlashSa
 
   const pricing = calcPricing();
 
+  // Total passengers and room count (for validation)
+  // 1 person can use max 1 room (TWIN/DOUBLE fits 1-2, TRIPLE fits 1-3, SINGLE fits 1)
+  const totalPassengers = qtyAdult + qtyChildBed + qtyChildNoBed;
+  const totalRooms = qtyTriple + qtyTwin + qtyDouble + qtySingle;
+  const isRoomOverCount = totalRooms > totalPassengers;
+
   const handleSubmit = async () => {
     if (!firstName.trim()) { setSubmitError('กรุณากรอกชื่อผู้ติดต่อ'); return; }
     if (!lastName.trim()) { setSubmitError('กรุณากรอกนามสกุล'); return; }
     if (!email.trim()) { setSubmitError('กรุณากรอกอีเมล'); return; }
     if (!phone.trim()) { setSubmitError('กรุณากรอกเบอร์โทรศัพท์'); return; }
     if (!consentTerms) { setSubmitError('กรุณายอมรับเงื่อนไข'); return; }
+    // Validate total rooms doesn't exceed passengers (1 person = max 1 room)
+    if (isRoomOverCount) { setSubmitError(`จำนวนห้องพักเกินจำนวนผู้เดินทาง (${totalRooms} ห้อง / ${totalPassengers} คน)`); return; }
 
     setSubmitError('');
     setIsSubmitting(true);
@@ -88,6 +103,10 @@ export default function FlashSaleBookingModal({ item, isOpen, onClose }: FlashSa
         qty_adult_single: qtyAdultSingle,
         qty_child_bed: qtyChildBed,
         qty_child_nobed: qtyChildNoBed,
+        qty_infant: qtyInfant,
+        qty_triple: qtyTriple,
+        qty_twin: qtyTwin,
+        qty_double: qtyDouble,
         special_request: specialRequest || undefined,
         consent_terms: true,
       });
@@ -132,11 +151,67 @@ export default function FlashSaleBookingModal({ item, isOpen, onClose }: FlashSa
     </div>
   );
 
+  // Room change handler - no strict capacity validation
+  // DOUBLE/TWIN are included in tour price, SINGLE is additional purchase
+  const handleRoomChange = (roomType: 'triple' | 'twin' | 'double' | 'single', newValue: number) => {
+    switch (roomType) {
+      case 'triple': setQtyTriple(newValue); break;
+      case 'twin': setQtyTwin(newValue); break;
+      case 'double': setQtyDouble(newValue); break;
+      case 'single': setQtySingle(newValue); break;
+    }
+  };
+
+  // Room types (ห้องพัก)
+  // DOUBLE/TWIN/TRIPLE included in tour price, SINGLE is additional purchase
+  const maxRooms = Math.max(10, totalPassengers);
+  const roomRows = [
+    {
+      label: 'พัก 3 ท่าน (TRIPLE)',
+      qty: qtyTriple,
+      setQty: (v: number) => handleRoomChange('triple', v),
+      min: 0,
+      max: maxRooms,
+      iconCount: 3,
+    },
+    {
+      label: 'พักคู่ (TWIN)',
+      qty: qtyTwin,
+      setQty: (v: number) => handleRoomChange('twin', v),
+      min: 0,
+      max: maxRooms,
+      iconCount: 2,
+    },
+    {
+      label: 'พักคู่ (DOUBLE)',
+      qty: qtyDouble,
+      setQty: (v: number) => handleRoomChange('double', v),
+      min: 0,
+      max: maxRooms,
+      iconCount: 1,
+    },
+    {
+      label: 'พักเดี่ยว (SINGLE)',
+      qty: qtySingle,
+      setQty: (v: number) => handleRoomChange('single', v),
+      min: 0,
+      max: maxRooms,
+      iconCount: 1,
+    },
+  ];
+
   // Person icon
   const PersonIcon = () => (
     <svg viewBox="0 0 20 32" className="w-[14px] h-[22px] flex-shrink-0 fill-red-500">
       <circle cx="10" cy="6.5" r="5.5" />
       <path d="M10 14C4 14 0 17.5 0 21.5V26c0 1.5 1 3 3 3h14c2 0 3-1.5 3-3v-4.5C20 17.5 16 14 10 14z" />
+    </svg>
+  );
+
+  // Bed icon
+  const BedIcon = () => (
+    <svg viewBox="0 0 24 24" className="w-[16px] h-[16px] flex-shrink-0 fill-red-500">
+      <path d="M7 14c1.66 0 3-1.34 3-3S8.66 8 7 8s-3 1.34-3 3 1.34 3 3 3zm0-4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm12-3h-8v8H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4zm2 8h-8V9h6c1.1 0 2 .9 2 2v4z"/>
     </svg>
   );
 
@@ -153,7 +228,7 @@ export default function FlashSaleBookingModal({ item, isOpen, onClose }: FlashSa
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm pointer-events-none" />
 
       {/* Modal */}
-      <div className="relative z-10 bg-white rounded-2xl shadow-2xl w-full max-w-[900px] mx-4 flex flex-col" onClick={(e) => e.stopPropagation()}>
+      <div className="relative z-10 bg-white rounded-2xl shadow-2xl w-full max-w-[1100px] mx-4 flex flex-col" onClick={(e) => e.stopPropagation()}>
 
         {/* ── Success overlay ── */}
         {bookingResult && (
@@ -240,129 +315,147 @@ export default function FlashSaleBookingModal({ item, isOpen, onClose }: FlashSa
           )}
         </div>
 
-        {/* ── Two-column content ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 min-h-0">
+        {/* ===== Row 1: ผู้เดินทาง + ห้องพัก ===== */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 border-b border-gray-200">
 
-          {/* LEFT: Quantity + Pricing */}
+          {/* ========== LEFT: ผู้เดินทาง ========== */}
           <div className="px-5 sm:px-6 py-5 lg:border-r border-gray-200">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">รายละเอียดการจอง</h3>
+            <h3 className="text-lg font-bold text-gray-800 mb-3">ผู้เดินทาง</h3>
 
             {/* Table header */}
-            <div className="grid grid-cols-[1fr_110px_80px_80px] items-center bg-gradient-to-r from-red-500 to-orange-500 rounded-t-xl px-4 py-2">
+            <div className="grid grid-cols-[1fr_100px] items-center bg-gradient-to-r from-red-500 to-orange-500 rounded-t-xl px-3 py-2">
               <span></span>
-              <span className="text-white font-bold text-sm text-center">จำนวน</span>
-              <span className="text-white font-bold text-sm text-center">ราคา</span>
-              <span className="text-white font-bold text-sm text-center">รวม</span>
+              <span className="text-white font-bold text-xs text-center">จำนวน</span>
             </div>
 
             {/* Passenger rows */}
             <div className="border border-t-0 border-gray-200 rounded-b-xl divide-y divide-gray-100">
               {/* Adult */}
-              <div className="grid grid-cols-[1fr_110px_80px_80px] items-center px-4 py-3">
+              <div className="grid grid-cols-[1fr_100px] items-center px-3 py-2">
                 <div className="flex items-center gap-2">
                   <PersonIcon />
-                  <span className="text-sm font-medium text-gray-700">ผู้ใหญ่</span>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-gray-700">ผู้ใหญ่</span>
+                    <span className="text-xs text-red-500">{pricing.priceAdult.toLocaleString()} บาท</span>
+                  </div>
                 </div>
                 <div className="flex justify-center">
                   <Stepper value={qtyAdult} onChange={setQtyAdult} min={1} />
                 </div>
-                <div className="text-center text-sm text-gray-600 tabular-nums">
-                  {pricing.priceAdult.toLocaleString()}
-                </div>
-                <div className="text-center text-sm font-semibold text-gray-800 tabular-nums">
-                  {(Math.max(qtyAdult - qtyAdultSingle, 0) * pricing.priceAdult).toLocaleString()}
-                </div>
               </div>
-              {/* Adult Single */}
-              <div className="grid grid-cols-[1fr_110px_80px_80px] items-center px-4 py-3 opacity-60">
+              {/* Adult Single - disabled */}
+              <div className="grid grid-cols-[1fr_100px] items-center px-3 py-2 opacity-60">
                 <div className="flex items-center gap-2">
                   <PersonIcon />
-                  <span className="text-sm font-medium text-gray-700">ผู้ใหญ่ (พักเดี่ยว)</span>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-gray-700">ผู้ใหญ่ (พักเดี่ยว)</span>
+                    <span className="text-xs text-red-500">ติดต่อฝ่ายขาย</span>
+                  </div>
                 </div>
                 <div className="flex justify-center">
                   <Stepper value={qtyAdultSingle} onChange={(v) => setQtyAdultSingle(Math.min(v, qtyAdult))} min={0} disabled />
                 </div>
-                <div className="text-center text-sm text-gray-600">-</div>
-                <div className="text-center text-sm text-orange-500 text-[11px]">ติดต่อฝ่ายขาย</div>
               </div>
-              {/* Child bed */}
-              <div className="grid grid-cols-[1fr_110px_80px_80px] items-center px-4 py-3 opacity-60">
+              {/* Child bed - disabled */}
+              <div className="grid grid-cols-[1fr_100px] items-center px-3 py-2 opacity-60">
                 <div className="flex items-center gap-2">
                   <PersonIcon />
-                  <span className="text-sm font-medium text-gray-700">เด็ก (มีเตียง)</span>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-gray-700">เด็กมีเตียง</span>
+                    <span className="text-xs text-red-500">ติดต่อฝ่ายขาย</span>
+                  </div>
                 </div>
                 <div className="flex justify-center">
                   <Stepper value={qtyChildBed} onChange={setQtyChildBed} min={0} disabled />
                 </div>
-                <div className="text-center text-sm text-gray-600">-</div>
-                <div className="text-center text-sm text-orange-500 text-[11px]">ติดต่อฝ่ายขาย</div>
               </div>
-              {/* Child no bed */}
-              <div className="grid grid-cols-[1fr_110px_80px_80px] items-center px-4 py-3 opacity-60">
+              {/* Child no bed - disabled */}
+              <div className="grid grid-cols-[1fr_100px] items-center px-3 py-2 opacity-60">
                 <div className="flex items-center gap-2">
                   <PersonIcon />
-                  <span className="text-sm font-medium text-gray-700">เด็ก (ไม่มีเตียง)</span>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-gray-700">เด็กไม่มีเตียง</span>
+                    <span className="text-xs text-red-500">ติดต่อฝ่ายขาย</span>
+                  </div>
                 </div>
                 <div className="flex justify-center">
                   <Stepper value={qtyChildNoBed} onChange={setQtyChildNoBed} min={0} disabled />
                 </div>
-                <div className="text-center text-sm text-gray-600">-</div>
-                <div className="text-center text-sm text-orange-500 text-[11px]">ติดต่อฝ่ายขาย</div>
               </div>
             </div>
 
             {/* Grand total */}
-            <div className="mt-3 bg-gradient-to-r from-red-500 to-orange-500 rounded-xl px-5 py-3 flex items-center justify-end">
+            <div className="mt-4 bg-gradient-to-r from-red-500 to-orange-500 rounded-xl px-5 py-3 flex items-center justify-end">
               <span className="text-white font-bold text-lg">
                 รวม : {pricing.grandTotal > 0 ? `${pricing.grandTotal.toLocaleString()} บาท` : '-'}
               </span>
             </div>
+          </div>
 
-            {/* Conditions */}
-            <div className="mt-4 text-[11px] text-gray-500 leading-[1.8] space-y-0">
+          {/* ========== RIGHT: ห้องพัก ========== */}
+          <div className="px-5 sm:px-6 py-5 border-t lg:border-t-0">
+            <h3 className="text-lg font-bold text-gray-800 mb-3">ห้องพัก</h3>
+
+            {/* Room header */}
+            <div className="grid grid-cols-[1fr_100px] items-center bg-gradient-to-r from-red-500 to-orange-500 rounded-t-xl px-3 py-2">
+              <span></span>
+              <span className="text-white font-bold text-xs text-center">จำนวน</span>
+            </div>
+
+            {/* Room rows */}
+            <div className="border border-t-0 border-gray-200 rounded-b-xl divide-y divide-gray-100">
+              {roomRows.map((row, idx) => (
+                <div key={idx} className="grid grid-cols-[1fr_100px] items-center px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm font-medium text-gray-700 w-[130px]">{row.label}</span>
+                        <div className="flex items-center gap-0.5">
+                          {Array.from({ length: row.iconCount }).map((_, i) => (
+                            <BedIcon key={i} />
+                          ))}
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-400">ไม่มีค่าใช้จ่าย</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-center">
+                    <Stepper value={row.qty} onChange={row.setQty} min={row.min} max={row.max} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Room allocation info */}
+            <div className="mt-3 text-xs text-gray-500">
+              <p>เลือกห้องพัก: {totalRooms} ห้อง / ผู้เดินทาง {totalPassengers} คน</p>
+              {isRoomOverCount && (
+                <p className="text-red-500 font-medium">⚠️ ห้องพักเกินจำนวนผู้เดินทาง {totalRooms - totalPassengers} ห้อง</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ===== Row 2: เงื่อนไข + ข้อมูลผู้เดินทาง ===== */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 min-h-0">
+
+          {/* ========== LEFT: เงื่อนไข ========== */}
+          <div className="px-5 sm:px-6 py-5 lg:border-r border-gray-200">
+            <h3 className="text-lg font-bold text-gray-800 mb-3">เงื่อนไขการจอง</h3>
+            <div className="text-[12px] text-gray-500 leading-[1.7] space-y-0">
               <p>• การจอง Flash Sale ยังไม่ใช่การคอนเฟิร์มที่นั่งทันที รอเจ้าหน้าที่ตอบกลับ</p>
               <p>• ราคา Flash Sale เป็นราคาพิเศษ ไม่สามารถใช้ร่วมกับโปรโมชั่นอื่นได้</p>
               <p>• บริษัทฯ ขอสงวนสิทธิ์ในการยกเลิก หากที่นั่งเต็มหรือทัวร์ไม่คอนเฟิร์ม</p>
               <p>• การจองจะเสร็จสมบูรณ์เมื่อได้รับการยืนยันและชำระเงินเท่านั้น</p>
             </div>
-
-            {/* Consent + Submit button */}
-            <div className="mt-4 pt-3 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={consentTerms}
-                  onChange={(e) => setConsentTerms(e.target.checked)}
-                  className="w-5 h-5 rounded border-gray-300 text-red-500 focus:ring-red-400 cursor-pointer accent-red-500"
-                />
-                <span className="text-sm text-gray-700 font-medium">ฉันอ่านเงื่อนไขแล้ว</span>
-              </label>
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={isSubmitting || !consentTerms}
-                className="px-8 py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white font-bold rounded-xl hover:from-red-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg cursor-pointer flex items-center gap-2 text-sm whitespace-nowrap"
-              >
-                {isSubmitting ? (
-                  <><Loader2 className="w-5 h-5 animate-spin" /> กำลังจอง...</>
-                ) : (
-                  <><Zap className="w-4 h-4 fill-white" /> จอง Flash Sale</>
-                )}
-              </button>
-            </div>
-            {submitError && (
-              <div className="mt-2 flex items-center gap-2 text-red-500 text-sm">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />{submitError}
-              </div>
-            )}
           </div>
 
-          {/* RIGHT: Customer info */}
-          <div className="px-5 sm:px-6 py-5 border-t lg:border-t-0 border-gray-200">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">ข้อมูลผู้เดินทาง</h3>
+          {/* ========== RIGHT: ข้อมูลผู้เดินทาง ========== */}
+          <div className="px-5 sm:px-6 py-5 border-t lg:border-t-0">
+            <h3 className="text-lg font-bold text-gray-800 mb-3">ข้อมูลผู้เดินทาง</h3>
 
-            <div className="space-y-4">
-              {/* Name */}
+            <div className="space-y-3">
+              {/* ชื่อ / นามสกุล */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-sm font-bold text-gray-700">ชื่อผู้ติดต่อ<span className="text-red-500">*</span></label>
@@ -386,7 +479,7 @@ export default function FlashSaleBookingModal({ item, isOpen, onClose }: FlashSa
                 </div>
               </div>
 
-              {/* Email & Phone */}
+              {/* อีเมล / เบอร์โทร */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-sm font-bold text-gray-700">อีเมล<span className="text-red-500">*</span></label>
@@ -419,19 +512,50 @@ export default function FlashSaleBookingModal({ item, isOpen, onClose }: FlashSa
                 </div>
               )}
 
-              {/* Special request */}
+              {/* ความต้องการพิเศษ */}
               <div>
                 <label className="text-sm font-bold text-gray-700">ความต้องการพิเศษ</label>
                 <textarea
                   value={specialRequest}
                   onChange={(e) => setSpecialRequest(e.target.value)}
                   placeholder="ความต้องการพิเศษ"
-                  rows={4}
+                  rows={3}
                   className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-red-400 focus:ring-1 focus:ring-red-200 outline-none transition resize-none placeholder:text-gray-400"
                 />
               </div>
+
+              {/* Consent checkbox + Submit button */}
+              <div className="pt-4 border-t border-gray-100 space-y-3">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={consentTerms}
+                    onChange={(e) => setConsentTerms(e.target.checked)}
+                    className="w-5 h-5 rounded border-gray-300 text-red-500 focus:ring-red-400 cursor-pointer accent-red-500"
+                  />
+                  <span className="text-sm text-gray-700 font-medium">ฉันอ่านเงื่อนไขแล้ว</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting || !consentTerms}
+                  className="w-full py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white font-bold rounded-xl hover:from-red-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg cursor-pointer flex items-center justify-center gap-2 text-sm"
+                >
+                {isSubmitting ? (
+                  <><Loader2 className="w-5 h-5 animate-spin" /> กำลังจอง...</>
+                ) : (
+                  <><Zap className="w-4 h-4 fill-white" /> จอง Flash Sale</>
+                )}
+                </button>
+                {submitError && (
+                  <div className="flex items-center gap-2 text-red-500 text-sm">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />{submitError}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>

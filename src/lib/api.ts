@@ -501,12 +501,52 @@ export interface Member {
 export interface BookingResponse {
   id: number;
   booking_code: string;
-  tour_title: string;
-  period: string;
-  flash_price?: number;
+  tour_id: number;
+  period_id: number;
+  flash_sale_item_id?: number;
+  qty_adult: number;
+  qty_adult_single: number;
+  qty_child_bed: number;
+  qty_child_nobed: number;
+  qty_infant: number;
+  qty_triple: number;
+  qty_twin: number;
+  qty_double: number;
+  price_adult: number;
+  price_single: number;
+  price_child_bed: number;
+  price_child_nobed: number;
+  price_infant: number;
   total_amount: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  sale_code?: string;
+  special_request?: string;
   status: string;
-  status_label: string;
+  source: string;
+  admin_note?: string;
+  created_at: string;
+  updated_at: string;
+  tour?: {
+    id: number;
+    title: string;
+    slug: string;
+    tour_code: string;
+    effective_cover_image_url?: string;
+    destination?: string;
+  };
+  period?: {
+    id: number;
+    start_date: string;
+    end_date: string;
+  };
+  flash_sale_item?: {
+    id: number;
+    flash_price: number;
+    discount_percent: number;
+  };
 }
 
 export const bookingApi = {
@@ -530,6 +570,10 @@ export const bookingApi = {
     qty_adult_single: number;
     qty_child_bed: number;
     qty_child_nobed: number;
+    qty_infant?: number;
+    qty_triple?: number;
+    qty_twin?: number;
+    qty_double?: number;
     sale_code?: string;
     special_request?: string;
     consent_terms: boolean;
@@ -548,6 +592,10 @@ export const bookingApi = {
     qty_adult_single: number;
     qty_child_bed: number;
     qty_child_nobed: number;
+    qty_infant?: number;
+    qty_triple?: number;
+    qty_twin?: number;
+    qty_double?: number;
     special_request?: string;
     consent_terms: boolean;
   }) => api.post<{ booking: BookingResponse }>('/web/booking/flash-sale', data),
@@ -555,6 +603,39 @@ export const bookingApi = {
   // Get my bookings
   myBookings: (page = 1) =>
     api.get<{ data: { data: BookingResponse[] } }>(`/web/bookings?page=${page}`),
+
+  // Get single booking detail
+  getBooking: (id: number) =>
+    api.get<{ data: BookingResponse }>(`/web/bookings/${id}`),
+
+  // Get sales users for dropdown (with cache)
+  getSales: (() => {
+    let cache: { id: number; name: string }[] | null = null;
+    let fetchPromise: Promise<{ success: boolean; data: { id: number; name: string }[] }> | null = null;
+    
+    return async () => {
+      // Return cached data immediately
+      if (cache !== null) {
+        return { success: true, data: cache };
+      }
+      // Reuse existing request if in progress
+      if (fetchPromise) {
+        return fetchPromise;
+      }
+      // Fetch and cache
+      fetchPromise = api.get<{ data: { id: number; name: string }[] }>('/web/sales').then(res => {
+        if (res.success && res.data) {
+          cache = res.data;
+        }
+        fetchPromise = null;
+        return res;
+      }).catch(err => {
+        fetchPromise = null;
+        throw err;
+      });
+      return fetchPromise;
+    };
+  })(),
 };
 
 // ===================== Tour Reviews =====================

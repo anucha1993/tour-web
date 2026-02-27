@@ -42,7 +42,7 @@ const menuGroups: MenuGroup[] = [
     title: "การจองทัวร์",
     items: [
       { href: "/member/wishlist", icon: HeartIcon, label: "ทัวร์ที่ถูกใจ"},
-      { href: "/member/bookings", icon: ClipboardDocumentListIcon, label: "รายการจอง", isMockup: true },
+      { href: "/member/bookings", icon: ClipboardDocumentListIcon, label: "รายการจอง"},
       { href: "/member/quotations", icon: DocumentTextIcon, label: "ใบเสนอราคา", isMockup: true },
       { href: "/member/payment-history", icon: BanknotesIcon, label: "ประวัติการชำระเงิน", isMockup: true },
       { href: "/member/reviews", icon: StarIcon, label: "รีวิวของฉัน" },

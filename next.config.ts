@@ -39,6 +39,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "www.zegotravel.com",
       },
+      {
+        protocol: "https",
+        hostname: "godlikecenter.com",
+      },
+      {
+        protocol: "http",
+        hostname: "www.qualityb2bpackage.com",
+      },
     ],
   },
 };

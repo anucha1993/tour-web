@@ -17,6 +17,7 @@ import {
   tourDetailApi,
   reviewApi,
   blogApi,
+  bookingApi,
   TourDetail,
   TourDetailPeriod,
   TourDetailItinerary,
@@ -1064,6 +1065,8 @@ export default function TourDetailPage() {
     }
     setLoading(true);
     setHighlightSlideIndex(0); // Reset slider when loading new tour
+    // Preload sales users for booking modal (will be cached)
+    bookingApi.getSales().catch(() => {});
     tourDetailApi.get(slug).then(res => {
       if (res.success && res.data) {
         setTour(res.data);
