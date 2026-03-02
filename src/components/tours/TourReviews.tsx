@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { Star, ThumbsUp, ChevronDown, MessageCircle, User } from 'lucide-react';
-import { TourReview, ReviewSummary, CategoryRatings } from '@/lib/api';
+import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { Star, ThumbsUp, ChevronDown, MessageCircle, User, Eye } from 'lucide-react';
+import { TourReview, ReviewSummary, CategoryRatings, reviewApi } from '@/lib/api';
 
 const CATEGORY_LABELS: Record<string, string> = {
   guide: 'ไกด์',
@@ -57,6 +58,32 @@ interface ReviewCardProps {
 
 function ReviewCard({ review, onHelpful }: ReviewCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const [viewsCount, setViewsCount] = useState(review.views_count || 0);
+  const viewTracked = useRef(false);
+
+  // Track view when card becomes visible (IntersectionObserver)
+  const cardRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (viewTracked.current) return;
+    const el = cardRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !viewTracked.current) {
+          viewTracked.current = true;
+          reviewApi.recordView(review.id).then((res) => {
+            if (res.success && res.data) {
+              setViewsCount(res.data.views_count);
+            }
+          }).catch(() => {});
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [review.id]);
 
   const displayName = review.reviewer_name || 'สมาชิก';
   const initial = displayName.charAt(0).toUpperCase();
@@ -67,7 +94,7 @@ function ReviewCard({ review, onHelpful }: ReviewCardProps) {
   });
 
   return (
-    <div className="border border-gray-100 rounded-xl p-4 sm:p-5 hover:shadow-sm transition-shadow">
+    <div ref={cardRef} className="border border-gray-100 rounded-xl p-4 sm:p-5 hover:shadow-sm transition-shadow">
       {/* Header */}
       <div className="flex items-start gap-3">
         {review.reviewer_avatar_url ? (
@@ -163,14 +190,26 @@ function ReviewCard({ review, onHelpful }: ReviewCardProps) {
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-end mt-3">
-        <button
-          onClick={() => onHelpful(review.id)}
-          className="flex items-center gap-1 text-xs text-gray-400 hover:text-blue-500 transition-colors"
-        >
-          <ThumbsUp className="w-3.5 h-3.5" />
-          <span>มีประโยชน์ {review.helpful_count > 0 ? `(${review.helpful_count})` : ''}</span>
-        </button>
+      <div className="flex items-center justify-between mt-3">
+        <div className="flex items-center gap-1 text-xs text-gray-400">
+          <Eye className="w-3.5 h-3.5" />
+          <span>{viewsCount > 0 ? viewsCount.toLocaleString() : 0} เข้าชม</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link
+            href={`/reviews/${review.id}`}
+            className="text-xs text-blue-500 hover:text-blue-700 font-medium transition-colors"
+          >
+            อ่านเพิ่มเติม →
+          </Link>
+          <button
+            onClick={() => onHelpful(review.id)}
+            className="flex items-center gap-1 text-xs text-gray-400 hover:text-blue-500 transition-colors"
+          >
+            <ThumbsUp className="w-3.5 h-3.5" />
+            <span>มีประโยชน์ {review.helpful_count > 0 ? `(${review.helpful_count})` : ''}</span>
+          </button>
+        </div>
       </div>
     </div>
   );

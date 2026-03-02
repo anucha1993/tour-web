@@ -96,7 +96,7 @@ export default function HeroSlider() {
   const hasSlides = slides.length > 0;
 
   return (
-    <section className="relative z-0 min-h-[100px] lg:min-h-[600px] text-white overflow-hidden">
+    <section className="relative z-10 min-h-[100px] lg:min-h-[600px] text-white overflow-x-clip">
       {/* Background - Slides or Gradient */}
       {hasSlides ? (
         <>
@@ -243,7 +243,7 @@ export default function HeroSlider() {
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl shadow-2xl p-4 lg:p-6 max-w-6xl">
+          <div className="bg-white rounded-2xl shadow-2xl p-4 lg:p-6 max-w-6xl relative z-20">
             <SearchForm variant="hero" showQuickLinks />
           </div>
         )}

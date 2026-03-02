@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { Star, StarHalf, Quote, ChevronLeft, ChevronRight, MessageSquare, ImageIcon } from 'lucide-react';
+import { Star, StarHalf, Quote, ChevronLeft, ChevronRight, MessageSquare, ImageIcon, Eye } from 'lucide-react';
 import { API_URL } from '@/lib/config';
 import { TourReview } from '@/lib/api';
 
@@ -131,7 +131,7 @@ function ReviewCard({ review }: { review: TourReview }) {
   const tourSlug = review.tour?.slug || '';
 
   return (
-    <div className="flex-shrink-0 w-[320px] sm:w-[360px] bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 group">
+    <Link href={`/reviews/${review.id}`} className="flex-shrink-0 w-[320px] sm:w-[360px] bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 group block">
       {/* Quote icon */}
       <Quote className="w-8 h-8 text-[var(--color-primary)]/20 mb-3 rotate-180" />
 
@@ -186,17 +186,20 @@ function ReviewCard({ review }: { review: TourReview }) {
           </div>
         </div>
 
-        {/* Tour name */}
-        {tourSlug && (
-          <Link
-            href={`/tours/${tourSlug}`}
-            className="block mt-2 text-xs text-[var(--color-gray-400)] hover:text-[var(--color-primary)] transition-colors truncate"
-          >
-            ทัวร์: {tourTitle}
-          </Link>
-        )}
+        {/* Tour name + views */}
+        <div className="flex items-center justify-between mt-2">
+          {tourTitle ? (
+            <span className="text-xs text-[var(--color-gray-400)] truncate flex-1 min-w-0">
+              ทัวร์: {tourTitle}
+            </span>
+          ) : <span />}
+          <div className="flex items-center gap-1 text-[11px] text-gray-400 flex-shrink-0 ml-2">
+            <Eye className="w-3 h-3" />
+            <span>{(review.views_count || 0).toLocaleString()}</span>
+          </div>
+        </div>
       </div>
-    </div>
+    </Link>
   );
 }
 

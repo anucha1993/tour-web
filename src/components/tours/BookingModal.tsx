@@ -5,7 +5,7 @@ import {
   X, Minus as MinusIcon, Plus, Phone,
   Loader2, CheckCircle2, AlertCircle, ChevronDown,
 } from 'lucide-react';
-import { bookingApi, BookingResponse, TourDetail, TourDetailPeriod } from '@/lib/api';
+import { bookingApi, BookingSubmitResult, TourDetail, TourDetailPeriod } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface BookingModalProps {
@@ -60,7 +60,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
   // Submit state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
-  const [bookingResult, setBookingResult] = useState<BookingResponse | null>(null);
+  const [bookingResult, setBookingResult] = useState<BookingSubmitResult | null>(null);
   const [isOtpLoading, setIsOtpLoading] = useState(false);
 
   // Pre-fill for logged-in members

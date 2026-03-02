@@ -421,8 +421,8 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
 
       {/* ── Row 2: Advanced filters (date + price) ── */}
       <div
-        className={`overflow-hidden transition-all duration-300 ${
-          showAdvanced ? 'max-h-[500px] opacity-100 mt-3' : 'max-h-0 opacity-0'
+        className={`transition-all duration-300 ${
+          showAdvanced ? 'max-h-[500px] opacity-100 mt-3 overflow-visible' : 'max-h-0 opacity-0 overflow-hidden'
         }`}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">

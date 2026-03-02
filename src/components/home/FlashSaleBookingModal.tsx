@@ -5,24 +5,36 @@ import {
   X, Minus as MinusIcon, Plus,
   Loader2, CheckCircle2, AlertCircle, Zap, Calendar,
 } from 'lucide-react';
-import { bookingApi, FlashSalePublicItem, BookingResponse } from '@/lib/api';
+import { bookingApi, FlashSalePublicItem, BookingSubmitResult } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface FlashSaleBookingModalProps {
   item: FlashSalePublicItem;
+  allItems?: FlashSalePublicItem[];
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function FlashSaleBookingModal({ item, isOpen, onClose }: FlashSaleBookingModalProps) {
+export default function FlashSaleBookingModal({ item, allItems = [], isOpen, onClose }: FlashSaleBookingModalProps) {
   const { member, isAuthenticated } = useAuth();
+
+  // Active item (switchable when same tour has multiple periods)
+  const [activeItem, setActiveItem] = useState<FlashSalePublicItem>(item);
+
+  // Filter periods for the same tour from all flash sale items
+  const sameTourItems = allItems.filter(i => i.tour_code === item.tour_code && !i.is_sold_out);
+
+  // Sync activeItem when item prop changes
+  useEffect(() => {
+    setActiveItem(item);
+  }, [item]);
 
   // Quantities - Passengers
   const [qtyAdult, setQtyAdult] = useState(1);
   const [qtyAdultSingle, setQtyAdultSingle] = useState(0);
   const [qtyChildBed, setQtyChildBed] = useState(0);
   const [qtyChildNoBed, setQtyChildNoBed] = useState(0);
-  const [qtyInfant, setQtyInfant] = useState(0);
+  const [qtyInfant] = useState(0);
 
   // Quantities - Room Types
   const [qtyTriple, setQtyTriple] = useState(0);
@@ -41,7 +53,7 @@ export default function FlashSaleBookingModal({ item, isOpen, onClose }: FlashSa
   // Submit state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
-  const [bookingResult, setBookingResult] = useState<BookingResponse | null>(null);
+  const [bookingResult, setBookingResult] = useState<BookingSubmitResult | null>(null);
 
   // Pre-fill for logged-in members
   useEffect(() => {
@@ -53,9 +65,9 @@ export default function FlashSaleBookingModal({ item, isOpen, onClose }: FlashSa
     }
   }, [isAuthenticated, member]);
 
-  // Pricing
-  const flashPrice = Number(item.flash_price);
-  const originalPrice = Number(item.original_price_snapshot || item.original_price || 0);
+  // Pricing (use activeItem)
+  const flashPrice = Number(activeItem.flash_price);
+  const originalPrice = Number(activeItem.original_price_snapshot || activeItem.original_price || 0);
 
   const calcPricing = useCallback(() => {
     const priceAdult = flashPrice;
@@ -94,7 +106,7 @@ export default function FlashSaleBookingModal({ item, isOpen, onClose }: FlashSa
     setIsSubmitting(true);
     try {
       const res = await bookingApi.submitFlashSale({
-        flash_sale_item_id: item.flash_sale_item_id,
+        flash_sale_item_id: activeItem.flash_sale_item_id,
         first_name: firstName.trim(),
         last_name: lastName.trim(),
         email: email.trim(),
@@ -220,7 +232,7 @@ export default function FlashSaleBookingModal({ item, isOpen, onClose }: FlashSa
   const formatDateThai = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
 
-  const stockRemaining = item.quantity_limit ? Math.max(0, item.quantity_limit - item.quantity_sold) : null;
+  const stockRemaining = activeItem.quantity_limit ? Math.max(0, activeItem.quantity_limit - activeItem.quantity_sold) : null;
 
   return (
     <div className="fixed inset-0 z-[500] flex items-start justify-center overflow-y-auto pt-28 sm:pt-32 pb-4 sm:pb-6" onClick={onClose}>
@@ -283,13 +295,10 @@ export default function FlashSaleBookingModal({ item, isOpen, onClose }: FlashSa
         <div className="px-5 sm:px-6 py-3 bg-gray-50 border-b border-gray-100">
           <div className="flex items-center gap-3">
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-gray-800 truncate">{item.title}</p>
+              <p className="text-sm font-bold text-gray-800 truncate">{activeItem.title}</p>
               <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
-                <span className="font-mono">{item.tour_code}</span>
-                <span>•</span>
-                <Calendar className="w-3 h-3" />
-                <span>{formatDateThai(item.period_start_date)} - {formatDateThai(item.period_end_date)}</span>
-                {item.days > 0 && <span>• {item.days}D{item.nights}N</span>}
+                <span className="font-mono">{activeItem.tour_code}</span>
+                {activeItem.days > 0 && <span>• {activeItem.days}D{activeItem.nights}N</span>}
               </div>
             </div>
             <div className="text-right flex-shrink-0">
@@ -299,9 +308,9 @@ export default function FlashSaleBookingModal({ item, isOpen, onClose }: FlashSa
                 )}
                 <span className="text-lg font-bold text-red-500">฿{flashPrice.toLocaleString()}</span>
               </div>
-              {Number(item.discount_percent) > 0 && (
+              {Number(activeItem.discount_percent) > 0 && (
                 <span className="inline-flex items-center gap-0.5 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                  <Zap className="w-2.5 h-2.5 fill-white" />-{item.discount_percent}%
+                  <Zap className="w-2.5 h-2.5 fill-white" />-{activeItem.discount_percent}%
                 </span>
               )}
             </div>
@@ -311,6 +320,55 @@ export default function FlashSaleBookingModal({ item, isOpen, onClose }: FlashSa
               <span className="text-gray-500">เหลือ</span>
               <span className="font-bold text-red-500">{stockRemaining}</span>
               <span className="text-gray-500">ที่</span>
+            </div>
+          )}
+        </div>
+
+        {/* ── Period selector (รอบเดินทาง) ── */}
+        <div className="px-5 sm:px-6 py-3 border-b border-gray-200 bg-white">
+          <h3 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1.5">
+            <Calendar className="w-4 h-4 text-red-500" />
+            รอบเดินทาง
+          </h3>
+          {sameTourItems.length > 1 ? (
+            <div className="flex flex-wrap gap-2">
+              {sameTourItems.map((si) => {
+                const isActive = si.flash_sale_item_id === activeItem.flash_sale_item_id;
+                const siRemaining = si.quantity_limit ? Math.max(0, si.quantity_limit - si.quantity_sold) : null;
+                return (
+                  <button
+                    key={si.flash_sale_item_id}
+                    onClick={() => setActiveItem(si)}
+                    className={`relative px-3 py-2 rounded-lg border-2 text-left transition-all cursor-pointer ${
+                      isActive
+                        ? 'border-red-500 bg-red-50'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
+                  >
+                    <p className={`text-sm font-semibold ${isActive ? 'text-red-600' : 'text-gray-700'}`}>
+                      {formatDateThai(si.period_start_date)} - {formatDateThai(si.period_end_date)}
+                    </p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className={`text-xs font-bold ${isActive ? 'text-red-500' : 'text-gray-500'}`}>
+                        ฿{Number(si.flash_price).toLocaleString()}
+                      </span>
+                      {siRemaining !== null && (
+                        <span className="text-[10px] text-gray-400">เหลือ {siRemaining} ที่</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
+              <Calendar className="w-4 h-4 text-red-500" />
+              <span className="text-sm font-semibold text-red-600">
+                {formatDateThai(activeItem.period_start_date)} - {formatDateThai(activeItem.period_end_date)}
+              </span>
+              {stockRemaining !== null && (
+                <span className="text-xs text-gray-500 ml-auto">เหลือ {stockRemaining} ที่</span>
+              )}
             </div>
           )}
         </div>

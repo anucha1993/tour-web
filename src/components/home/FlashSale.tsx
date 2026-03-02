@@ -337,6 +337,7 @@ export default function FlashSale() {
   const [flashSales, setFlashSales] = useState<FlashSalePublic[]>([]);
   const [loading, setLoading] = useState(true);
   const [bookingItem, setBookingItem] = useState<FlashSalePublicItem | null>(null);
+  const [bookingSaleItems, setBookingSaleItems] = useState<FlashSalePublicItem[]>([]);
   const { isAuthenticated } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -357,12 +358,13 @@ export default function FlashSale() {
   }, []);
 
   // Auth gate: if not logged in → redirect to login with return URL
-  const handleBook = (item: FlashSalePublicItem) => {
+  const handleBook = (item: FlashSalePublicItem, saleItems: FlashSalePublicItem[]) => {
     if (!isAuthenticated) {
       router.push(`/login?redirect=${encodeURIComponent(pathname || '/')}&flash_booking=1`);
       return;
     }
     setBookingItem(item);
+    setBookingSaleItems(saleItems);
   };
 
   // Don't render anything if no flash sales - no skeleton needed since this is below fold
@@ -378,7 +380,7 @@ export default function FlashSale() {
       {flashSales.map((sale) => (
         <section
           key={sale.id}
-          className="py-10 lg:py-14 bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50 relative overflow-hidden"
+          className="py-10 lg:py-14 bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50 relative z-0 overflow-hidden"
         >
           {/* Decorative blurs */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-red-100/50 to-transparent rounded-full blur-3xl" />
@@ -428,7 +430,7 @@ export default function FlashSale() {
                   </thead>
                   <tbody>
                     {sale.items.map((item, idx) => (
-                      <FlashRow key={`${item.id}-${item.period_start_date}`} item={item} index={idx} onBook={handleBook} />
+                      <FlashRow key={`${item.id}-${item.period_start_date}`} item={item} index={idx} onBook={(i) => handleBook(i, sale.items)} />
                     ))}
                   </tbody>
                 </table>
@@ -444,7 +446,7 @@ export default function FlashSale() {
             <div className="sm:hidden bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="max-h-[480px] overflow-y-auto">
                 {sale.items.map((item, idx) => (
-                  <MobileFlashRow key={`${item.id}-${item.period_start_date}`} item={item} index={idx} onBook={handleBook} />
+                  <MobileFlashRow key={`${item.id}-${item.period_start_date}`} item={item} index={idx} onBook={(i) => handleBook(i, sale.items)} />
                 ))}
               </div>
               {sale.items.length > 10 && (
@@ -461,8 +463,9 @@ export default function FlashSale() {
       {bookingItem && (
         <FlashSaleBookingModal
           item={bookingItem}
+          allItems={bookingSaleItems}
           isOpen={!!bookingItem}
-          onClose={() => setBookingItem(null)}
+          onClose={() => { setBookingItem(null); setBookingSaleItems([]); }}
         />
       )}
     </>

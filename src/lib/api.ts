@@ -497,6 +497,17 @@ export interface Member {
 }
 
 // Booking API
+// Simplified booking result returned from submit endpoints
+export interface BookingSubmitResult {
+  id: number;
+  booking_code: string;
+  tour_title: string;
+  period: string;
+  total_amount: number;
+  status: string;
+  status_label: string;
+}
+
 // Booking response type
 export interface BookingResponse {
   id: number;
@@ -579,7 +590,7 @@ export const bookingApi = {
     consent_terms: boolean;
     otp_request_id?: number;
     otp_verified?: boolean;
-  }) => api.post<{ booking: BookingResponse }>('/web/booking/submit', data),
+  }) => api.post<{ booking: BookingSubmitResult }>('/web/booking/submit', data),
 
   // Submit flash sale booking (requires auth)
   submitFlashSale: (data: {
@@ -598,7 +609,7 @@ export const bookingApi = {
     qty_double?: number;
     special_request?: string;
     consent_terms: boolean;
-  }) => api.post<{ booking: BookingResponse }>('/web/booking/flash-sale', data),
+  }) => api.post<{ booking: BookingSubmitResult }>('/web/booking/flash-sale', data),
 
   // Get my bookings
   myBookings: (page = 1) =>
@@ -607,6 +618,10 @@ export const bookingApi = {
   // Get single booking detail
   getBooking: (id: number) =>
     api.get<{ data: BookingResponse }>(`/web/bookings/${id}`),
+
+  // Cancel a pending booking (customer self-cancel)
+  cancelBooking: (id: number) =>
+    api.post<Record<string, never>>(`/web/bookings/${id}/cancel`, {}),
 
   // Get sales users for dropdown (with cache)
   getSales: (() => {
@@ -684,6 +699,7 @@ export interface TourReview {
   replied_at: string | null;
   is_featured: boolean;
   helpful_count: number;
+  views_count: number;
   created_at: string;
   images?: ReviewImage[];
   user?: {
@@ -765,6 +781,14 @@ export const reviewApi = {
   // Public: Mark review as helpful
   markHelpful: (reviewId: number) =>
     api.post<{ data: { helpful_count: number } }>(`/reviews/${reviewId}/helpful`, {}),
+
+  // Public: Record a view for a review
+  recordView: (reviewId: number) =>
+    api.post<{ data: { views_count: number } }>(`/reviews/${reviewId}/view`, {}),
+
+  // Public: Get single review detail
+  getReview: (reviewId: number) =>
+    api.get<{ data: { review: TourReview; related_reviews: TourReview[]; featured_reviews: TourReview[] } }>(`/reviews/${reviewId}`),
 
   // Auth: Submit a review (JSON)
   submitReview: (tourSlug: string, data: {

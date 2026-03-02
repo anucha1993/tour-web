@@ -30,6 +30,9 @@ export default function MemberBookings() {
   const [bookings, setBookings] = useState<BookingResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const perPage = 5;
 
   useEffect(() => {
     if (!member) return;
@@ -53,6 +56,26 @@ export default function MemberBookings() {
 
     fetchBookings();
   }, [member]);
+
+  const handleCancelBooking = async (bookingId: number, bookingCode: string) => {
+    if (!confirm(`ต้องการยกเลิกการจอง ${bookingCode} หรือไม่?\n\nเมื่อยกเลิกแล้วจะไม่สามารถกลับมาได้`)) return;
+
+    try {
+      setCancellingId(bookingId);
+      const res = await bookingApi.cancelBooking(bookingId);
+      if (res.success) {
+        setBookings(prev =>
+          prev.map(b => b.id === bookingId ? { ...b, status: "cancelled" } : b)
+        );
+      } else {
+        alert(res.message || "ไม่สามารถยกเลิกการจองได้");
+      }
+    } catch {
+      alert("เกิดข้อผิดพลาดในการยกเลิก");
+    } finally {
+      setCancellingId(null);
+    }
+  };
 
   if (!member) return null;
 
@@ -122,9 +145,13 @@ export default function MemberBookings() {
       )}
 
       {/* Bookings List */}
-      {!loading && !error && bookings.length > 0 && (
+      {!loading && !error && bookings.length > 0 && (() => {
+        const totalPages = Math.ceil(bookings.length / perPage);
+        const paginatedBookings = bookings.slice((currentPage - 1) * perPage, currentPage * perPage);
+        return (
+        <>
         <div className="space-y-4">
-          {bookings.map((booking) => {
+          {paginatedBookings.map((booking) => {
             const status = statusConfig[booking.status] || statusConfig.pending;
             const StatusIcon = status.icon;
             const isFlashSale = booking.source === "flash_sale";
@@ -215,12 +242,28 @@ export default function MemberBookings() {
                           year: "numeric",
                         })}
                       </span>
-                      <Link
-                        href={`/member/bookings/${booking.id}`}
-                        className="text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)]"
-                      >
-                        ดูรายละเอียด →
-                      </Link>
+                      <div className="flex items-center gap-3">
+                        {booking.status === "pending" && (
+                          <button
+                            onClick={() => handleCancelBooking(booking.id, booking.booking_code)}
+                            disabled={cancellingId === booking.id}
+                            className="text-sm font-medium text-red-500 hover:text-red-700 disabled:opacity-50 flex items-center gap-1 cursor-pointer"
+                          >
+                            {cancellingId === booking.id ? (
+                              <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <XCircleIcon className="w-4 h-4" />
+                            )}
+                            ยกเลิกการจอง
+                          </button>
+                        )}
+                        <Link
+                          href={`/member/bookings/${booking.id}`}
+                          className="text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)]"
+                        >
+                          ดูรายละเอียด →
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -228,7 +271,42 @@ export default function MemberBookings() {
             );
           })}
         </div>
-      )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-6">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            >
+              ← ก่อนหน้า
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`w-9 h-9 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+                  page === currentPage
+                    ? "bg-[var(--color-primary)] text-white shadow-sm"
+                    : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            >
+              ถัดไป →
+            </button>
+          </div>
+        )}
+        </>
+        );
+      })()}
     </div>
   );
 }
