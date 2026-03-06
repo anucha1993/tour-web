@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { Star, StarHalf, Quote, ChevronLeft, ChevronRight, MessageSquare, ImageIcon, Eye } from 'lucide-react';
+import { Star, StarHalf, Quote, ChevronLeft, ChevronRight, MessageSquare, ImageIcon, Eye, ArrowRight } from 'lucide-react';
 import { API_URL } from '@/lib/config';
 import { TourReview } from '@/lib/api';
 
@@ -198,6 +198,12 @@ function ReviewCard({ review }: { review: TourReview }) {
             <span>{(review.views_count || 0).toLocaleString()}</span>
           </div>
         </div>
+
+        {/* Read more */}
+        <div className="mt-3 text-xs font-medium text-[var(--color-primary)] group-hover:underline flex items-center gap-1">
+          อ่านเพิ่มเติม
+          <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
+        </div>
       </div>
     </Link>
   );
@@ -270,14 +276,23 @@ export default function CustomerReviews() {
     <section className="py-12 lg:py-16 bg-gradient-to-b from-gray-50 to-white">
       <div className="container-custom">
         {/* Header */}
-        <div className="text-center mb-10">
-          <h2 className="text-2xl lg:text-3xl font-bold text-[var(--color-gray-800)] flex items-center justify-center gap-2">
-            <MessageSquare className="w-7 h-7 text-[var(--color-primary)]" />
-            รีวิวจากลูกค้า
-          </h2>
-          <p className="text-[var(--color-gray-500)] mt-2">
-            เสียงจากลูกค้าที่ไว้วางใจเดินทางกับเรา
-          </p>
+        <div className="flex items-start justify-between mb-10">
+          <div>
+            <h2 className="text-2xl lg:text-3xl font-bold text-[var(--color-gray-800)] flex items-center gap-2">
+              <MessageSquare className="w-7 h-7 text-[var(--color-primary)]" />
+              รีวิวจากลูกค้า
+            </h2>
+            <p className="text-[var(--color-gray-500)] mt-2">
+              เสียงจากลูกค้าที่ไว้วางใจเดินทางกับเรา
+            </p>
+          </div>
+          <Link
+            href="/reviews"
+            className="flex-shrink-0 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-primary)] hover:underline mt-1"
+          >
+            ดูรีวิวทั้งหมด
+            <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
 
         {/* Loading Skeleton */}
@@ -334,6 +349,8 @@ export default function CustomerReviews() {
             <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-gray-50 to-transparent" />
           </div>
         )}
+
+
       </div>
     </section>
   );

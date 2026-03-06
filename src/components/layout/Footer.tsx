@@ -69,6 +69,7 @@ const fallbackTourLinks: FooterLink[] = [
 const fallbackCompanyLinks: FooterLink[] = [
   { label: 'เกี่ยวกับเรา', href: '/about' },
   { label: 'ติดต่อเรา', href: '/contact' },
+  { label: 'รีวิวจากลูกค้า', href: '/reviews' },
   { label: 'รับจัดกรุ๊ปทัวร์', href: '/group-tours' },
   { label: 'ร่วมงานกับเรา', href: '/careers' },
   { label: 'พันธมิตรธุรกิจ', href: '/partners' },

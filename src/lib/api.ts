@@ -747,7 +747,19 @@ export interface ReviewSchemaOrg {
   }>;
 }
 
+export interface ReviewPageSettings {
+  id: number;
+  hero_title: string;
+  hero_subtitle: string | null;
+  hero_image_url: string | null;
+  hero_image_position: string;
+}
+
 export const reviewApi = {
+  // Public: Get review page settings (hero image, title, etc.)
+  getPageSettings: () =>
+    api.get<{ data: ReviewPageSettings }>('/reviews/page-settings'),
+
   // Public: Get approved reviews for a tour
   getReviews: (tourSlug: string, params?: { sort?: string; rating?: number; page?: number; per_page?: number }) => {
     const searchParams = new URLSearchParams();
@@ -777,6 +789,20 @@ export const reviewApi = {
   // Public: Get featured reviews for homepage
   featured: (limit?: number) =>
     api.get<{ data: TourReview[] }>(`/reviews/featured${limit ? `?limit=${limit}` : ''}`),
+
+  // Public: List all approved reviews with pagination
+  listAll: (params?: { sort?: string; rating?: number; tag?: string; page?: number; per_page?: number }) => {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.append(key, String(value));
+        }
+      });
+    }
+    const qs = searchParams.toString();
+    return api.get<{ data: { summary: ReviewSummary; reviews: { data: TourReview[]; current_page: number; last_page: number; total: number } } }>(`/reviews/all${qs ? `?${qs}` : ''}`);
+  },
 
   // Public: Mark review as helpful
   markHelpful: (reviewId: number) =>
