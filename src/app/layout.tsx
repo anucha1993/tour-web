@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Noto_Sans_Thai } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Header } from "@/components/layout";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -8,10 +8,9 @@ import { TourBadgesProvider } from "@/contexts/TourBadgesContext";
 import LazyFavoritesDrawer from "@/components/home/LazyFavoritesDrawer";
 import LazyFooter from "@/components/layout/LazyFooter";
 
-const notoSansThai = Noto_Sans_Thai({
+const notoSansThai = localFont({
+  src: "./fonts/NotoSansThai-VariableFont_wdth,wght.ttf",
   variable: "--font-noto-sans-thai",
-  subsets: ["thai", "latin"],
-  weight: ["400", "600", "700"],
   display: "swap",
 });
 

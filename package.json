@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "NODE_OPTIONS='--max-old-space-size=2048' next build",
-    "build:low": "NODE_OPTIONS='--max-old-space-size=1024' next build",
+    "build": "set NODE_OPTIONS=--max-old-space-size=2048 && next build",
+    "build:low": "set NODE_OPTIONS=--max-old-space-size=1024 && next build",
     "start": "next start",
-    "start:prod": "NODE_ENV=production node server.js",
+    "start:prod": "set NODE_ENV=production && node server.js",
     "lint": "eslint"
   },
   "dependencies": {
