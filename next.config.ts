@@ -4,12 +4,16 @@ const nextConfig: NextConfig = {
   // Proxy API requests to Laravel backend (avoids CORS)
   async rewrites() {
     const apiTarget = process.env.API_PROXY_TARGET || 'http://127.0.0.1:8000/api';
-    return [
-      {
-        source: '/api/:path*',
-        destination: `${apiTarget}/:path*`,
-      },
-    ];
+    return {
+      beforeFiles: [
+        {
+          source: '/api/:path*',
+          destination: `${apiTarget}/:path*`,
+        },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
   },
   // Compiler optimizations  
   compiler: {
