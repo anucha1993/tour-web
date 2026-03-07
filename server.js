@@ -1,19 +1,20 @@
 const { createServer } = require('http');
-const { parse } = require('url');
 const next = require('next');
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = process.env.HOST || '0.0.0.0';
-const port = parseInt(process.env.PORT, 10) || 3000;
+// iisnode sets process.env.PORT as a named pipe, must use it as-is
+const port = process.env.PORT || 3000;
 
-const app = next({ dev, hostname, port });
+const app = next({ dev, hostname, port: typeof port === 'string' ? 3000 : parseInt(port, 10) });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
   createServer(async (req, res) => {
     try {
-      const parsedUrl = parse(req.url, true);
-      await handle(req, res, parsedUrl);
+      // Do NOT pass parsedUrl — let Next.js handle routing internally
+      // so that rewrites, redirects, and middleware all work correctly
+      await handle(req, res);
     } catch (err) {
       console.error('Error occurred handling', req.url, err);
       res.statusCode = 500;
@@ -24,7 +25,7 @@ app.prepare().then(() => {
       console.error(err);
       process.exit(1);
     })
-    .listen(port, hostname, () => {
+    .listen(port, () => {
       console.log(`> Ready on http://${hostname}:${port}`);
     });
 });
