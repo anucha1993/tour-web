@@ -50,9 +50,9 @@ export default function RootLayout({
   return (
     <html lang="th">
       <head>
-        <link rel="preconnect" href="https://api.nexttrip.asia" />
+        <link rel="preconnect" href="https://api.nexttrip.world" />
         <link rel="preconnect" href="https://imagedelivery.net" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://api.nexttrip.asia" />
+        <link rel="dns-prefetch" href="https://api.nexttrip.world" />
         <link rel="dns-prefetch" href="https://imagedelivery.net" />
       </head>
       <body className={`${notoSansThai.variable} antialiased`}>

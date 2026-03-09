@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.nexttrip.asia/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.nexttrip.world/api';
 
 function ConfirmContent() {
   const searchParams = useSearchParams();

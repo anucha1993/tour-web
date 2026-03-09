@@ -3,7 +3,7 @@
 
 export const config = {
   // API Base URL - change this when switching domains
-  apiUrl: process.env.NEXT_PUBLIC_API_URL || "https://api.nexttrip.asia/api",
+  apiUrl: process.env.NEXT_PUBLIC_API_URL || "https://api.nexttrip.world/api",
   
   // Site Info
   siteName: "NextTrip Holiday",
