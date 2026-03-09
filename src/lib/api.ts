@@ -59,9 +59,17 @@ class ApiClient {
       (headers as Record<string, string>)['Authorization'] = `Bearer ${this.token}`;
     }
 
+    // IIS/Plesk blocks PUT/PATCH/DELETE verbs — send as POST with method override header
+    let method = (options.method || 'GET') as string;
+    if (method === 'PUT' || method === 'PATCH' || method === 'DELETE') {
+      (headers as Record<string, string>)['X-HTTP-Method-Override'] = method;
+      method = 'POST';
+    }
+
     try {
       const response = await fetch(url, {
         ...options,
+        method,
         headers,
       });
 
