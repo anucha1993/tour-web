@@ -758,6 +758,16 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
   );
 }
 
+// ===== Helper: ensure places is always string[] =====
+function parsePlaces(places: unknown): string[] {
+  if (Array.isArray(places)) return places;
+  if (typeof places === 'string') {
+    try { const parsed = JSON.parse(places); if (Array.isArray(parsed)) return parsed; } catch {}
+    return places.split(',').map(s => s.trim()).filter(Boolean);
+  }
+  return [];
+}
+
 // ===== Itinerary Component (Table) =====
 function ItinerarySection({ itineraries }: { itineraries: TourDetailItinerary[] }) {
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
@@ -807,18 +817,18 @@ function ItinerarySection({ itineraries }: { itineraries: TourDetailItinerary[] 
                   )}
                 </td>
                 <td className="px-3 py-3">
-                  {day.places && day.places.length > 0 ? (
+                  {(() => { const places = parsePlaces(day.places); return places.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
-                      {day.places.slice(0, 2).map((p, i) => (
+                      {places.slice(0, 2).map((p, i) => (
                         <span key={i} className="text-xs bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded font-medium">{p}</span>
                       ))}
-                      {day.places.length > 2 && (
-                        <span className="text-xs text-gray-400">+{day.places.length - 2}</span>
+                      {places.length > 2 && (
+                        <span className="text-xs text-gray-400">+{places.length - 2}</span>
                       )}
                     </div>
                   ) : (
                     <span className="text-xs text-gray-300">-</span>
-                  )}
+                  ); })()}
                 </td>
                 <td className="px-3 py-3 text-center">
                   {day.has_breakfast
@@ -883,9 +893,9 @@ function ItinerarySection({ itineraries }: { itineraries: TourDetailItinerary[] 
                     {day.has_lunch && <Sun className="w-3 h-3 text-green-500" />}
                     {day.has_dinner && <Moon className="w-3 h-3 text-green-500" />}
                   </span>
-                  {day.places && day.places.length > 0 && (
-                    <span className="truncate"><MapPin className="w-3 h-3 inline" /> {day.places[0]}{day.places.length > 1 ? ` +${day.places.length - 1}` : ''}</span>
-                  )}
+                  {(() => { const places = parsePlaces(day.places); return places.length > 0 && (
+                    <span className="truncate"><MapPin className="w-3 h-3 inline" /> {places[0]}{places.length > 1 ? ` +${places.length - 1}` : ''}</span>
+                  ); })()}
                 </div>
               </div>
               {selectedDay === day.day_number ? <ChevronUp className="w-4 h-4 text-orange-400" /> : <ChevronDown className="w-4 h-4 text-gray-300" />}
@@ -943,18 +953,18 @@ function ItinerarySection({ itineraries }: { itineraries: TourDetailItinerary[] 
             )}
 
             {/* Places */}
-            {selected.places && selected.places.length > 0 && (
+            {(() => { const places = parsePlaces(selected.places); return places.length > 0 && (
               <div className="p-3 bg-orange-50/50 rounded-lg">
                 <div className="text-xs text-gray-500 font-medium mb-1.5">สถานที่เที่ยว</div>
                 <div className="flex flex-wrap gap-1">
-                  {selected.places.map((p, i) => (
+                  {places.map((p, i) => (
                     <span key={i} className="inline-flex items-center gap-0.5 text-xs bg-white text-orange-700 px-2 py-1 rounded font-medium">
                       <MapPin className="w-3 h-3 text-orange-400" />{p}
                     </span>
                   ))}
                 </div>
               </div>
-            )}
+            ); })()}
           </div>
 
           {/* Images */}
@@ -975,7 +985,7 @@ function ItinerarySection({ itineraries }: { itineraries: TourDetailItinerary[] 
         <span className="font-semibold">สรุป {itineraries.length} วัน:</span>
         <span>🍽️ รวม {itineraries.reduce((s, d) => s + (d.has_breakfast ? 1 : 0) + (d.has_lunch ? 1 : 0) + (d.has_dinner ? 1 : 0), 0)} มื้อ</span>
         <span>🏨 {itineraries.filter(d => d.accommodation).length} คืน</span>
-        <span>📍 {itineraries.reduce((s, d) => s + (d.places?.length || 0), 0)} สถานที่</span>
+        <span>📍 {itineraries.reduce((s, d) => s + parsePlaces(d.places).length, 0)} สถานที่</span>
       </div>
     </div>
   );
