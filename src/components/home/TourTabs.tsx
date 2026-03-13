@@ -143,14 +143,14 @@ function TourCard({ tour }: { tour: TourTabTour }) {
                 </tr>
               </thead>
               <tbody>
-                {tour.periods_preview.slice(0, 4).map((p) => {
+                {tour.periods_preview.slice(0, 4).map((p, idx) => {
                   const startFmt = new Date(p.start + 'T12:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
                   const endFmt = p.end ? new Date(p.end + 'T12:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }) : null;
                   const originalPrice = p.price_adult ?? price;
                   const salePrice = p.net_price_adult ?? price;
                   const hasDiscount = originalPrice && salePrice && Number(originalPrice) > Number(salePrice);
                   return (
-                    <tr key={p.start} className="border-b border-gray-50 hover:bg-blue-50/50">
+                    <tr key={`${p.start}-${idx}`} className="border-b border-gray-50 hover:bg-blue-50/50">
                       <td className="py-1 text-[var(--color-gray-700)]">
                         {startFmt}{endFmt && ` - ${endFmt}`}
                       </td>

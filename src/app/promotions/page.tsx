@@ -15,7 +15,7 @@ import {
   Sparkles,
   Search,
 } from 'lucide-react';
-import { tourTabsApi, festivalToursApi, internationalToursApi, FestivalHolidayPublic, FestivalBadge, TourTabData, TourTabTour, InternationalTourFilters } from '@/lib/api';
+import { tourTabsApi, festivalToursApi, internationalToursApi, FestivalHolidayPublic, FestivalBadge, TourTabData, TourTabTour, TourTabBadge, InternationalTourFilters } from '@/lib/api';
 import FlashSale from '@/components/home/FlashSale';
 import FavoriteButton from '@/components/home/FavoriteButton';
 import TourTabBadges from '@/components/shared/TourTabBadges';
@@ -309,6 +309,7 @@ export default function PromotionsPage() {
   const [festivals, setFestivals] = useState<FestivalHolidayPublic[]>([]);
   const [festivalBadges, setFestivalBadges] = useState<FestivalBadge[]>([]);
   const [allCities, setAllCities] = useState<{ id: number; name_th: string; country_id: number; country_name: string; tour_count: number }[]>([]);
+  const [tourTabBadges, setTourTabBadges] = useState<TourTabBadge[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [activeSearchParams, setActiveSearchParams] = useState<SearchParams>({});
@@ -318,11 +319,12 @@ export default function PromotionsPage() {
   useEffect(() => {
     async function fetchPromotions() {
       try {
-        const [promoRes, festivalRes, badgeRes, intlRes] = await Promise.all([
+        const [promoRes, festivalRes, badgeRes, intlRes, tabBadgeRes] = await Promise.all([
           tourTabsApi.promotions(),
           festivalToursApi.list(),
           festivalToursApi.badges(),
           internationalToursApi.list({ per_page: 1 }),
+          tourTabsApi.badges(),
         ]);
         if (promoRes.success && promoRes.data) {
           setPromotionTabs(promoRes.data);
@@ -338,6 +340,9 @@ export default function PromotionsPage() {
         }
         if (intlRes?.filters?.cities) {
           setAllCities(intlRes.filters.cities);
+        }
+        if (tabBadgeRes.data) {
+          setTourTabBadges(tabBadgeRes.data);
         }
       } catch (error) {
         console.error('Failed to fetch promotions:', error);
@@ -365,8 +370,11 @@ export default function PromotionsPage() {
         start_date: f.start_date,
         end_date: f.end_date,
       })),
+      promotions: tourTabBadges
+        .filter((b) => !promotionTabs.some((t) => t.id === b.id))
+        .map((b) => b.badge_text || b.name),
     };
-  }, [promotionTabs, festivals, allCities]);
+  }, [promotionTabs, festivals, allCities, tourTabBadges]);
 
   const handleSearch = (params: SearchParams) => {
     setActiveSearchParams(params);
@@ -397,7 +405,17 @@ export default function PromotionsPage() {
   // Filter & sort tours using SearchParams from TourSearchForm
   const getFilteredTours = (tours: TourTabTour[]): TourTabTour[] => {
     let filtered = tours;
+
     const p = activeSearchParams;
+
+    // Badge (promotion) filter — match by badge name → tour_ids
+    if (p.promotion) {
+      const matchedBadge = tourTabBadges.find((b) => (b.badge_text || b.name) === p.promotion);
+      if (matchedBadge) {
+        const badgeTourIds = new Set(matchedBadge.tour_ids);
+        filtered = filtered.filter((t) => badgeTourIds.has(t.id));
+      }
+    }
 
     // Text search
     if (p.search?.trim()) {
