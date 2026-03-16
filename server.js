@@ -3,10 +3,9 @@ const next = require('next');
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = process.env.HOST || '0.0.0.0';
-// iisnode sets process.env.PORT as a named pipe, must use it as-is
-const port = process.env.PORT || 3000;
+const port = parseInt(process.env.PORT, 10) || 3000;
 
-const app = next({ dev, hostname, port: typeof port === 'string' ? 3000 : parseInt(port, 10) });
+const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {

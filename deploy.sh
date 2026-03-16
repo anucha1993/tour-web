@@ -59,20 +59,24 @@ rsync -avz \
 
 echo -e "${GREEN}✅ Upload complete!${NC}"
 
-# ===== Step 3: Install production deps & restart Passenger on server =====
+# ===== Step 3: Install deps & restart PM2 on server =====
 echo -e "${YELLOW}🔄 Step 3: Restarting server...${NC}"
 
-ssh -p ${SSH_PORT} ${SERVER_USER}@${SERVER_HOST} << ENDSSH
+ssh -p ${SSH_PORT} ${SERVER_USER}@${SERVER_HOST} << 'ENDSSH'
     cd /var/www/vhosts/nexttrip.asia/httpdocs
     
     # Install only production dependencies
     npm install --production --ignore-scripts
     
-    # Restart Passenger (Plesk uses Passenger for Node.js)
-    mkdir -p tmp
-    touch tmp/restart.txt
+    # Restart with PM2
+    if pm2 describe tour-web > /dev/null 2>&1; then
+        pm2 restart tour-web
+    else
+        pm2 start ecosystem.config.js
+    fi
+    pm2 save
     
-    echo "✅ Server restarted! (Passenger will pick up changes)"
+    echo "Server restarted via PM2"
 ENDSSH
 
 if [ $? -ne 0 ]; then
