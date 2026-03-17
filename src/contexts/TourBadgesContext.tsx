@@ -80,8 +80,9 @@ export function TourBadgesProvider({ children }: { children: ReactNode }) {
 
   const getPeriodBadges = (tourId: number, discountAdult: number, periodId?: number): BadgeInfo[] => {
     const badges: BadgeInfo[] = [];
-    // Tour tab badges — if tour is in the tab's list, show badge on all periods
+    // Tour tab badges — only show on periods if display_modes includes 'period'
     for (const tab of badgeTabs) {
+      if (!tab.display_modes?.includes('period')) continue;
       if (!tab.tour_ids.includes(tourId)) continue;
       badges.push({
         text: tab.badge_text,

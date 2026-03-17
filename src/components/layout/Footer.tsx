@@ -139,20 +139,28 @@ export default function Footer() {
   useEffect(() => {
     const fetchFooterData = async () => {
       try {
-        // Fetch footer menus, contacts, and footer config in parallel
-        const [menusRes, contactsRes, footerConfigRes] = await Promise.all([
+        // Fetch footer menus, contacts, footer config, and festival status in parallel
+        const [menusRes, contactsRes, footerConfigRes, festivalRes] = await Promise.all([
           fetch(`${API_URL}/menus/public`).then((r) => r.ok ? r.json() : null).catch(() => null),
           fetch(`${API_URL}/site-contacts/public`).then((r) => r.ok ? r.json() : null).catch(() => null),
           fetch(`${API_URL}/footer-config/public`).then((r) => r.ok ? r.json() : null).catch(() => null),
+          fetch(`${API_URL}/tours/festival`).then((r) => r.ok ? r.json() : null).catch(() => null),
         ]);
+
+        const hasFestivals = festivalRes?.data && Array.isArray(festivalRes.data) && festivalRes.data.length > 0;
+        const filterFestival = (links: FooterLink[]) =>
+          hasFestivals ? links : links.filter(l => !l.href.includes('festival'));
 
         // Process footer menus
         if (menusRes?.success && menusRes.data) {
           const toLinks = (items: { title: string; url: string }[]): FooterLink[] =>
             items.map((item) => ({ label: item.title, href: item.url || '#' }));
-          if (menusRes.data.footer_col1?.length > 0) setTourLinks(toLinks(menusRes.data.footer_col1));
+          if (menusRes.data.footer_col1?.length > 0) setTourLinks(filterFestival(toLinks(menusRes.data.footer_col1)));
           if (menusRes.data.footer_col2?.length > 0) setCompanyLinks(toLinks(menusRes.data.footer_col2));
           if (menusRes.data.footer_col3?.length > 0) setSupportLinks(toLinks(menusRes.data.footer_col3));
+        } else if (!hasFestivals) {
+          // Fallback: remove festival from default links
+          setTourLinks(prev => prev.filter(l => !l.href.includes('festival')));
         }
 
         // Process contacts

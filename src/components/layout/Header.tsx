@@ -174,9 +174,10 @@ export default function Header() {
           setDomesticCities(domesticMenuRes.data);
         }
 
-        // Build festival submenu from API data
+        // Build festival submenu from API data (only if there are active festivals)
         let festivalSubs: { label: string; href: string }[] = [];
-        if (festivalMenuRes?.data && Array.isArray(festivalMenuRes.data)) {
+        const hasFestivals = festivalMenuRes?.data && Array.isArray(festivalMenuRes.data) && festivalMenuRes.data.length > 0;
+        if (hasFestivals) {
           festivalSubs = festivalMenuRes.data.map((f: { name: string; slug: string; badge_icon?: string | null }) => ({
             label: `${f.badge_icon ? f.badge_icon + ' ' : ''}${f.name}`,
             href: `/tours/festival/${f.slug}`,
@@ -209,7 +210,14 @@ export default function Header() {
                       : undefined),
             };
           });
-          if (apiMenus.length > 0) setMenuItems(apiMenus);
+          // Hide festival menu if no active festivals exist
+          const filteredMenus = hasFestivals
+            ? apiMenus
+            : apiMenus.filter(m => !m.href.includes('festival'));
+          if (filteredMenus.length > 0) setMenuItems(filteredMenus);
+        } else if (!hasFestivals) {
+          // Even with fallback menus, hide festival if no active festivals
+          setMenuItems(prev => prev.filter(m => !m.href.includes('festival')));
         }
 
         if (contactsRes?.success && contactsRes.data) {
