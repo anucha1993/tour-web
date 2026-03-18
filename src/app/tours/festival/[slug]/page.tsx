@@ -113,7 +113,7 @@ const BADGE_BG_CLASSES: Record<string, string> = {
   pink: 'bg-gradient-to-r from-pink-500 to-rose-400',
 };
 
-function TourCard({ tour, settings }: { tour: FestivalTourItem; settings: FestivalTourSettings }) {
+function TourCard({ tour, settings, festivalBadge }: { tour: FestivalTourItem; settings: FestivalTourSettings; festivalBadge?: { text: string; color: string; icon?: string } }) {
   const { getPeriodBadges } = useTourBadges();
   const [showAllPeriods, setShowAllPeriods] = useState(false);
   const maxDisplay = settings.max_periods_display || 6;
@@ -273,7 +273,11 @@ function TourCard({ tour, settings }: { tour: FestivalTourItem; settings: Festiv
                           <span className="text-gray-500 text-xs">{getDayOfWeek(period.start_date)}</span>
                           {(() => {
                             const pBadges = getPeriodBadges(tour.id, period.offer?.discount_adult || 0, period.id);
-                            return pBadges.map((b, bi) => (
+                            // Always show the current festival badge on this page
+                            const allBadges = festivalBadge && !pBadges.some(b => b.text === festivalBadge.text)
+                              ? [festivalBadge, ...pBadges]
+                              : pBadges;
+                            return allBadges.map((b, bi) => (
                               <span key={bi} className={`text-[10px] font-bold text-white px-1.5 py-0.5 rounded ${BADGE_BG_CLASSES[b.color] || 'bg-gray-500'} ${b.color === 'yellow' ? 'text-yellow-900' : ''}`}>
                                 {b.icon && <span>{b.icon}</span>}{b.text}
                               </span>
@@ -584,7 +588,7 @@ export default function FestivalDetailPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {tours.map(tour => <TourCard key={tour.id} tour={tour} settings={settings} />)}
+            {tours.map(tour => <TourCard key={tour.id} tour={tour} settings={settings} festivalBadge={festivalInfo?.badge_text ? { text: festivalInfo.badge_text, color: festivalInfo.badge_color || 'orange', icon: festivalInfo.badge_icon || undefined } : undefined} />)}
           </div>
         )}
 

@@ -90,22 +90,14 @@ export function TourBadgesProvider({ children }: { children: ReactNode }) {
         icon: tab.badge_icon || undefined,
       });
     }
-    // Festival badges (period + card mode)
+    // Festival badges (period mode only)
     for (const festival of festivalBadges) {
       if (!festival.badge_text) continue;
-      if (!festival.display_modes?.includes('period') && !festival.display_modes?.includes('card')) continue;
+      if (!festival.display_modes?.includes('period')) continue;
       if (!festival.tour_ids.includes(tourId)) continue;
       // If periodId provided and festival has specific period_ids, check match
       if (periodId && festival.period_ids.length > 0) {
         if (festival.period_ids.includes(periodId)) {
-          badges.push({
-            text: festival.badge_text,
-            color: festival.badge_color,
-            icon: festival.badge_icon || undefined,
-          });
-        }
-        // If period not in the list, still show if festival is in card mode (tour-level)
-        else if (festival.display_modes?.includes('card')) {
           badges.push({
             text: festival.badge_text,
             color: festival.badge_color,
