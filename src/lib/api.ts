@@ -267,6 +267,8 @@ export interface TourTabBadge {
   badge_icon?: string;
   tour_ids: number[];
   discount_min_amount?: number | null;
+  has_discount?: boolean;
+  discount_min_percent?: number | null;
   display_modes?: string[];
 }
 
