@@ -209,6 +209,7 @@ export default function ReviewsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [sort, setSort] = useState('latest');
   const [ratingFilter, setRatingFilter] = useState<number | null>(null);
+  const [tourTypeFilter, setTourTypeFilter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [page, setPage] = useState(1);
@@ -216,6 +217,7 @@ export default function ReviewsPage() {
   const [total, setTotal] = useState(0);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     rating: true,
+    tourType: true,
     sort: true,
   });
 
@@ -227,7 +229,7 @@ export default function ReviewsPage() {
     }).catch(() => {});
   }, []);
 
-  const fetchReviews = async (pageNum: number, sortBy: string, rating: number | null) => {
+  const fetchReviews = async (pageNum: number, sortBy: string, rating: number | null, tourType: string | null) => {
     setIsLoading(true);
     try {
       const params: Record<string, string | number> = {
@@ -236,6 +238,7 @@ export default function ReviewsPage() {
         sort: sortBy,
       };
       if (rating) params.rating = rating;
+      if (tourType) params.tour_type = tourType;
 
       const res = await reviewApi.listAll(params);
       if (res.data) {
@@ -254,13 +257,13 @@ export default function ReviewsPage() {
   };
 
   useEffect(() => {
-    fetchReviews(1, sort, ratingFilter);
-  }, [sort, ratingFilter]);
+    fetchReviews(1, sort, ratingFilter, tourTypeFilter);
+  }, [sort, ratingFilter, tourTypeFilter]);
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > lastPage) return;
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    fetchReviews(newPage, sort, ratingFilter);
+    fetchReviews(newPage, sort, ratingFilter, tourTypeFilter);
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -275,6 +278,7 @@ export default function ReviewsPage() {
 
   const clearAllFilters = () => {
     setRatingFilter(null);
+    setTourTypeFilter(null);
     setSearchQuery('');
     setSearchInput('');
     setSort('latest');
@@ -285,7 +289,7 @@ export default function ReviewsPage() {
   const heroSubtitle = pageSettings?.hero_subtitle || 'เสียงจากลูกค้าที่ไว้วางใจเดินทางกับเรา อ่านประสบการณ์จริงจากผู้เดินทาง';
   const heroImage = pageSettings?.hero_image_url;
   const heroImagePos = pageSettings?.hero_image_position || 'center';
-  const isFiltered = !!(ratingFilter || searchQuery);
+  const isFiltered = !!(ratingFilter || tourTypeFilter || searchQuery);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -374,6 +378,12 @@ export default function ReviewsPage() {
                         <button onClick={() => { setRatingFilter(null); setPage(1); }}><X className="w-3 h-3" /></button>
                       </span>
                     )}
+                    {tourTypeFilter && (
+                      <span className="inline-flex items-center gap-1 text-xs bg-white border border-orange-200 text-orange-700 px-2 py-0.5 rounded-full">
+                        {{ individual: 'บุคคลทั่วไป/จอยด์ทัวร์', private: 'กรุ๊ปเหมาส่วนตัว', corporate: 'กลุ่มบริษัท' }[tourTypeFilter] || tourTypeFilter}
+                        <button onClick={() => { setTourTypeFilter(null); setPage(1); }}><X className="w-3 h-3" /></button>
+                      </span>
+                    )}
                     {searchQuery && (
                       <span className="inline-flex items-center gap-1 text-xs bg-white border border-orange-200 text-orange-700 px-2 py-0.5 rounded-full">
                         &ldquo;{searchQuery}&rdquo;
@@ -439,6 +449,50 @@ export default function ReviewsPage() {
                   )}
                 </div>
               )}
+
+              {/* Tour Type Filter */}
+              <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                <button
+                  onClick={() => toggleSection('tourType')}
+                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition"
+                >
+                  <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">ประเภทลูกค้า</h3>
+                  {openSections.tourType ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                </button>
+                {openSections.tourType && (
+                  <div className="border-t border-gray-100">
+                    {[
+                      { value: 'individual', label: 'บุคคลทั่วไป/จอยด์ทัวร์' },
+                      { value: 'private', label: 'กรุ๊ปเหมาส่วนตัว' },
+                      { value: 'corporate', label: 'กลุ่มบริษัท' },
+                    ].map((opt) => {
+                      const isActive = tourTypeFilter === opt.value;
+                      const count = summary?.tour_type_counts?.[opt.value] || 0;
+                      return (
+                        <button
+                          key={opt.value}
+                          onClick={() => {
+                            setTourTypeFilter(isActive ? null : opt.value);
+                            setPage(1);
+                          }}
+                          className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition hover:bg-gray-50 ${
+                            isActive ? 'text-orange-600 font-semibold bg-orange-50' : 'text-gray-700'
+                          }`}
+                        >
+                          {opt.label}
+                          {count > 0 && (
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              isActive ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-500'
+                            }`}>
+                              {count}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
 
               {/* Sort */}
               <div className="bg-white rounded-xl shadow-sm overflow-hidden">

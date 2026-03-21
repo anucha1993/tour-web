@@ -14,6 +14,7 @@ import {
   Hotel,
   Sparkles,
   Search,
+  X,
 } from 'lucide-react';
 import { tourTabsApi, festivalToursApi, internationalToursApi, FestivalHolidayPublic, FestivalBadge, TourTabData, TourTabTour, TourTabBadge, InternationalTourFilters } from '@/lib/api';
 import FlashSale from '@/components/home/FlashSale';
@@ -30,6 +31,26 @@ const BADGE_COLORS: Record<string, string> = {
   blue: 'bg-blue-500',
   purple: 'bg-purple-500',
   pink: 'bg-pink-500',
+};
+
+const BADGE_BORDER_COLORS: Record<string, string> = {
+  red: 'border-red-400 text-red-600 hover:bg-red-50',
+  orange: 'border-orange-400 text-orange-600 hover:bg-orange-50',
+  yellow: 'border-yellow-400 text-yellow-600 hover:bg-yellow-50',
+  green: 'border-green-400 text-green-600 hover:bg-green-50',
+  blue: 'border-blue-400 text-blue-600 hover:bg-blue-50',
+  purple: 'border-purple-400 text-purple-600 hover:bg-purple-50',
+  pink: 'border-pink-400 text-pink-600 hover:bg-pink-50',
+};
+
+const BADGE_ACTIVE_COLORS: Record<string, string> = {
+  red: 'bg-red-500 text-white border-red-500',
+  orange: 'bg-orange-500 text-white border-orange-500',
+  yellow: 'bg-yellow-500 text-white border-yellow-500',
+  green: 'bg-green-500 text-white border-green-500',
+  blue: 'bg-blue-500 text-white border-blue-500',
+  purple: 'bg-purple-500 text-white border-purple-500',
+  pink: 'bg-pink-500 text-white border-pink-500',
 };
 
 function PromotionTourCard({ tour, tabBadge }: { tour: TourTabTour; tabBadge?: { text: string; color: string; icon?: string } }) {
@@ -314,6 +335,7 @@ export default function PromotionsPage() {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [activeSearchParams, setActiveSearchParams] = useState<SearchParams>({});
   const [sortBy, setSortBy] = useState<SortOption>('default');
+  const [selectedBadges, setSelectedBadges] = useState<string[]>([]);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -389,6 +411,15 @@ export default function PromotionsPage() {
   const clearFilters = () => {
     setActiveSearchParams({});
     setSortBy('default');
+    setSelectedBadges([]);
+  };
+
+  const toggleBadge = (badgeName: string) => {
+    setSelectedBadges(prev =>
+      prev.includes(badgeName)
+        ? prev.filter(b => b !== badgeName)
+        : [...prev, badgeName]
+    );
   };
 
   const scrollToSection = (slug: string) => {
@@ -408,12 +439,15 @@ export default function PromotionsPage() {
 
     const p = activeSearchParams;
 
-    // Badge (promotion) filter — match by badge name → tour_ids
-    if (p.promotion) {
-      const matchedBadge = tourTabBadges.find((b) => (b.badge_text || b.name) === p.promotion);
-      if (matchedBadge) {
-        const badgeTourIds = new Set(matchedBadge.tour_ids);
-        filtered = filtered.filter((t) => badgeTourIds.has(t.id));
+    // Badge (promotion) filter — AND logic: tour must match ALL selected badges
+    const activeBadges = selectedBadges.length > 0 ? selectedBadges : (p.promotions ?? []);
+    if (activeBadges.length > 0) {
+      for (const promoName of activeBadges) {
+        const matchedBadge = tourTabBadges.find((b) => (b.badge_text || b.name) === promoName);
+        if (matchedBadge) {
+          const badgeTourIds = new Set(matchedBadge.tour_ids);
+          filtered = filtered.filter((t) => badgeTourIds.has(t.id));
+        }
       }
     }
 
@@ -432,6 +466,15 @@ export default function PromotionsPage() {
     if (p.country_id) {
       const cid = Number(p.country_id);
       filtered = filtered.filter(t => t.country.id === cid);
+    }
+
+    // City filter (OR logic — tour visits ANY of the selected cities)
+    if (p.city_id) {
+      const selectedCityIds = p.city_id.split(',').map(Number);
+      filtered = filtered.filter(t => {
+        const tourCities = t.city_ids || [];
+        return selectedCityIds.some(cid => tourCities.includes(cid));
+      });
     }
 
     // Airline filter (match by name since we use name as code)
@@ -501,7 +544,7 @@ export default function PromotionsPage() {
   const totalFilteredTours = useMemo(() => {
     return promotionTabs.reduce((sum, tab) => sum + getFilteredTours(tab.tours).length, 0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [promotionTabs, activeSearchParams, sortBy]);
+  }, [promotionTabs, activeSearchParams, sortBy, selectedBadges]);
 
   const isInitialLoad = loading && promotionTabs.length === 0;
 
@@ -556,6 +599,7 @@ export default function PromotionsPage() {
               </div>
             </div>
           ) : (
+            <>
             <TourSearchForm
               filters={filters}
               onSearch={handleSearch}
@@ -570,6 +614,41 @@ export default function PromotionsPage() {
                 priceRange: true,
               }}
             />
+            {/* Badge Filter Pills */}
+            {tourTabBadges.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2 items-center">
+                <span className="text-xs text-gray-400 mr-1">🏷️ โปรโมชั่น:</span>
+                {tourTabBadges.map((badge) => {
+                  const name = badge.badge_text || badge.name;
+                  const isActive = selectedBadges.includes(name);
+                  const color = badge.badge_color || 'orange';
+                  return (
+                    <button
+                      key={badge.id}
+                      onClick={() => toggleBadge(name)}
+                      className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border transition-all ${
+                        isActive
+                          ? (BADGE_ACTIVE_COLORS[color] || 'bg-orange-500 text-white border-orange-500')
+                          : (BADGE_BORDER_COLORS[color] || 'border-orange-400 text-orange-600 hover:bg-orange-50')
+                      }`}
+                    >
+                      {badge.badge_icon && <span>{badge.badge_icon}</span>}
+                      {name}
+                    </button>
+                  );
+                })}
+                {selectedBadges.length > 0 && (
+                  <button
+                    onClick={() => setSelectedBadges([])}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                    ล้าง
+                  </button>
+                )}
+              </div>
+            )}
+            </>
           )}
         </div>
 

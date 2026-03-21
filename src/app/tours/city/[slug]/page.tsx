@@ -409,11 +409,13 @@ export default function CityToursPage() {
 
     setLoading(true);
     try {
+      const { promotions, ...restParams } = activeSearchParams;
       const apiParams: Record<string, string | number | undefined> = {
         page,
         // ถ้าผู้ใช้เลือกประเทศอื่น ไม่ล็อค city_slug เพื่อให้ค้นหาข้ามประเทศได้
-        ...(activeSearchParams.country_id ? {} : { city_slug: citySlug }),
-        ...activeSearchParams,
+        ...(restParams.country_id ? {} : { city_slug: citySlug }),
+        ...restParams,
+        ...(promotions && promotions.length > 0 && { promotions: promotions.join(',') }),
         ...(sortBy && { sort_by: sortBy }),
       };
       const response = await internationalToursApi.list(apiParams);

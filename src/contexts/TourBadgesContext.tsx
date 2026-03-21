@@ -84,8 +84,8 @@ export function TourBadgesProvider({ children }: { children: ReactNode }) {
     for (const tab of badgeTabs) {
       if (!tab.display_modes?.includes('period')) continue;
       if (!tab.tour_ids.includes(tourId)) continue;
-      // Check discount conditions — skip badge if period doesn't meet the requirement
-      if (tab.has_discount && discountAdult <= 0) continue;
+      // Check discount conditions — if tab requires discount, period must have discount > 0
+      if (tab.requires_discount && discountAdult <= 0) continue;
       if (tab.discount_min_amount && tab.discount_min_amount > 0 && discountAdult < tab.discount_min_amount) continue;
       badges.push({
         text: tab.badge_text,

@@ -440,7 +440,7 @@ export default function CountryToursPage() {
     price_max: searchParams.get('price_max') || undefined,
     min_seats: searchParams.get('min_seats') || undefined,
     festival_id: searchParams.get('festival_id') || undefined,
-    promotion: searchParams.get('promotion') || undefined,
+    promotions: searchParams.get('promotions')?.split(',').filter(Boolean) || undefined,
     theme: searchParams.get('theme') || undefined,
     special_highlight: searchParams.get('special_highlight') || undefined,
   });
@@ -456,10 +456,12 @@ export default function CountryToursPage() {
 
     setLoading(true);
     try {
+      const { promotions, ...restParams } = activeSearchParams;
       const apiParams: Record<string, string | number | undefined> = {
         page,
         country_slug: countrySlug,
-        ...activeSearchParams,
+        ...restParams,
+        ...(promotions && promotions.length > 0 && { promotions: promotions.join(',') }),
         ...(sortBy && { sort_by: sortBy }),
       };
       const response = await internationalToursApi.list(apiParams);

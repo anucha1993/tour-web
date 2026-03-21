@@ -371,9 +371,11 @@ export default function FestivalDetailPage() {
 
     setLoading(true);
     try {
+      const { promotions, ...restParams } = activeSearchParams;
       const apiParams: Record<string, string | number | undefined> = {
         page,
-        ...activeSearchParams,
+        ...restParams,
+        ...(promotions && promotions.length > 0 && { promotions: promotions.join(',') }),
         ...(sortBy && { sort_by: sortBy }),
       };
       const response = await festivalToursApi.getBySlug(festivalSlug, apiParams);

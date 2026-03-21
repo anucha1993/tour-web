@@ -244,6 +244,7 @@ export interface TourTabTour {
   }[];
   total_periods?: number;
   active_promotions?: { name: string; start_date: string | null; end_date: string | null }[];
+  city_ids?: number[];
 }
 
 export interface TourTabData {
@@ -267,8 +268,7 @@ export interface TourTabBadge {
   badge_icon?: string;
   tour_ids: number[];
   discount_min_amount?: number | null;
-  has_discount?: boolean;
-  discount_min_percent?: number | null;
+  requires_discount?: boolean;
   display_modes?: string[];
 }
 
@@ -734,6 +734,7 @@ export interface ReviewSummary {
   total_reviews: number;
   rating_distribution: Record<number, number>;
   category_averages: Record<string, number>;
+  tour_type_counts?: Record<string, number>;
 }
 
 export interface ReviewSchemaOrg {
@@ -801,7 +802,7 @@ export const reviewApi = {
     api.get<{ data: TourReview[] }>(`/reviews/featured${limit ? `?limit=${limit}` : ''}`),
 
   // Public: List all approved reviews with pagination
-  listAll: (params?: { sort?: string; rating?: number; tag?: string; page?: number; per_page?: number }) => {
+  listAll: (params?: { sort?: string; rating?: number; tag?: string; tour_type?: string; page?: number; per_page?: number }) => {
     const searchParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
