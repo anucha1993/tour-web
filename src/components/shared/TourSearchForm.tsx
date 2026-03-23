@@ -590,7 +590,7 @@ export default function TourSearchForm({
         const all = filters.special_highlights ?? [];
         // Shuffle once per render with a stable seed based on array length
         const shuffled = [...all].sort(() => 0.5 - Math.sin(all.length * 9301 + 49297));
-        const LIMIT = 8;
+        const LIMIT = 8;ggggg
         const visible = showAllHighlights ? shuffled : shuffled.slice(0, LIMIT);
         const hasMore = all.length > LIMIT;
         return (
