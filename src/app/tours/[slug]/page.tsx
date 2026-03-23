@@ -31,6 +31,7 @@ import TourTabBadges from '@/components/shared/TourTabBadges';
 import ReviewSection from '@/components/tours/ReviewSection';
 import RelatedToursCarousel from '@/components/tours/RelatedToursCarousel';
 import { useTourBadges } from '@/contexts/TourBadgesContext';
+import { config } from '@/lib/config';
 
 // ===== Related Blog Posts Component =====
 function RelatedBlogPosts({ cities, countryName }: {
@@ -609,7 +610,7 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
                     ) : <span className="text-xs text-orange-500">ติดต่อฝ่ายขาย</span>}
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <span className="text-gray-600">{period.available}/{period.capacity}</span>
+                    <span className="text-gray-600">{period.available} ที่</span>
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[effectiveStatus] || 'text-gray-600 bg-gray-50'}`}>
@@ -1063,8 +1064,11 @@ export default function TourDetailPage() {
   const [bookingPeriod, setBookingPeriod] = useState<TourDetailPeriod | null>(null);
   const [highlightSlideIndex, setHighlightSlideIndex] = useState(0);
   const [reviewSummary, setReviewSummary] = useState<ReviewSummary | null>(null);
+  const [selectedDisplayPeriod, setSelectedDisplayPeriod] = useState<TourDetailPeriod | null>(null);
+  const [periodDropdownOpen, setPeriodDropdownOpen] = useState(false);
   const viewRecorded = useRef(false);
   const reviewSectionRef = useRef<HTMLDivElement | null>(null);
+  const periodDropdownRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch tour data
   useEffect(() => {
@@ -1110,6 +1114,25 @@ export default function TourDetailPage() {
       }
     }).catch(() => { /* ignore */ });
   }, [slug]);
+
+  // Initialize selected display period to first available period
+  useEffect(() => {
+    if (!tour || tour.periods.length === 0) { setSelectedDisplayPeriod(null); return; }
+    const first = tour.periods.find(p => p.available > 0 && p.sale_status !== 'sold_out') || tour.periods[0];
+    setSelectedDisplayPeriod(first);
+  }, [tour]);
+
+  // Close period dropdown on outside click
+  useEffect(() => {
+    if (!periodDropdownOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (periodDropdownRef.current && !periodDropdownRef.current.contains(e.target as Node)) {
+        setPeriodDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [periodDropdownOpen]);
 
   // Loading
   if (loading) {
@@ -1164,8 +1187,10 @@ export default function TourDetailPage() {
       }, new Date(tour.periods[0].start_date))
     : null;
 
-  // Check if all periods are sold out (available = 0 or sale_status = 'sold_out')
-  const isAllSoldOut = tour.periods.length === 0 || tour.periods.every(p => p.available === 0 || p.sale_status === 'sold_out');
+  // Check if all periods are closed/full
+  const isAllSoldOut = tour.periods.length === 0 || tour.periods.every(p =>
+    p.available === 0 || p.sale_status === 'sold_out' || p.status === 'closed' || p.status === 'cancelled'
+  );
 
   const TABS: { id: DetailTab; label: string; icon: React.ElementType; count?: number }[] = [
     { id: 'periods', label: 'ช่วงเวลาการเดินทาง', icon: Calendar, count: tour.periods.length || undefined },
@@ -1345,45 +1370,125 @@ export default function TourDetailPage() {
 
               {/* Quick info cards */}
               <div className="flex gap-2 mb-3">
-                <div className="flex-1 p-2 border border-gray-200 rounded-lg">
-                  <div className="text-xs text-gray-500 mb-1">วันเดินทาง</div>
-                  <div className="text-sm font-medium flex items-center gap-1">
-                    <Calendar className="w-4 h-4 text-gray-400" />
-                    {nextDeparture
-                      ? nextDeparture.toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short' })
-                      : '-'
-                    }
-                  </div>
+                {/* Travel date selector */}
+                <div className="relative flex-1" ref={periodDropdownRef}>
+                  <button
+                    onClick={() => tour.periods.length > 0 && setPeriodDropdownOpen(o => !o)}
+                    className={`w-full p-2 rounded-lg text-left transition border ${
+                      tour.periods.length > 0
+                        ? 'border-orange-300 bg-orange-50/40 hover:border-orange-400 cursor-pointer'
+                        : 'border-gray-200 cursor-default'
+                    }`}
+                  >
+                    <div className="text-xs text-gray-500 mb-1 flex items-center justify-between">
+                      <span>วันเดินทาง</span>
+                      {tour.periods.length > 0 && (
+                        <ChevronDown className={`w-3 h-3 text-orange-400 transition-transform ${periodDropdownOpen ? 'rotate-180' : ''}`} />
+                      )}
+                    </div>
+                    {selectedDisplayPeriod ? (
+                      <div className="flex items-center gap-1 text-xs font-semibold text-gray-800 flex-wrap">
+                        <Plane className="w-3 h-3 text-orange-500 flex-shrink-0" />
+                        <span>{new Date(selectedDisplayPeriod.start_date + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}</span>
+                        <ArrowRight className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                        <span>{new Date(selectedDisplayPeriod.end_date + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}</span>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-400">ไม่มีรอบเดินทาง</div>
+                    )}
+                  </button>
+                  {/* Period dropdown list */}
+                  {periodDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-orange-200 rounded-xl shadow-xl z-50 max-h-56 overflow-y-auto">
+                      {tour.periods.map(period => {
+                        const isSoldOut = period.available === 0 || period.sale_status === 'sold_out' || period.status === 'closed' || period.status === 'cancelled';
+                        const isSelected = selectedDisplayPeriod?.id === period.id;
+                        const sD = new Date(period.start_date + 'T00:00:00');
+                        const eD = new Date(period.end_date + 'T00:00:00');
+                        return (
+                          <button
+                            key={period.id}
+                            onClick={() => { setSelectedDisplayPeriod(period); setPeriodDropdownOpen(false); }}
+                            disabled={isSoldOut}
+                            className={`w-full px-3 py-2 text-left flex items-center justify-between transition-colors first:rounded-t-xl last:rounded-b-xl ${
+                              isSelected ? 'bg-orange-50 text-orange-700' :
+                              isSoldOut ? 'opacity-40 cursor-not-allowed text-gray-500' :
+                              'hover:bg-gray-50 text-gray-700 cursor-pointer'
+                            }`}
+                          >
+                            <div>
+                              <div className="text-xs font-medium">
+                                {sD.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })} → {eD.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}
+                              </div>
+                              <div className="text-xs text-gray-400">{isSoldOut ? 'เต็มแล้ว' : `ว่าง ${period.available} ที่`}</div>
+                            </div>
+                            {isSelected && <Check className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
+                {/* Available seats for selected period */}
                 <div className="flex-1 p-2 border border-gray-200 rounded-lg">
                   <div className="text-xs text-gray-500 mb-1">ที่นั่งว่าง</div>
                   <div className="text-sm font-medium flex items-center gap-1">
-                    <Users className="w-4 h-4 text-gray-400" />
-                    {tour.available_seats} ที่นั่ง
+                    <Users className={`w-4 h-4 ${selectedDisplayPeriod && selectedDisplayPeriod.available <= 5 && selectedDisplayPeriod.available > 0 ? 'text-red-400' : 'text-gray-400'}`} />
+                    {selectedDisplayPeriod
+                      ? <span className={selectedDisplayPeriod.available <= 5 && selectedDisplayPeriod.available > 0 ? 'text-red-500 font-bold' : ''}>
+                          {selectedDisplayPeriod.available} ที่
+                        </span>
+                      : `${tour.available_seats} ที่`
+                    }
                   </div>
                 </div>
               </div>
 
               {/* CTA */}
               <div className="space-y-2 mb-4">
-                {isAllSoldOut ? (
-                  <div className="block w-full text-center py-3 bg-gray-300 text-gray-500 font-semibold rounded-xl cursor-not-allowed">
-                    ที่นั่งเต็มแล้ว
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => { setBookingPeriod(null); setBookingOpen(true); }}
-                    className="block w-full text-center py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors shadow-md cursor-pointer"
-                  >
-                    จองทัวร์นี้
-                  </button>
-                )}
+                {(() => {
+                  const p = selectedDisplayPeriod;
+                  const isClosed = !p
+                    || p.available === 0
+                    || p.sale_status === 'sold_out'
+                    || p.status === 'closed'
+                    || p.status === 'sold_out'
+                    || p.status === 'cancelled';
+                  const isWaitingList = !isClosed && p.sale_status === 'available';
+                  if (isClosed) {
+                    return (
+                      <div className="block w-full text-center py-3 bg-gray-300 text-gray-500 font-semibold rounded-xl cursor-not-allowed">
+                        เต็ม
+                      </div>
+                    );
+                  }
+                  if (isWaitingList) {
+                    return (
+                      <a
+                        href={config.social.line}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 w-full py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition-colors shadow-md cursor-pointer"
+                      >
+                        จองทางไลน์
+                      </a>
+                    );
+                  }
+                  return (
+                    <button
+                      onClick={() => { setBookingPeriod(p); setBookingOpen(true); }}
+                      className="block w-full text-center py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors shadow-md cursor-pointer"
+                    >
+                      จองเลย
+                    </button>
+                  );
+                })()}
                 {tour.pdf_url && (
                   <a
                     href={tour.pdf_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-xl transition cursor-pointer"
+                    className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 rounded-xl transition shadow-md cursor-pointer"
                   >
                     <Download className="w-4 h-4" />
                     ดาวน์โหลด PDF

@@ -105,6 +105,7 @@ export default function TourSearchForm({
   );
   const [showMonthDrop, setShowMonthDrop] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAllHighlights, setShowAllHighlights] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
   const [showCountryDrop, setShowCountryDrop] = useState(false);
   const [airlineSearch, setAirlineSearch] = useState('');
@@ -585,31 +586,48 @@ export default function TourSearchForm({
       )}
 
       {/* ═══ Special Highlight badges ═══ */}
-      {(filters.special_highlights ?? []).length > 0 && (
-        <div className="flex flex-wrap gap-1.5 items-center">
-          <span className="text-xs text-gray-400">⭐ ไฮไลท์พิเศษ:</span>
-          {(filters.special_highlights ?? []).map((name) => (
-            <button
-              key={name}
-              type="button"
-              onClick={() => {
-                const newVal = specialHighlight === name ? '' : name;
-                setSpecialHighlight(newVal);
-                const p = buildParams();
-                if (newVal) p.special_highlight = newVal; else delete p.special_highlight;
-                onSearch(p);
-              }}
-              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                specialHighlight === name
-                  ? 'bg-emerald-500 text-white border-emerald-500'
-                  : 'bg-white text-emerald-600 border-emerald-300 hover:bg-emerald-50'
-              }`}
-            >
-              {name}
-            </button>
-          ))}
-        </div>
-      )}
+      {(filters.special_highlights ?? []).length > 0 && (() => {
+        const all = filters.special_highlights ?? [];
+        // Shuffle once per render with a stable seed based on array length
+        const shuffled = [...all].sort(() => 0.5 - Math.sin(all.length * 9301 + 49297));
+        const LIMIT = 8;
+        const visible = showAllHighlights ? shuffled : shuffled.slice(0, LIMIT);
+        const hasMore = all.length > LIMIT;
+        return (
+          <div className="flex flex-wrap gap-1.5 items-center">
+            <span className="text-xs text-gray-400">⭐ ไฮไลท์พิเศษ:</span>
+            {visible.map((name) => (
+              <button
+                key={name}
+                type="button"
+                onClick={() => {
+                  const newVal = specialHighlight === name ? '' : name;
+                  setSpecialHighlight(newVal);
+                  const p = buildParams();
+                  if (newVal) p.special_highlight = newVal; else delete p.special_highlight;
+                  onSearch(p);
+                }}
+                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                  specialHighlight === name
+                    ? 'bg-emerald-500 text-white border-emerald-500'
+                    : 'bg-white text-emerald-600 border-emerald-300 hover:bg-emerald-50'
+                }`}
+              >
+                {name}
+              </button>
+            ))}
+            {hasMore && (
+              <button
+                type="button"
+                onClick={() => setShowAllHighlights(v => !v)}
+                className="px-3 py-1 rounded-full text-xs font-medium border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 transition-colors"
+              >
+                {showAllHighlights ? '‹ ย่อ' : `+${all.length - LIMIT} more`}
+              </button>
+            )}
+          </div>
+        );
+      })()}
 
       {/* ═══ Advanced toggle ═══ */}
       <div className="flex items-center gap-2">
