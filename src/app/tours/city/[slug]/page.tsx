@@ -109,13 +109,15 @@ const BADGE_BG_CLASSES: Record<string, string> = {
   pink: 'bg-gradient-to-r from-pink-500 to-rose-400',
 };
 
+const PERIODS_STEP = 5;
+
 function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: InternationalTourSettings }) {
   const { getPeriodBadges } = useTourBadges();
-  const [showAllPeriods, setShowAllPeriods] = useState(false);
-  const maxDisplay = settings.max_periods_display || 6;
-  const visiblePeriods = (tour.periods || []).slice(0, showAllPeriods ? undefined : maxDisplay);
+  const [visibleCount, setVisibleCount] = useState(PERIODS_STEP);
+  const visiblePeriods = (tour.periods || []).slice(0, visibleCount);
   const hasDiscount = tour.discount_amount && tour.discount_amount > 0;
-  const hasMorePeriods = (tour.periods?.length || 0) > maxDisplay;
+  const hasMorePeriods = (tour.periods?.length || 0) > visibleCount;
+  const hasLessPeriods = visibleCount > PERIODS_STEP;
 
   return (
     <div className="bg-white shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow p-3 lg:p-4">
@@ -355,12 +357,23 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
               </tbody>
             </table>
           </div>
-          {hasMorePeriods && (
-            <button onClick={() => setShowAllPeriods(!showAllPeriods)} className="w-full py-2.5 text-sm text-orange-600 hover:bg-orange-50 border-t border-gray-100 flex items-center justify-center gap-1 transition-colors">
-              <ChevronDown className={`w-4 h-4 transition-transform ${showAllPeriods ? 'rotate-180' : ''}`} />
-              {showAllPeriods ? 'แสดงน้อยลง' : `ดูทั้งหมด ${tour.periods!.length} รอบ`}
+          {hasMorePeriods ? (
+            <button
+              onClick={() => setVisibleCount(c => c + PERIODS_STEP)}
+              className="w-full py-2.5 text-sm text-white bg-orange-400 hover:bg-orange-500 flex items-center justify-center gap-1 transition-colors font-medium"
+            >
+              <ChevronDown className="w-4 h-4" />
+              เดินทางเพิ่ม ({Math.min(PERIODS_STEP, tour.periods!.length - visibleCount)} รอบ จากทั้งหมด {tour.periods!.length} รอบ)
             </button>
-          )}
+          ) : hasLessPeriods ? (
+            <button
+              onClick={() => setVisibleCount(PERIODS_STEP)}
+              className="w-full py-2.5 text-sm text-gray-500 hover:bg-gray-50 border-t border-gray-100 flex items-center justify-center gap-1 transition-colors"
+            >
+              <ChevronDown className="w-4 h-4 rotate-180" />
+              ย่อรอบเดินทาง
+            </button>
+          ) : null}
         </div>
       )}
     </div>

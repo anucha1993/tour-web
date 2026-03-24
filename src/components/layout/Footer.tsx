@@ -77,7 +77,7 @@ const fallbackCompanyLinks: FooterLink[] = [
 ];
 
 const fallbackSupportLinks: FooterLink[] = [
-  { label: 'วิธีการจอง', href: '/how-to-book' },
+  // { label: 'วิธีการจอง', href: '/how-to-book' },
   { label: 'การชำระเงิน', href: '/payment' },
   { label: 'คำถามที่พบบ่อย', href: '/faq' },
   { label: 'เงื่อนไขการให้บริการ', href: '/terms' },
