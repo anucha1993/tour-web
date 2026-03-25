@@ -132,7 +132,7 @@ export const authApi = {
 
   // Request OTP for registration
   requestRegisterOtp: (phone: string) =>
-    api.post<{ otp_request_id?: number; expires_in?: number; debug_otp?: string; otp_disabled?: boolean }>('/web/auth/register/request-otp', { phone }),
+    api.post<{ data?: { otp_request_id?: number; expires_in?: number; debug_otp?: string; otp_disabled?: boolean } }>('/web/auth/register/request-otp', { phone }),
 
   // Complete registration
   register: (data: {
@@ -147,7 +147,7 @@ export const authApi = {
     consent_terms: boolean;
     consent_privacy: boolean;
     consent_marketing?: boolean;
-  }) => api.post<{ member: Member; token: string }>('/web/auth/register', data),
+  }) => api.post<{ data?: { member: Member; token: string } }>('/web/auth/register', data),
 
   // Login with email/phone + password
   login: (login: string, password: string) =>
