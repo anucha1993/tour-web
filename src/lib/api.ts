@@ -126,14 +126,19 @@ export const api = new ApiClient(API_BASE_URL);
 
 // Auth API
 export const authApi = {
+  // Check whether OTP is enabled
+  getOtpStatus: () =>
+    api.get<{ enabled: boolean }>('/web/auth/otp-status'),
+
   // Request OTP for registration
   requestRegisterOtp: (phone: string) =>
-    api.post<{ otp_request_id: number; expires_in: number; debug_otp?: string }>('/web/auth/register/request-otp', { phone }),
+    api.post<{ otp_request_id?: number; expires_in?: number; debug_otp?: string; otp_disabled?: boolean }>('/web/auth/register/request-otp', { phone }),
 
   // Complete registration
   register: (data: {
-    otp_request_id: number;
-    otp: string;
+    otp_request_id?: number;
+    otp?: string;
+    phone?: string;
     first_name: string;
     last_name: string;
     email: string;

@@ -189,6 +189,47 @@ const BADGE_LABELS: Record<string, { text: string; color: string }> = {
   LIMITED: { text: '⏰ จำนวนจำกัด', color: 'purple' },
 };
 
+const formatPeriodPrice = (price: number | null | undefined) => {
+  if (!price) return null;
+  return new Intl.NumberFormat('th-TH').format(price);
+};
+
+const formatPeriodDate = (dateStr: string | null) => {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  const thMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = thMonths[date.getMonth()];
+  const year = date.getFullYear() + 543;
+  return `${day} ${month}${String(year).slice(-2)}`;
+};
+
+const formatPeriodDateRange = (start: string, end: string) => `${formatPeriodDate(start)} - ${formatPeriodDate(end)}`;
+
+const getPeriodDayOfWeek = (dateStr: string) => ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'][new Date(dateStr).getDay()];
+
+const PERIOD_BADGE_BG_CLASSES: Record<string, string> = {
+  red: 'bg-gradient-to-r from-red-600 to-orange-500',
+  orange: 'bg-gradient-to-r from-orange-500 to-yellow-400',
+  yellow: 'bg-gradient-to-r from-amber-400 to-yellow-300 !text-yellow-900',
+  green: 'bg-gradient-to-r from-green-500 to-emerald-400',
+  blue: 'bg-gradient-to-r from-blue-500 to-cyan-400',
+  purple: 'bg-gradient-to-r from-purple-500 to-pink-400',
+  pink: 'bg-gradient-to-r from-pink-500 to-rose-400',
+};
+
+function PeriodAvailabilityBadge({ period }: { period: TourDetailPeriod }) {
+  if (period.status === 'closed' || period.available <= 0) {
+    return <span className="px-2.5 py-1 bg-red-100 text-red-700 text-sm font-bold rounded">CLOSED</span>;
+  }
+
+  if (period.available <= 5) {
+    return <span className="px-2.5 py-1 bg-orange-100 text-orange-700 text-sm font-bold rounded">{period.available}</span>;
+  }
+
+  return <span className="px-2.5 py-1 bg-green-100 text-green-700 text-sm font-bold rounded">{period.available}</span>;
+}
+
 // ===== Gallery Component (Viator-style: thumbnails left + main image) =====
 const THUMBNAIL_SLOTS = 5; // Always show 6 thumbnail slots including main image
 
@@ -484,17 +525,6 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
     );
   }
 
-  const statusColors: Record<string, string> = {
-    available: 'text-green-600 bg-green-50',
-    booking: 'text-yellow-600 bg-yellow-50',
-    sold_out: 'text-red-600 bg-red-50',
-  };
-  const statusLabels: Record<string, string> = {
-    available: 'ว่าง',
-    booking: 'จองได้',
-    sold_out: 'Sold Out',
-  };
-
   // Check if offer promotion is currently active based on promo dates
   const isPromoActive = (offer: TourDetailPeriod['offer']) => {
     if (!offer?.promo_name) return false;
@@ -514,112 +544,89 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
     <div>
       {/* Desktop table */}
       <div className="hidden md:block overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm text-center">
           <thead>
-            <tr className="bg-gray-50 text-gray-600">
-              <th className="text-left px-4 py-3 font-semibold rounded-tl-lg">วันเดินทาง</th>
-              <th className="text-right px-4 py-3 font-semibold">ราคาผู้ใหญ่</th>
-              <th className="text-right px-4 py-3 font-semibold">ราคาเด็ก</th>
-              <th className="text-right px-4 py-3 font-semibold">พักเดี่ยว</th>
-              <th className="text-center px-4 py-3 font-semibold">ที่นั่ง</th>
-              <th className="text-center px-4 py-3 font-semibold">สถานะ</th>
-            
-              <th className="text-center px-4 py-3 font-semibold rounded-tr-lg w-20"></th>
+            <tr className="text-white font-semibold bg-orange-400">
+              <th className="px-4 py-3 text-center font-medium rounded-tl-lg whitespace-nowrap">เดินทาง</th>
+              <th className="px-4 py-3 text-center font-medium whitespace-nowrap">ผู้ใหญ่</th>
+              <th className="px-4 py-3 text-center font-medium whitespace-nowrap">พักเดี่ยว</th>
+              <th className="px-4 py-3 text-center font-medium whitespace-nowrap">ที่นั่ง</th>
+              <th className="px-4 py-3 text-center font-medium whitespace-nowrap">จอง</th>
+              <th className="px-4 py-3 text-center font-medium whitespace-nowrap">รับได้</th>
+              <th className="px-4 py-3 text-center font-medium rounded-tr-lg whitespace-nowrap">จอง</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {display.map((period) => {
               const offer = period.offer;
-              const startD = new Date(period.start_date);
-              const endD = new Date(period.end_date);
-              // Compute effective status: if available = 0, treat as sold_out
-              const effectiveStatus = period.available === 0 ? 'sold_out' : period.sale_status;
+              const isClosed = period.status === 'closed' || period.available <= 0;
+              const periodBadges = getPeriodBadges(tourId, offer?.discount_adult || 0, period.id);
+              const hasPromo = isPromoActive(offer);
               return (
-                <tr key={period.id} className={`transition-colors ${effectiveStatus === 'sold_out' ? 'bg-gray-50 opacity-70' : 'hover:bg-gray-50'}`}>
-                  <td className="px-4 py-3">
-                    <div className={`font-medium ${effectiveStatus === 'sold_out' ? 'text-gray-500' : 'text-gray-800'}`}>
-                      {startD.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}
-                      {' - '}
-                      {endD.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}
+                <tr key={period.id} className={isClosed ? 'bg-gray-50 text-gray-400' : 'hover:bg-orange-50/40'}>
+                  <td className="px-4 py-3 text-left">
+                    <div className="flex flex-wrap items-center gap-1.5 whitespace-nowrap">
+                      <span className={`font-medium ${isClosed ? '' : 'text-gray-600'}`}>
+                        {formatPeriodDateRange(period.start_date, period.end_date)}
+                      </span>
+                      <span className="text-gray-500 text-xs">{getPeriodDayOfWeek(period.start_date)}</span>
+                      {hasPromo && (
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-full px-2 py-0.5">
+                          <Sparkles className="w-3 h-3" />
+                          {offer!.promo_name}
+                        </span>
+                      )}
+                      {periodBadges.map((badge, bi) => (
+                        <span
+                          key={bi}
+                          className={`inline-flex items-center gap-0.5 text-xs font-bold text-white px-2 py-0.5 rounded-full ${PERIOD_BADGE_BG_CLASSES[badge.color] || 'bg-gray-500'} ${badge.color === 'yellow' ? 'text-yellow-900' : ''}`}
+                        >
+                          {badge.icon && <span>{badge.icon}</span>}
+                          {badge.text}
+                        </span>
+                      ))}
+                      {hasPromo && (offer!.promo_start_date || offer!.promo_end_date) && (
+                        <span className="text-xs text-gray-400">
+                          {offer!.promo_start_date && offer!.promo_end_date
+                            ? `${formatPromoDate(offer!.promo_start_date)} - ${formatPromoDate(offer!.promo_end_date)}`
+                            : offer!.promo_end_date
+                              ? `ถึง ${formatPromoDate(offer!.promo_end_date)}`
+                              : `ตั้งแต่ ${formatPromoDate(offer!.promo_start_date!)}`}
+                        </span>
+                      )}
                     </div>
-                    {(() => {
-                      const periodBadges = getPeriodBadges(tourId, offer?.discount_adult || 0, period.id);
-                      const hasPromo = isPromoActive(offer);
-                      if (!hasPromo && periodBadges.length === 0) return null;
-                      return (
-                        <div className="flex flex-wrap items-center gap-1 mt-1">
-                          {hasPromo && (
-                            <span className="inline-flex items-center gap-1 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-full px-2 py-0.5">
-                              <Sparkles className="w-3 h-3" />
-                              {offer!.promo_name}
-                            </span>
-                          )}
-                          {periodBadges.map((badge, bi) => (
-                            <span
-                              key={bi}
-                              className={`inline-flex items-center gap-0.5 text-xs font-bold text-white px-2 py-0.5 rounded-full ${
-                                {
-                                  red: 'bg-gradient-to-r from-red-600 to-orange-500',
-                                  orange: 'bg-gradient-to-r from-orange-500 to-yellow-400 !text-yellow-900',
-                                  yellow: 'bg-gradient-to-r from-amber-400 to-yellow-300 !text-yellow-900',
-                                  green: 'bg-gradient-to-r from-green-500 to-emerald-400',
-                                  blue: 'bg-gradient-to-r from-blue-500 to-cyan-400',
-                                  purple: 'bg-gradient-to-r from-purple-500 to-pink-400',
-                                  pink: 'bg-gradient-to-r from-pink-500 to-rose-400',
-                                }[badge.color] || 'bg-gray-500'
-                              }`}
-                            >
-                              {badge.icon && <span>{badge.icon}</span>}
-                              {badge.text}
-                            </span>
-                          ))}
-                          {hasPromo && (offer!.promo_start_date || offer!.promo_end_date) && (
-                            <span className="text-xs text-gray-400">
-                              {offer!.promo_start_date && offer!.promo_end_date
-                                ? `${formatPromoDate(offer!.promo_start_date)} - ${formatPromoDate(offer!.promo_end_date)}`
-                                : offer!.promo_end_date
-                                  ? `ถึง ${formatPromoDate(offer!.promo_end_date)}`
-                                  : `ตั้งแต่ ${formatPromoDate(offer!.promo_start_date!)}`
-                              }
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })()}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 whitespace-nowrap">
                     {offer ? (
                       <div>
                         {offer.discount_adult > 0 && (
-                          <span className="text-xs text-gray-400 line-through block">฿{offer.price_adult.toLocaleString()}</span>
+                          <div className="line-through text-gray-400 text-sm">{formatPeriodPrice(offer.price_adult)}</div>
                         )}
-                        <span className={`font-bold ${offer.discount_adult > 0 ? 'text-red-500' : 'text-gray-800'}`}>
-                          ฿{offer.net_price_adult.toLocaleString()}
+                        <span className={`font-bold ${offer.discount_adult > 0 ? 'text-red-600' : isClosed ? '' : 'text-gray-600'}`}>
+                          {formatPeriodPrice(offer.net_price_adult)}
                         </span>
                       </div>
-                    ) : <span className="text-xs text-orange-500">ติดต่อฝ่ายขาย</span>}
+                    ) : <span className="text-xs text-orange-500 font-medium">ติดต่อฝ่ายขาย</span>}
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    {offer?.price_child ? (
-                      <span className="text-gray-700">฿{(offer.price_child - offer.discount_child_bed).toLocaleString()}</span>
-                    ) : <span className="text-xs text-orange-500">ติดต่อฝ่ายขาย</span>}
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    {offer ? (
+                      (offer.net_price_single ?? offer.price_single) ? (
+                        <div>
+                          {offer.discount_single > 0 && offer.price_single && (
+                            <div className="line-through text-gray-400 text-sm">{formatPeriodPrice(offer.price_single)}</div>
+                          )}
+                          <span className={`font-bold ${offer.discount_single > 0 ? 'text-red-600' : isClosed ? '' : 'text-gray-600'}`}>
+                            {formatPeriodPrice(offer.net_price_single ?? offer.price_single)}
+                          </span>
+                        </div>
+                      ) : <span className="text-xs text-orange-500 font-medium">ติดต่อฝ่ายขาย</span>
+                    ) : <span className="text-xs text-orange-500 font-medium">ติดต่อฝ่ายขาย</span>}
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    {offer?.price_single ? (
-                      <span className="text-gray-700">+฿{(offer.price_single - offer.discount_single).toLocaleString()}</span>
-                    ) : <span className="text-xs text-orange-500">ติดต่อฝ่ายขาย</span>}
-                  </td>
+                  <td className="px-4 py-3">{period.capacity}</td>
+                  <td className="px-4 py-3">{period.booked}</td>
+                  <td className="px-4 py-3"><PeriodAvailabilityBadge period={period} /></td>
                   <td className="px-4 py-3 text-center">
-                    <span className="text-gray-600">{period.available} ที่</span>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[effectiveStatus] || 'text-gray-600 bg-gray-50'}`}>
-                      {statusLabels[effectiveStatus] || effectiveStatus}
-                    </span>
-                  </td>
-                  
-                  <td className="px-4 py-3 text-center">
-                    {effectiveStatus !== 'sold_out' && onBookPeriod && (
+                    {!isClosed && onBookPeriod && (
                       <button
                         onClick={() => onBookPeriod(period)}
                         className="px-3 py-1.5 bg-orange-500 text-white text-xs font-semibold rounded-lg hover:bg-orange-600 transition cursor-pointer"
@@ -639,86 +646,97 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
       <div className="md:hidden space-y-3">
         {display.map((period) => {
           const offer = period.offer;
-          const startD = new Date(period.start_date);
-          const endD = new Date(period.end_date);
-          // Compute effective status: if available = 0, treat as sold_out
-          const effectiveStatus = period.available === 0 ? 'sold_out' : period.sale_status;
+          const isClosed = period.status === 'closed' || period.available <= 0;
+          const periodBadges = getPeriodBadges(tourId, offer?.discount_adult || 0, period.id);
+          const hasPromo = isPromoActive(offer);
           return (
-            <div key={period.id} className={`relative border rounded-xl p-4 transition-colors overflow-hidden ${effectiveStatus === 'sold_out' ? 'border-gray-200 bg-gray-50' : 'border-gray-100 hover:border-orange-200'}`}>
+            <div key={period.id} className={`relative border rounded-xl p-4 transition-colors overflow-hidden ${isClosed ? 'border-gray-200 bg-gray-50' : 'border-gray-100 hover:border-orange-200'}`}>
               {/* Sold Out Stamp */}
-              {effectiveStatus === 'sold_out' && (
+              {isClosed && (
                 <div className="absolute -right-8 top-3 rotate-45 bg-red-500 text-white text-xs font-bold px-10 py-1 shadow-md">
                   SOLD OUT
                 </div>
               )}
               <div className="flex items-center justify-between mb-2">
                 <span className="font-semibold text-gray-800">
-                  {startD.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })} - {endD.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}
+                  {formatPeriodDateRange(period.start_date, period.end_date)}
                 </span>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[effectiveStatus] || ''}`}>
-                  {statusLabels[effectiveStatus] || effectiveStatus}
-                </span>
+                <PeriodAvailabilityBadge period={period} />
               </div>
-              {(() => {
-                const periodBadges = getPeriodBadges(tourId, offer?.discount_adult || 0, period.id);
-                const hasPromo = isPromoActive(offer);
-                if (!hasPromo && periodBadges.length === 0) return null;
-                return (
-                  <div className="flex flex-wrap items-center gap-1.5 mb-2">
-                    {hasPromo && (
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-full px-2 py-0.5">
-                        <Sparkles className="w-3 h-3" />
-                        {offer!.promo_name}
-                      </span>
-                    )}
-                    {periodBadges.map((badge, bi) => (
-                      <span
-                        key={bi}
-                        className={`inline-flex items-center gap-0.5 text-xs font-bold text-white px-2 py-0.5 rounded-full ${
-                          {
-                            red: 'bg-gradient-to-r from-red-600 to-orange-500',
-                            orange: 'bg-gradient-to-r from-orange-500 to-yellow-400 !text-yellow-900',
-                            yellow: 'bg-gradient-to-r from-amber-400 to-yellow-300 !text-yellow-900',
-                            green: 'bg-gradient-to-r from-green-500 to-emerald-400',
-                            blue: 'bg-gradient-to-r from-blue-500 to-cyan-400',
-                            purple: 'bg-gradient-to-r from-purple-500 to-pink-400',
-                            pink: 'bg-gradient-to-r from-pink-500 to-rose-400',
-                          }[badge.color] || 'bg-gray-500'
-                        }`}
-                      >
-                        {badge.icon && <span>{badge.icon}</span>}
-                        {badge.text}
-                      </span>
-                    ))}
-                    {hasPromo && (offer!.promo_start_date || offer!.promo_end_date) && (
-                      <span className="text-xs text-gray-400">
-                        {offer!.promo_start_date && offer!.promo_end_date
-                          ? `${formatPromoDate(offer!.promo_start_date)} - ${formatPromoDate(offer!.promo_end_date)}`
-                          : offer!.promo_end_date
-                            ? `ถึง ${formatPromoDate(offer!.promo_end_date)}`
-                            : `ตั้งแต่ ${formatPromoDate(offer!.promo_start_date!)}`
-                        }
-                      </span>
-                    )}
-                  </div>
-                );
-              })()}
+              <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                <span className="text-xs text-gray-500">{getPeriodDayOfWeek(period.start_date)}</span>
+                {hasPromo && (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-full px-2 py-0.5">
+                    <Sparkles className="w-3 h-3" />
+                    {offer!.promo_name}
+                  </span>
+                )}
+                {periodBadges.map((badge, bi) => (
+                  <span
+                    key={bi}
+                    className={`inline-flex items-center gap-0.5 text-xs font-bold text-white px-2 py-0.5 rounded-full ${PERIOD_BADGE_BG_CLASSES[badge.color] || 'bg-gray-500'} ${badge.color === 'yellow' ? 'text-yellow-900' : ''}`}
+                  >
+                    {badge.icon && <span>{badge.icon}</span>}
+                    {badge.text}
+                  </span>
+                ))}
+              </div>
               {offer ? (
-                <div className="flex items-end justify-between">
-                  <div>
-                    {offer.discount_adult > 0 && (
-                      <span className="text-xs text-gray-400 line-through mr-2">฿{offer.price_adult.toLocaleString()}</span>
-                    )}
-                    <span className={`text-lg font-bold ${offer.discount_adult > 0 ? 'text-red-500' : 'text-orange-500'}`}>
-                      ฿{offer.net_price_adult.toLocaleString()}
-                    </span>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <div className="text-xs text-gray-500">ราคาผู้ใหญ่</div>
+                      {offer.discount_adult > 0 && (
+                        <div className="text-xs text-gray-400 line-through">{formatPeriodPrice(offer.price_adult)}</div>
+                      )}
+                      <div className={`font-bold ${offer.discount_adult > 0 ? 'text-red-600' : 'text-orange-500'}`}>
+                        {formatPeriodPrice(offer.net_price_adult)}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500">พักเดี่ยว</div>
+                      {(offer.net_price_single ?? offer.price_single) ? (
+                        <>
+                          {offer.discount_single > 0 && offer.price_single && (
+                            <div className="text-xs text-gray-400 line-through">{formatPeriodPrice(offer.price_single)}</div>
+                          )}
+                          <div className={`font-bold ${offer.discount_single > 0 ? 'text-red-600' : 'text-gray-700'}`}>
+                            {formatPeriodPrice(offer.net_price_single ?? offer.price_single)}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-sm text-orange-500">ติดต่อฝ่ายขาย</div>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">ว่าง {period.available} ที่</span>
-                    {effectiveStatus !== 'sold_out' && onBookPeriod && (
+                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                    <div className="rounded-lg bg-gray-50 py-2">
+                      <div className="text-gray-500">ที่นั่ง</div>
+                      <div className="font-semibold text-gray-800">{period.capacity}</div>
+                    </div>
+                    <div className="rounded-lg bg-gray-50 py-2">
+                      <div className="text-gray-500">จอง</div>
+                      <div className="font-semibold text-gray-800">{period.booked}</div>
+                    </div>
+                    <div className="rounded-lg bg-gray-50 py-2">
+                      <div className="text-gray-500">รับได้</div>
+                      <div className="font-semibold text-gray-800">{period.available}</div>
+                    </div>
+                  </div>
+                  <div>
+                    {hasPromo && (offer.promo_start_date || offer.promo_end_date) && (
+                      <div className="text-xs text-gray-400 mb-2">
+                        {offer.promo_start_date && offer.promo_end_date
+                          ? `${formatPromoDate(offer.promo_start_date)} - ${formatPromoDate(offer.promo_end_date)}`
+                          : offer.promo_end_date
+                            ? `ถึง ${formatPromoDate(offer.promo_end_date)}`
+                            : `ตั้งแต่ ${formatPromoDate(offer.promo_start_date!)}`}
+                      </div>
+                    )}
+                    {!isClosed && onBookPeriod && (
                       <button
                         onClick={() => onBookPeriod(period)}
-                        className="px-3 py-1.5 bg-orange-500 text-white text-xs font-semibold rounded-lg hover:bg-orange-600 transition cursor-pointer"
+                        className="w-full px-3 py-2 bg-orange-500 text-white text-sm font-semibold rounded-lg hover:bg-orange-600 transition cursor-pointer"
                       >
                         จอง
                       </button>
@@ -728,7 +746,7 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
               ) : (
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-orange-500">ติดต่อฝ่ายขาย</span>
-                  {effectiveStatus !== 'sold_out' && onBookPeriod && (
+                  {!isClosed && onBookPeriod && (
                     <button
                       onClick={() => onBookPeriod(period)}
                       className="px-3 py-1.5 bg-orange-500 text-white text-xs font-semibold rounded-lg hover:bg-orange-600 transition cursor-pointer"

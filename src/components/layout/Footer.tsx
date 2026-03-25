@@ -59,8 +59,8 @@ interface FooterConfig {
 
 // Fallback footer links
 const fallbackTourLinks: FooterLink[] = [
-  { label: 'ทัวร์ต่างประเทศ', href: '/tours/international' },
-  { label: 'ทัวร์ในประเทศ', href: '/tours/domestic' },
+  // { label: 'ทัวร์ต่างประเทศ', href: '/tours/international' },
+  // { label: 'ทัวร์ในประเทศ', href: '/tours/domestic' },
   { label: 'ทัวร์โปรโมชั่น', href: '/promotions' },
   { label: 'ทัวร์ตามเทศกาล', href: '/tours/festival' },
   { label: 'แพ็คเกจทัวร์', href: '/packages' },

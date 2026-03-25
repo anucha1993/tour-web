@@ -121,11 +121,39 @@ export default function RegisterPage() {
     // Request OTP
     const response = await authApi.requestRegisterOtp(phone);
     
-    if (response.success && response.otp_request_id) {
-      setOtpRequestId(response.otp_request_id);
-      setOtpExpiresIn(response.expires_in || 300);
-      setDebugOtp(response.debug_otp || null);
-      setShowOtpModal(true);
+    if (response.success) {
+      if (response.data?.otp_disabled) {
+        // OTP is disabled — register directly without OTP verification
+        const regResponse = await authApi.register({
+          phone,
+          first_name: firstName,
+          last_name: lastName,
+          email,
+          password,
+          password_confirmation: passwordConfirm,
+          consent_terms: consentTerms,
+          consent_privacy: consentPrivacy,
+          consent_marketing: consentMarketing,
+        });
+
+        if (regResponse.success && regResponse.data?.token && regResponse.data?.member) {
+          api.setToken(regResponse.data.token);
+          setMember(regResponse.data.member);
+          router.push('/member');
+        } else {
+          if (regResponse.errors) {
+            const firstError = Object.values(regResponse.errors)[0];
+            setError(Array.isArray(firstError) ? firstError[0] : String(firstError));
+          } else {
+            setError(regResponse.message || 'สมัครสมาชิกไม่สำเร็จ');
+          }
+        }
+      } else if (response.data?.otp_request_id) {
+        setOtpRequestId(response.data.otp_request_id);
+        setOtpExpiresIn(response.data.expires_in || 300);
+        setDebugOtp(response.data.debug_otp || null);
+        setShowOtpModal(true);
+      }
     } else {
       setError(response.message || 'ไม่สามารถส่ง OTP ได้');
     }
@@ -154,14 +182,14 @@ export default function RegisterPage() {
       consent_marketing: consentMarketing,
     });
     
-    if (response.success && response.token && response.member) {
-      api.setToken(response.token);
-      setMember(response.member);
+    if (response.success && response.data?.token && response.data?.member) {
+      api.setToken(response.data.token);
+      setMember(response.data.member);
       router.push('/member');
     } else {
       if (response.errors) {
         const firstError = Object.values(response.errors)[0];
-        setError(Array.isArray(firstError) ? firstError[0] : firstError);
+        setError(Array.isArray(firstError) ? firstError[0] : String(firstError));
       } else {
         setError(response.message || 'สมัครสมาชิกไม่สำเร็จ');
       }
@@ -178,10 +206,10 @@ export default function RegisterPage() {
 
     const response = await authApi.requestRegisterOtp(phone);
     
-    if (response.success && response.otp_request_id) {
-      setOtpRequestId(response.otp_request_id);
-      setOtpExpiresIn(response.expires_in || 300);
-      setDebugOtp(response.debug_otp || null);
+    if (response.success && response.data?.otp_request_id) {
+      setOtpRequestId(response.data.otp_request_id);
+      setOtpExpiresIn(response.data.expires_in || 300);
+      setDebugOtp(response.data.debug_otp || null);
     } else {
       setError(response.message || 'ไม่สามารถส่ง OTP ได้');
     }

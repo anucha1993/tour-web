@@ -297,8 +297,8 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
               <thead>
                 <tr className="text-white font-semibold bg-orange-400">
                   <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium rounded-tl-lg whitespace-nowrap">เดินทาง</th>
-                  <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium whitespace-nowrap">ผู้ใหญ่ (พัก2-3ท่าน)</th>
-                  <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium whitespace-nowrap">ผู้ใหญ่ (พักเดี่ยว)</th>
+                  <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium whitespace-nowrap">ผู้ใหญ่ </th>
+                  <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium whitespace-nowrap">พักเดี่ยว</th>
                   <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium">ที่นั่ง</th>
                   <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium">จอง</th>
                   <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium rounded-tr-lg">รับได้</th>

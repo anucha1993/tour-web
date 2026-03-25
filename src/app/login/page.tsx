@@ -16,6 +16,7 @@ function LoginContent() {
   const { login, loginWithOtp, isAuthenticated } = useAuth();
   
   const [method, setMethod] = useState<LoginMethod>('password');
+  const [otpEnabled, setOtpEnabled] = useState(false);
   const [loginValue, setLoginValue] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -32,6 +33,23 @@ function LoginContent() {
   const [bgTitle, setBgTitle] = useState('');
 
   const redirectTo = searchParams.get('redirect') || '/member';
+
+  // Fetch OTP status
+  useEffect(() => {
+    authApi.getOtpStatus().then((r) => {
+      if (r.success && r.data) setOtpEnabled(r.data.enabled);
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!otpEnabled && method === 'otp') {
+      setMethod('password');
+      setOtp('');
+      setOtpRequestId(null);
+      setOtpExpiresIn(0);
+      setSuccess('');
+    }
+  }, [otpEnabled, method]);
 
   // Fetch Page Content
   useEffect(() => {
@@ -184,19 +202,29 @@ function LoginContent() {
                 </button>
                 <button
                   type="button"
+                  disabled={!otpEnabled}
                   onClick={() => {
+                    if (!otpEnabled) return;
                     setMethod('otp');
                     setError('');
                   }}
                   className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                    method === 'otp'
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
+                    !otpEnabled
+                      ? 'text-gray-400 cursor-not-allowed opacity-60'
+                      : method === 'otp'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
                   OTP
                 </button>
               </div>
+
+              {!otpEnabled && (
+                <p className="mb-6 text-xs text-gray-500">
+                  OTP ถูกปิดใช้งานชั่วคราวระหว่างรอตรวจสอบการตั้งค่า
+                </p>
+              )}
 
               {/* Error Message */}
               {error && (
@@ -305,7 +333,7 @@ function LoginContent() {
               )}
 
               {/* OTP Login Form */}
-              {method === 'otp' && !otpRequestId && (
+              {otpEnabled && method === 'otp' && !otpRequestId && (
                 <form onSubmit={handleRequestOtp} className="space-y-5">
                   <div>
                     <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
@@ -346,7 +374,7 @@ function LoginContent() {
               )}
 
               {/* OTP Verification Form */}
-              {method === 'otp' && otpRequestId && (
+              {otpEnabled && method === 'otp' && otpRequestId && (
                 <form onSubmit={handleOtpLogin} className="space-y-5">
                   <div>
                     <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-1">
