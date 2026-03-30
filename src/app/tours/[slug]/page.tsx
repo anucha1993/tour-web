@@ -219,8 +219,8 @@ const PERIOD_BADGE_BG_CLASSES: Record<string, string> = {
 };
 
 function PeriodAvailabilityBadge({ period }: { period: TourDetailPeriod }) {
-  if (period.status === 'closed' || period.available <= 0) {
-    return <span className="px-2.5 py-1 bg-red-100 text-red-700 text-sm font-bold rounded">CLOSED</span>;
+  if (period.status !== 'open' || period.available <= 0) {
+    return <span className="px-2.5 py-1 bg-red-100 text-red-700 text-sm font-bold rounded">เต็ม</span>;
   }
 
   if (period.available <= 5) {
@@ -553,13 +553,13 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
               <th className="px-4 py-3 text-center font-medium whitespace-nowrap">ที่นั่ง</th>
               <th className="px-4 py-3 text-center font-medium whitespace-nowrap">จอง</th>
               <th className="px-4 py-3 text-center font-medium whitespace-nowrap">รับได้</th>
-              <th className="px-4 py-3 text-center font-medium rounded-tr-lg whitespace-nowrap">จอง</th>
+              <th className="px-4 py-3 text-center font-medium rounded-tr-lg whitespace-nowrap">สถานะ</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {display.map((period) => {
               const offer = period.offer;
-              const isClosed = period.status === 'closed' || period.available <= 0;
+              const isClosed = period.status !== 'open' || period.available <= 0;
               const periodBadges = getPeriodBadges(tourId, offer?.discount_adult || 0, period.id);
               const hasPromo = isPromoActive(offer);
               return (
@@ -626,12 +626,13 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
                   <td className="px-4 py-3">{period.booked}</td>
                   <td className="px-4 py-3"><PeriodAvailabilityBadge period={period} /></td>
                   <td className="px-4 py-3 text-center">
-                    {!isClosed && onBookPeriod && (
+                    {onBookPeriod && (
                       <button
-                        onClick={() => onBookPeriod(period)}
-                        className="px-3 py-1.5 bg-orange-500 text-white text-xs font-semibold rounded-lg hover:bg-orange-600 transition cursor-pointer"
+                        onClick={() => !isClosed && onBookPeriod(period)}
+                        disabled={isClosed}
+                        className={`px-3 py-1.5 text-white text-xs font-semibold rounded-lg transition ${isClosed ? 'bg-gray-300 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600 cursor-pointer'}`}
                       >
-                        จอง
+                        {isClosed ? 'เต็ม' : 'จอง'}
                       </button>
                     )}
                   </td>
@@ -646,7 +647,7 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
       <div className="md:hidden space-y-3">
         {display.map((period) => {
           const offer = period.offer;
-          const isClosed = period.status === 'closed' || period.available <= 0;
+          const isClosed = period.status !== 'open' || period.available <= 0;
           const periodBadges = getPeriodBadges(tourId, offer?.discount_adult || 0, period.id);
           const hasPromo = isPromoActive(offer);
           return (
@@ -654,7 +655,7 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
               {/* Sold Out Stamp */}
               {isClosed && (
                 <div className="absolute -right-8 top-3 rotate-45 bg-red-500 text-white text-xs font-bold px-10 py-1 shadow-md">
-                  SOLD OUT
+                  เต็ม
                 </div>
               )}
               <div className="flex items-center justify-between mb-2">
@@ -733,12 +734,13 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
                             : `ตั้งแต่ ${formatPromoDate(offer.promo_start_date!)}`}
                       </div>
                     )}
-                    {!isClosed && onBookPeriod && (
+                    {onBookPeriod && (
                       <button
-                        onClick={() => onBookPeriod(period)}
-                        className="w-full px-3 py-2 bg-orange-500 text-white text-sm font-semibold rounded-lg hover:bg-orange-600 transition cursor-pointer"
+                        onClick={() => !isClosed && onBookPeriod(period)}
+                        disabled={isClosed}
+                        className={`w-full px-3 py-2 text-white text-sm font-semibold rounded-lg transition ${isClosed ? 'bg-gray-300 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600 cursor-pointer'}`}
                       >
-                        จอง
+                        {isClosed ? 'เต็ม' : 'จอง'}
                       </button>
                     )}
                   </div>
@@ -746,12 +748,13 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
               ) : (
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-orange-500">ติดต่อฝ่ายขาย</span>
-                  {!isClosed && onBookPeriod && (
+                  {onBookPeriod && (
                     <button
-                      onClick={() => onBookPeriod(period)}
-                      className="px-3 py-1.5 bg-orange-500 text-white text-xs font-semibold rounded-lg hover:bg-orange-600 transition cursor-pointer"
+                      onClick={() => !isClosed && onBookPeriod(period)}
+                      disabled={isClosed}
+                      className={`px-3 py-1.5 text-white text-xs font-semibold rounded-lg transition ${isClosed ? 'bg-gray-300 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600 cursor-pointer'}`}
                     >
-                      จอง
+                      {isClosed ? 'เต็ม' : 'จอง'}
                     </button>
                   )}
                 </div>

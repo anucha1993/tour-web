@@ -65,8 +65,8 @@ const formatDepartureMonthRange = (periods: { start_date: string }[]) => {
 const getDayOfWeek = (dateStr: string) => ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'][new Date(dateStr).getDay()];
 
 const PeriodStatusBadge = ({ period }: { period: InternationalTourPeriod }) => {
-  if (period.status === 'closed' || period.available <= 0)
-    return <span className="px-2.5 py-1 bg-red-100 text-red-700 text-sm font-bold rounded">CLOSED</span>;
+  if (period.status !== 'open' || period.available <= 0)
+    return <span className="px-2.5 py-1 bg-red-100 text-red-700 text-sm font-bold rounded">เต็ม</span>;
   if (period.available <= 5)
     return <span className="px-2.5 py-1 bg-orange-100 text-orange-700 text-sm font-bold rounded">{period.available}</span>;
   return <span className="px-2.5 py-1 bg-green-100 text-green-700 text-sm font-bold rounded">{period.available}</span>;
@@ -307,7 +307,7 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {visiblePeriods.map(period => {
-                  const isClosed = period.status === 'closed' || period.available <= 0;
+                  const isClosed = period.status !== 'open' || period.available <= 0;
                   return (
                     <tr key={period.id} className={isClosed ? 'bg-gray-50 text-gray-400' : 'hover:bg-orange-50/40'}>
                       <td className="px-2 lg:px-4 py-2 lg:py-2.5">
