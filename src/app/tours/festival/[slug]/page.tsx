@@ -353,6 +353,7 @@ export default function FestivalDetailPage() {
     show_periods: true, max_periods_display: 10, show_transport: true, show_hotel_star: true,
     show_meal_count: true, show_commission: false, filter_country: true, filter_city: true,
     filter_search: true, filter_airline: true, filter_departure_month: true, filter_price_range: true,
+    filter_festival: true, filter_promotion: true, filter_theme: true, filter_special_highlight: true, filter_advanced: true,
     sort_options: {},
   });
   const [festivalInfo, setFestivalInfo] = useState<FestivalToursResponse['festival'] | null>(null);
@@ -540,6 +541,11 @@ export default function FestivalDetailPage() {
                 airline: settings.filter_airline,
                 departureMonth: settings.filter_departure_month,
                 priceRange: settings.filter_price_range,
+                festival: settings.filter_festival,
+                promotion: settings.filter_promotion,
+                theme: settings.filter_theme,
+                specialHighlight: settings.filter_special_highlight,
+                advanced: settings.filter_advanced,
               }}
             />
           )}

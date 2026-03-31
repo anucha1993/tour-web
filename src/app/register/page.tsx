@@ -122,7 +122,7 @@ export default function RegisterPage() {
     const response = await authApi.requestRegisterOtp(phone);
     
     if (response.success) {
-      if (response.data?.otp_disabled) {
+      if (response.otp_disabled) {
         // OTP is disabled — register directly without OTP verification
         const regResponse = await authApi.register({
           phone,
@@ -136,9 +136,9 @@ export default function RegisterPage() {
           consent_marketing: consentMarketing,
         });
 
-        if (regResponse.success && regResponse.data?.token && regResponse.data?.member) {
-          api.setToken(regResponse.data.token);
-          setMember(regResponse.data.member);
+        if (regResponse.success && regResponse.token && regResponse.member) {
+          api.setToken(regResponse.token);
+          setMember(regResponse.member);
           router.push('/member');
         } else {
           if (regResponse.errors) {
@@ -148,10 +148,10 @@ export default function RegisterPage() {
             setError(regResponse.message || 'สมัครสมาชิกไม่สำเร็จ');
           }
         }
-      } else if (response.data?.otp_request_id) {
-        setOtpRequestId(response.data.otp_request_id);
-        setOtpExpiresIn(response.data.expires_in || 300);
-        setDebugOtp(response.data.debug_otp || null);
+      } else if (response.otp_request_id) {
+        setOtpRequestId(response.otp_request_id);
+        setOtpExpiresIn(response.expires_in || 300);
+        setDebugOtp(response.debug_otp || null);
         setShowOtpModal(true);
       }
     } else {
@@ -182,9 +182,9 @@ export default function RegisterPage() {
       consent_marketing: consentMarketing,
     });
     
-    if (response.success && response.data?.token && response.data?.member) {
-      api.setToken(response.data.token);
-      setMember(response.data.member);
+    if (response.success && response.token && response.member) {
+      api.setToken(response.token);
+      setMember(response.member);
       router.push('/member');
     } else {
       if (response.errors) {
@@ -206,10 +206,10 @@ export default function RegisterPage() {
 
     const response = await authApi.requestRegisterOtp(phone);
     
-    if (response.success && response.data?.otp_request_id) {
-      setOtpRequestId(response.data.otp_request_id);
-      setOtpExpiresIn(response.data.expires_in || 300);
-      setDebugOtp(response.data.debug_otp || null);
+    if (response.success && response.otp_request_id) {
+      setOtpRequestId(response.otp_request_id);
+      setOtpExpiresIn(response.expires_in || 300);
+      setDebugOtp(response.debug_otp || null);
     } else {
       setError(response.message || 'ไม่สามารถส่ง OTP ได้');
     }

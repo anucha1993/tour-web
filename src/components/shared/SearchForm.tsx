@@ -215,7 +215,7 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
     } else if (keyword.trim()) {
       router.push(`/search?q=${encodeURIComponent(keyword.trim())}${departureDateFrom ? `&departure_date_from=${departureDateFrom}` : ""}${departureDateTo ? `&departure_date_to=${departureDateTo}` : ""}${priceMin ? `&price_min=${priceMin}` : ""}${priceMax ? `&price_max=${priceMax}` : ""}`);
     } else {
-      router.push(`/tours/international${qs ? `?${qs}` : ""}`);
+      router.push(`/tours/country/all${qs ? `?${qs}` : ""}`);
     }
     onSearch?.();
   // eslint-disable-next-line react-hooks/exhaustive-deps

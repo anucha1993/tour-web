@@ -38,6 +38,11 @@ interface TourSearchFormProps {
     airline?: boolean;
     departureMonth?: boolean;
     priceRange?: boolean;
+    festival?: boolean;
+    promotion?: boolean;
+    theme?: boolean;
+    specialHighlight?: boolean;
+    advanced?: boolean;
   };
 }
 
@@ -169,6 +174,11 @@ export default function TourSearchForm({
     airline: showFilters.airline !== false,
     month: showFilters.departureMonth !== false,
     price: showFilters.priceRange !== false,
+    festival: showFilters.festival !== false,
+    promotion: showFilters.promotion !== false,
+    theme: showFilters.theme !== false,
+    specialHighlight: showFilters.specialHighlight !== false,
+    advanced: showFilters.advanced !== false,
   };
 
   const filteredCities = useMemo(() => {
@@ -502,7 +512,7 @@ export default function TourSearchForm({
       )}
 
       {/* ═══ Festival / Holiday badges ═══ */}
-      {(filters.festivals ?? []).length > 0 && (
+      {show.festival && (filters.festivals ?? []).length > 0 && (
         <div className="flex flex-wrap gap-1.5 items-center">
           <span className="text-xs text-gray-400">🎉 เทศกาล:</span>
           {(filters.festivals ?? []).map((f) => (
@@ -530,7 +540,7 @@ export default function TourSearchForm({
       )}
 
       {/* ═══ Promotion badges ═══ */}
-      {(filters.promotions ?? []).length > 0 && (
+      {show.promotion && (filters.promotions ?? []).length > 0 && (
         <div className="flex flex-wrap gap-1.5 items-center">
           <span className="text-xs text-gray-400">🏷️ โปรโมชั่น:</span>
           {(filters.promotions ?? []).map((name) => (
@@ -559,7 +569,7 @@ export default function TourSearchForm({
       )}
 
       {/* ═══ Theme badges ═══ */}
-      {(filters.themes ?? []).length > 0 && (
+      {show.theme && (filters.themes ?? []).length > 0 && (
         <div className="flex flex-wrap gap-1.5 items-center">
           <span className="text-xs text-gray-400">📂 หมวดหมู่:</span>
           {(filters.themes ?? []).map((name) => (
@@ -586,7 +596,7 @@ export default function TourSearchForm({
       )}
 
       {/* ═══ Special Highlight badges ═══ */}
-      {(filters.special_highlights ?? []).length > 0 && (() => {
+      {show.specialHighlight && (filters.special_highlights ?? []).length > 0 && (() => {
         const all = filters.special_highlights ?? [];
         // Shuffle once per render with a stable seed based on array length
         const shuffled = [...all].sort(() => 0.5 - Math.sin(all.length * 9301 + 49297));
@@ -630,6 +640,7 @@ export default function TourSearchForm({
       })()}
 
       {/* ═══ Advanced toggle ═══ */}
+      {show.advanced && (
       <div className="flex items-center gap-2">
         <button
           type="button"
@@ -644,9 +655,10 @@ export default function TourSearchForm({
           <ChevronDown className={`w-3 h-3 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
         </button>
       </div>
+      )}
 
       {/* ═══ Advanced filters panel ═══ */}
-      {showAdvanced && (
+      {show.advanced && showAdvanced && (
         <div className="bg-gray-50/50 rounded-xl border border-gray-200 p-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {/* วันเดินทาง */}

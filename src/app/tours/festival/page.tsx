@@ -112,7 +112,10 @@ export default function FestivalToursPage() {
           festivalToursApi.pageSettings(),
         ]);
         if (festivalsRes?.data) {
-          setFestivals(festivalsRes.data);
+          const sorted = [...festivalsRes.data].sort(
+            (a, b) => new Date(a.start_date || '9999-12-31').getTime() - new Date(b.start_date || '9999-12-31').getTime()
+          );
+          setFestivals(sorted);
         }
         if (settingsRes?.cover_image_url !== undefined) {
           setPageSettings(settingsRes);

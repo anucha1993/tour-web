@@ -24,7 +24,7 @@ interface NavMenuItem {
   label: string;
   href: string;
   megaMenu?: boolean; // flag for mega menu items (international tours)
-  submenu?: { label: string; href: string }[];
+  submenu?: { label: string; href: string; tourCount?: number }[];
 }
 
 interface IntlCity {
@@ -120,7 +120,7 @@ export default function Header() {
   const [menuItems, setMenuItems] = useState<NavMenuItem[]>(fallbackMenuItems);
   const [intlCountries, setIntlCountries] = useState<IntlMenuData>([]);
   const [domesticCities, setDomesticCities] = useState<DomesticCity[]>([]);
-  const [festivalMenuItems, setFestivalMenuItems] = useState<{ label: string; href: string }[]>([]);
+  const [festivalMenuItems, setFestivalMenuItems] = useState<{ label: string; href: string; tourCount?: number }[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [contactPhone, setContactPhone] = useState({ label: 'สอบถามทัวร์', value: '02-136-9144', url: 'tel:021369144' });
   const [contactHotline, setContactHotline] = useState({ label: 'Hotline (ตลอดเวลา)', value: '091-091-6364', url: 'tel:0910916364' });
@@ -175,13 +175,16 @@ export default function Header() {
         }
 
         // Build festival submenu from API data (only if there are active festivals)
-        let festivalSubs: { label: string; href: string }[] = [];
+        let festivalSubs: { label: string; href: string; tourCount?: number }[] = [];
         const hasFestivals = festivalMenuRes?.data && Array.isArray(festivalMenuRes.data) && festivalMenuRes.data.length > 0;
         if (hasFestivals) {
-          festivalSubs = festivalMenuRes.data.map((f: { name: string; slug: string; badge_icon?: string | null }) => ({
-            label: `${f.badge_icon ? f.badge_icon + ' ' : ''}${f.name}`,
-            href: `/tours/festival/${f.slug}`,
-          }));
+          festivalSubs = festivalMenuRes.data
+            .sort((a: { start_date?: string }, b: { start_date?: string }) => new Date(a.start_date || '9999-12-31').getTime() - new Date(b.start_date || '9999-12-31').getTime())
+            .map((f: { name: string; slug: string; badge_icon?: string | null; tour_count?: number }) => ({
+              label: `${f.badge_icon ? f.badge_icon + ' ' : ''}${f.name}`,
+              href: `/tours/festival/${f.slug}`,
+              tourCount: f.tour_count || 0,
+            }));
           festivalSubs.push({ label: 'ดูทั้งหมด', href: '/tours/festival' });
           setFestivalMenuItems(festivalSubs);
         }
@@ -452,9 +455,12 @@ export default function Header() {
                           <Link
                             key={subItem.href}
                             href={subItem.href}
-                            className="block px-4 py-2.5 text-sm text-[var(--color-gray-700)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-50)] transition-colors"
+                            className="flex items-center justify-between px-4 py-2.5 text-sm text-[var(--color-gray-700)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-50)] transition-colors"
                           >
-                            {subItem.label}
+                            <span>{subItem.label}</span>
+                            {subItem.tourCount != null && subItem.tourCount > 0 && (
+                              <span className="ml-2 text-xs font-bold text-white bg-[var(--color-primary)] rounded-full min-w-[22px] h-[22px] flex items-center justify-center px-1.5">{subItem.tourCount}</span>
+                            )}
                           </Link>
                         ))
                       )}
@@ -807,9 +813,12 @@ export default function Header() {
                                 key={subItem.href}
                                 href={subItem.href}
                                 onClick={() => setIsMobileMenuOpen(false)}
-                                className="block px-4 py-2.5 text-sm text-[var(--color-gray-600)] hover:text-[var(--color-primary)] transition-colors"
+                                className="flex items-center justify-between px-4 py-2.5 text-sm text-[var(--color-gray-600)] hover:text-[var(--color-primary)] transition-colors"
                               >
-                                {subItem.label}
+                                <span>{subItem.label}</span>
+                                {subItem.tourCount != null && subItem.tourCount > 0 && (
+                                  <span className="ml-2 text-xs font-bold text-white bg-[var(--color-primary)] rounded-full min-w-[22px] h-[22px] flex items-center justify-center px-1.5">{subItem.tourCount}</span>
+                                )}
                               </Link>
                             ))
                           )}

@@ -653,6 +653,11 @@ export default function PromotionsPage() {
                 airline: true,
                 departureMonth: true,
                 priceRange: true,
+                festival: true,
+                promotion: true,
+                theme: true,
+                specialHighlight: true,
+                advanced: true,
               }}
             />
             {/* Badge Filter Pills */}

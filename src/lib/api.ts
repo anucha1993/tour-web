@@ -132,7 +132,7 @@ export const authApi = {
 
   // Request OTP for registration
   requestRegisterOtp: (phone: string) =>
-    api.post<{ data?: { otp_request_id?: number; expires_in?: number; debug_otp?: string; otp_disabled?: boolean } }>('/web/auth/register/request-otp', { phone }),
+    api.post<{ otp_request_id?: number; expires_in?: number; debug_otp?: string; otp_disabled?: boolean }>('/web/auth/register/request-otp', { phone }),
 
   // Complete registration
   register: (data: {
@@ -147,7 +147,7 @@ export const authApi = {
     consent_terms: boolean;
     consent_privacy: boolean;
     consent_marketing?: boolean;
-  }) => api.post<{ data?: { member: Member; token: string } }>('/web/auth/register', data),
+  }) => api.post<{ member: Member; token: string }>('/web/auth/register', data),
 
   // Login with email/phone + password
   login: (login: string, password: string) =>
@@ -949,6 +949,7 @@ export interface InternationalTourItem {
   transports?: InternationalTourTransport[];
   periods?: InternationalTourPeriod[];
   active_promotions?: { name: string; start_date: string | null; end_date: string | null }[];
+  is_pinned?: boolean;
 }
 
 export interface InternationalTourFilters {
@@ -975,9 +976,16 @@ export interface InternationalTourSettings {
   filter_airline: boolean;
   filter_departure_month: boolean;
   filter_price_range: boolean;
+  filter_festival: boolean;
+  filter_promotion: boolean;
+  filter_theme: boolean;
+  filter_special_highlight: boolean;
+  filter_advanced: boolean;
   sort_options: Record<string, string>;
   cover_image_url?: string | null;
   cover_image_position?: string;
+  hero_text?: string | null;
+  pagination_mode?: string;
 }
 
 export interface InternationalToursResponse {
@@ -1046,9 +1054,16 @@ export interface DomesticTourSettings {
   filter_airline: boolean;
   filter_departure_month: boolean;
   filter_price_range: boolean;
+  filter_festival: boolean;
+  filter_promotion: boolean;
+  filter_theme: boolean;
+  filter_special_highlight: boolean;
+  filter_advanced: boolean;
   sort_options: Record<string, string>;
   cover_image_url?: string | null;
   cover_image_position?: string;
+  hero_text?: string | null;
+  pagination_mode?: string;
 }
 
 export interface DomesticToursResponse {
@@ -1135,9 +1150,15 @@ export interface FestivalTourSettings {
   filter_airline: boolean;
   filter_departure_month: boolean;
   filter_price_range: boolean;
+  filter_festival: boolean;
+  filter_promotion: boolean;
+  filter_theme: boolean;
+  filter_special_highlight: boolean;
+  filter_advanced: boolean;
   sort_options: Record<string, string>;
   cover_image_url?: string | null;
   cover_image_position?: string;
+  hero_text?: string | null;
 }
 
 export interface FestivalToursResponse {

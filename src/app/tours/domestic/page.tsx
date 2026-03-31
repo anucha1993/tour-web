@@ -163,6 +163,9 @@ function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: Domest
             <Link href={`/tours/${tour.slug}`} className="text-lg lg:text-xl font-bold text-gray-900 hover:text-orange-600 transition-colors line-clamp-2">{tour.title}</Link>
             <div className="flex flex-wrap items-center gap-1.5 lg:gap-2 mt-1.5 text-xs lg:text-sm text-gray-500">
               <span className="bg-gray-100 px-2.5 py-0.5 rounded font-mono">รหัสทัวร์ {tour.tour_code}</span>
+              {tour.is_pinned && (
+                <span className="inline-flex items-center gap-0.5 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">📌 แนะนำ</span>
+              )}
               <span>{tour.duration_days} วัน {tour.duration_nights} คืน</span>
               {tour.country && (
                 <span className="inline-flex items-center gap-1">
@@ -419,10 +422,12 @@ function DomesticToursContent() {
   const [settings, setSettings] = useState<DomesticTourSettings>({
     show_periods: true, max_periods_display: 6, show_transport: true, show_hotel_star: true,
     show_meal_count: true, show_commission: false, filter_city: true,
-    filter_search: true, filter_airline: true, filter_departure_month: true, filter_price_range: true, sort_options: {},
+    filter_search: true, filter_airline: true, filter_departure_month: true, filter_price_range: true,
+    filter_festival: true, filter_promotion: true, filter_theme: true, filter_special_highlight: true, filter_advanced: true, sort_options: {},
   });
   const [meta, setMeta] = useState({ current_page: 1, last_page: 1, per_page: 10, total: 0 });
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const [activeSearchParams, setActiveSearchParams] = useState<SearchParams>({
     search: searchParams.get('search') || undefined,
@@ -444,12 +449,16 @@ function DomesticToursContent() {
   const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);
   const abortRef = useRef<AbortController | null>(null);
 
-  const fetchTours = useCallback(async (page: number = 1) => {
+  const fetchTours = useCallback(async (page: number = 1, append: boolean = false) => {
     if (abortRef.current) abortRef.current.abort();
     const controller = new AbortController();
     abortRef.current = controller;
 
-    setLoading(true);
+    if (append) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
     try {
       const { promotions, ...restParams } = activeSearchParams;
       const apiParams: Record<string, string | number | undefined> = {
@@ -461,7 +470,11 @@ function DomesticToursContent() {
       const response = await domesticToursApi.list(apiParams);
       if (controller.signal.aborted) return;
       if (response) {
-        setTours(response.data || []);
+        if (append) {
+          setTours(prev => [...prev, ...(response.data || [])]);
+        } else {
+          setTours(response.data || []);
+        }
         setMeta(response.meta || { current_page: 1, last_page: 1, per_page: 10, total: 0 });
         setFilters(response.filters || {});
         setSettings(response.settings || settings);
@@ -470,14 +483,19 @@ function DomesticToursContent() {
       if (controller.signal.aborted) return;
       console.error('Failed to fetch tours:', error);
     } finally {
-      if (!controller.signal.aborted) setLoading(false);
+      if (!controller.signal.aborted) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSearchParams, sortBy]);
 
   useEffect(() => {
+    if (settings.pagination_mode === 'load_more' && currentPage > 1) return;
     fetchTours(currentPage);
     return () => { if (abortRef.current) abortRef.current.abort(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, fetchTours]);
 
   const handleSearch = (params: SearchParams) => {
@@ -496,6 +514,14 @@ function DomesticToursContent() {
     setCurrentPage(1);
     router.push('/tours/domestic', { scroll: false });
   };
+
+  const handleLoadMore = () => {
+    const nextPage = currentPage + 1;
+    setCurrentPage(nextPage);
+    fetchTours(nextPage, true);
+  };
+
+  const isLoadMoreMode = settings.pagination_mode === 'load_more';
 
   const isInitialLoad = loading && tours.length === 0;
 
@@ -539,7 +565,7 @@ function DomesticToursContent() {
                 </h1>
               </div>
               <p className="text-white/80 text-base lg:text-lg ml-8">
-                รวมโปรแกรมทัวร์ในประเทศไทย เที่ยวทั่วไทย ราคาพิเศษ พร้อมเดินทาง
+                {settings.hero_text || 'รวมโปรแกรมทัวร์ในประเทศไทย เที่ยวทั่วไทย ราคาพิเศษ พร้อมเดินทาง'}
               </p>
             </>
           )}
@@ -585,6 +611,11 @@ function DomesticToursContent() {
                 airline: settings.filter_airline,
                 departureMonth: settings.filter_departure_month,
                 priceRange: settings.filter_price_range,
+                festival: settings.filter_festival,
+                promotion: settings.filter_promotion,
+                theme: settings.filter_theme,
+                specialHighlight: settings.filter_special_highlight,
+                advanced: settings.filter_advanced,
               }}
             />
           )}
@@ -624,7 +655,23 @@ function DomesticToursContent() {
         )}
 
         {/* Pagination */}
-        {meta.last_page > 1 && (
+        {isLoadMoreMode ? (
+          meta.current_page < meta.last_page && (
+            <div className="flex justify-center mt-8">
+              <button
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+                className="px-8 py-3 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {loadingMore ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> กำลังโหลด...</>
+                ) : (
+                  <>โหลดเพิ่มเติม ({meta.total - tours.length} รายการ)</>
+                )}
+              </button>
+            </div>
+          )
+        ) : meta.last_page > 1 && (
           <div className="flex items-center justify-center gap-2 mt-8">
             <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage <= 1} className="p-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"><ChevronLeft className="w-5 h-5" /></button>
             {Array.from({ length: meta.last_page }, (_, i) => i + 1)
