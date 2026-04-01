@@ -253,7 +253,7 @@ export default function TourSearchForm({
         <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
           <Search className="w-4 h-4 text-white" />
         </div>
-        <span className="text-sm font-semibold text-gray-700">ค้นหาโปรแกรมทัวร์</span>
+        <span className="text-sm font-semibold text-gray-700">ค้นหาโปรแกรมทัวร์ห</span>
       </div>
 
       {/* ═══ Main search bar ═══ */}

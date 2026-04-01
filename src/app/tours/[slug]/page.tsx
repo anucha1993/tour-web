@@ -585,13 +585,9 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
                           {badge.text}
                         </span>
                       ))}
-                      {hasPromo && (offer!.promo_start_date || offer!.promo_end_date) && (
-                        <span className="text-xs text-gray-400">
-                          {offer!.promo_start_date && offer!.promo_end_date
-                            ? `${formatPromoDate(offer!.promo_start_date)} - ${formatPromoDate(offer!.promo_end_date)}`
-                            : offer!.promo_end_date
-                              ? `ถึง ${formatPromoDate(offer!.promo_end_date)}`
-                              : `ตั้งแต่ ${formatPromoDate(offer!.promo_start_date!)}`}
+                      {hasPromo && offer!.promo_end_date && (
+                        <span className="text-xs text-red-500 font-medium">
+                          โปรสิ้นสุด {formatPromoDate(offer!.promo_end_date)}
                         </span>
                       )}
                     </div>
@@ -725,13 +721,9 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
                     </div>
                   </div>
                   <div>
-                    {hasPromo && (offer.promo_start_date || offer.promo_end_date) && (
-                      <div className="text-xs text-gray-400 mb-2">
-                        {offer.promo_start_date && offer.promo_end_date
-                          ? `${formatPromoDate(offer.promo_start_date)} - ${formatPromoDate(offer.promo_end_date)}`
-                          : offer.promo_end_date
-                            ? `ถึง ${formatPromoDate(offer.promo_end_date)}`
-                            : `ตั้งแต่ ${formatPromoDate(offer.promo_start_date!)}`}
+                    {hasPromo && offer.promo_end_date && (
+                      <div className="text-xs text-red-500 font-medium mb-2">
+                        โปรสิ้นสุด {formatPromoDate(offer.promo_end_date)}
                       </div>
                     )}
                     {onBookPeriod && (
@@ -1221,7 +1213,7 @@ export default function TourDetailPage() {
   ];
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-16">
+    <div className="bg-gray-50 min-h-screen pb-24 lg:pb-16">
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-gray-500 mb-4">
@@ -1251,6 +1243,9 @@ export default function TourDetailPage() {
               <span className="text-xs font-mono text-gray-400 bg-gray-50 px-2 py-0.5 rounded">{tour.tour_code}</span>
               {badgeInfo && <Badge color={badgeInfo.color}>{badgeInfo.text}</Badge>}
               {discountPercent > 0 && <Badge color="red">ลด {discountPercent}%</Badge>}
+              {tour.discount_label && (
+                <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">🏷️ {tour.discount_label}</span>
+              )}
               <TourTabBadges tourId={tour.id} />
             </div>
 
@@ -1491,7 +1486,7 @@ export default function TourDetailPage() {
                         rel="noopener noreferrer"
                         className="flex items-center justify-center gap-2 w-full py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition-colors shadow-md cursor-pointer"
                       >
-                        จองทางไลน์
+                        จองด่วน
                       </a>
                     );
                   }
@@ -1554,7 +1549,7 @@ export default function TourDetailPage() {
                   <div className="flex items-start gap-2">
                     <Check className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <span className="font-medium">ยกเลิกฟรี</span>
+                      <span className="font-medium">ยกเลิกการเดินทางได้ตามเงื่อนไขในโปรแกรม</span>
                       <span className="text-gray-600"> ล่วงหน้า 24 ชม.</span>
                     </div>
                   </div>
@@ -1985,6 +1980,28 @@ export default function TourDetailPage() {
           onClose={() => setBookingOpen(false)}
           selectedPeriod={bookingPeriod}
         />
+      )}
+
+      {/* Mobile floating จองด่วน button */}
+      {!isAllSoldOut && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white/95 backdrop-blur border-t border-gray-200 px-4 py-3 flex items-center gap-3 shadow-[0_-2px_10px_rgba(0,0,0,0.08)]">
+          <div className="flex-1 min-w-0">
+            <div className="text-xs text-gray-500">เริ่มต้น</div>
+            <div className="text-lg font-bold text-orange-600">
+              ฿{(selectedDisplayPeriod?.offer?.price_adult ?? tour.display_price ?? 0).toLocaleString()}
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              const period = selectedDisplayPeriod ?? tour.periods.find(p => p.available > 0 && p.sale_status !== 'sold_out' && p.status !== 'closed' && p.status !== 'cancelled');
+              if (period) { setBookingPeriod(period); setBookingOpen(true); }
+            }}
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-colors shadow-md whitespace-nowrap"
+          >
+            <ShoppingBag className="w-5 h-5" />
+            จองด่วน
+          </button>
+        </div>
       )}
     </div>
   );
