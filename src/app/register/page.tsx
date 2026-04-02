@@ -445,7 +445,7 @@ export default function RegisterPage() {
                     />
                     <span className="text-sm text-gray-700">
                       ยอมรับ{' '}
-                      <Link href="/privacy" className="text-[var(--color-primary)] hover:underline" target="_blank">
+                      <Link href="/privacy-policy" className="text-[var(--color-primary)] hover:underline" target="_blank">
                         นโยบายคุ้มครองข้อมูลส่วนบุคคล (Privacy policy)
                       </Link>
                     </span>
