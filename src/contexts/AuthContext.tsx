@@ -9,6 +9,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (login: string, password: string) => Promise<{ success: boolean; message?: string }>;
   loginWithOtp: (otpRequestId: number, otp: string) => Promise<{ success: boolean; message?: string }>;
+  loginWithSocial: (provider: 'google' | 'facebook' | 'line', code: string, redirectUri: string) => Promise<{ success: boolean; message?: string; is_new?: boolean }>;
   logout: () => Promise<void>;
   setMember: (member: Member | null) => void;
   refreshMember: () => Promise<void>;
@@ -67,6 +68,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { success: false, message: response.message };
   }, []);
 
+  const loginWithSocial = useCallback(async (provider: 'google' | 'facebook' | 'line', code: string, redirectUri: string) => {
+    const response = await authApi.socialCallback(provider, code, redirectUri);
+    
+    if (response.success && response.token && response.member) {
+      api.setToken(response.token);
+      setMember(response.member);
+      return { success: true, is_new: response.is_new };
+    }
+    
+    return { success: false, message: response.message };
+  }, []);
+
   const logout = useCallback(async () => {
     await authApi.logout();
     api.setToken(null);
@@ -88,6 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: !!member,
         login,
         loginWithOtp,
+        loginWithSocial,
         logout,
         setMember,
         refreshMember,
