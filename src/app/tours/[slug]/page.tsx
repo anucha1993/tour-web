@@ -516,6 +516,12 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
   const display = expanded ? periods : periods.slice(0, 6);
   const { getPeriodBadges } = useTourBadges();
 
+  const computeSaleStatus = (available: number) => {
+    if (available === 0) return 'sold_out';
+    if (available < 4) return 'available';
+    return 'booking';
+  };
+
   if (periods.length === 0) {
     return (
       <div className="text-center py-8 text-gray-400">
@@ -622,15 +628,32 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
                   <td className="px-4 py-3">{period.booked}</td>
                   <td className="px-4 py-3"><PeriodAvailabilityBadge period={period} /></td>
                   <td className="px-4 py-3 text-center">
-                    {onBookPeriod && (
-                      <button
-                        onClick={() => !isClosed && onBookPeriod(period)}
-                        disabled={isClosed}
-                        className={`px-3 py-1.5 text-white text-xs font-semibold rounded-lg transition ${isClosed ? 'bg-gray-300 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600 cursor-pointer'}`}
-                      >
-                        {isClosed ? 'เต็ม' : 'จอง'}
-                      </button>
-                    )}
+                    {onBookPeriod && (() => {
+                      const saleStatus = computeSaleStatus(period.available);
+                      if (isClosed) {
+                        return <span className="px-3 py-1.5 bg-gray-300 text-gray-500 text-xs font-semibold rounded-lg">เต็ม</span>;
+                      }
+                      if (saleStatus === 'available') {
+                        return (
+                          <a
+                            href={config.social.line}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-semibold rounded-lg transition cursor-pointer"
+                          >
+                            ไลน์
+                          </a>
+                        );
+                      }
+                      return (
+                        <button
+                          onClick={() => onBookPeriod(period)}
+                          className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-lg transition cursor-pointer"
+                        >
+                          จอง
+                        </button>
+                      );
+                    })()}
                   </td>
                 </tr>
               );
@@ -726,15 +749,36 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
                         โปรสิ้นสุด {formatPromoDate(offer.promo_end_date)}
                       </div>
                     )}
-                    {onBookPeriod && (
-                      <button
-                        onClick={() => !isClosed && onBookPeriod(period)}
-                        disabled={isClosed}
-                        className={`w-full px-3 py-2 text-white text-sm font-semibold rounded-lg transition ${isClosed ? 'bg-gray-300 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600 cursor-pointer'}`}
-                      >
-                        {isClosed ? 'เต็ม' : 'จอง'}
-                      </button>
-                    )}
+                    {onBookPeriod && (() => {
+                      const saleStatus = computeSaleStatus(period.available);
+                      if (isClosed) {
+                        return (
+                          <button disabled className="w-full px-3 py-2 bg-gray-300 text-gray-500 text-sm font-semibold rounded-lg cursor-not-allowed">
+                            เต็ม
+                          </button>
+                        );
+                      }
+                      if (saleStatus === 'available') {
+                        return (
+                          <a
+                            href={config.social.line}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center w-full px-3 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold rounded-lg transition cursor-pointer"
+                          >
+                            ไลน์
+                          </a>
+                        );
+                      }
+                      return (
+                        <button
+                          onClick={() => onBookPeriod(period)}
+                          className="w-full px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-lg transition cursor-pointer"
+                        >
+                          จอง
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
               ) : (
@@ -1131,7 +1175,7 @@ export default function TourDetailPage() {
   // Initialize selected display period to first available period
   useEffect(() => {
     if (!tour || tour.periods.length === 0) { setSelectedDisplayPeriod(null); return; }
-    const first = tour.periods.find(p => p.available > 0 && p.sale_status !== 'sold_out') || tour.periods[0];
+    const first = tour.periods.find(p => p.available > 0 && p.status !== 'closed' && p.status !== 'cancelled') || tour.periods[0];
     setSelectedDisplayPeriod(first);
   }, [tour]);
 
@@ -1200,9 +1244,16 @@ export default function TourDetailPage() {
       }, new Date(tour.periods[0].start_date))
     : null;
 
+  // Compute sale_status locally from available seats (matches backend auto-calculation)
+  const computeSaleStatus = (available: number) => {
+    if (available === 0) return 'sold_out';
+    if (available < 4) return 'available'; // ไลน์
+    return 'booking'; // จอง
+  };
+
   // Check if all periods are closed/full
   const isAllSoldOut = tour.periods.length === 0 || tour.periods.every(p =>
-    p.available === 0 || p.sale_status === 'sold_out' || p.status === 'closed' || p.status === 'cancelled'
+    p.available === 0 || p.status === 'closed' || p.status === 'cancelled'
   );
 
   const TABS: { id: DetailTab; label: string; icon: React.ElementType; count?: number }[] = [
@@ -1417,7 +1468,7 @@ export default function TourDetailPage() {
                   {periodDropdownOpen && (
                     <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-orange-200 rounded-xl shadow-xl z-50 max-h-56 overflow-y-auto">
                       {tour.periods.map(period => {
-                        const isSoldOut = period.available === 0 || period.sale_status === 'sold_out' || period.status === 'closed' || period.status === 'cancelled';
+                        const isSoldOut = period.available === 0 || period.status === 'closed' || period.status === 'cancelled';
                         const isSelected = selectedDisplayPeriod?.id === period.id;
                         const sD = new Date(period.start_date + 'T00:00:00');
                         const eD = new Date(period.end_date + 'T00:00:00');
@@ -1466,11 +1517,10 @@ export default function TourDetailPage() {
                   const p = selectedDisplayPeriod;
                   const isClosed = !p
                     || p.available === 0
-                    || p.sale_status === 'sold_out'
                     || p.status === 'closed'
                     || p.status === 'sold_out'
                     || p.status === 'cancelled';
-                  const isWaitingList = !isClosed && p.sale_status === 'available';
+                  const saleStatus = p ? computeSaleStatus(p.available) : 'sold_out';
                   if (isClosed) {
                     return (
                       <div className="block w-full text-center py-3 bg-gray-300 text-gray-500 font-semibold rounded-xl cursor-not-allowed">
@@ -1478,7 +1528,8 @@ export default function TourDetailPage() {
                       </div>
                     );
                   }
-                  if (isWaitingList) {
+                  if (saleStatus === 'available') {
+                    // ไลน์ — available < 4, show LINE contact button
                     return (
                       <a
                         href={config.social.line}
@@ -1993,8 +2044,16 @@ export default function TourDetailPage() {
           </div>
           <button
             onClick={() => {
-              const period = selectedDisplayPeriod ?? tour.periods.find(p => p.available > 0 && p.sale_status !== 'sold_out' && p.status !== 'closed' && p.status !== 'cancelled');
-              if (period) { setBookingPeriod(period); setBookingOpen(true); }
+              const period = selectedDisplayPeriod ?? tour.periods.find(p => p.available > 0 && p.status !== 'closed' && p.status !== 'cancelled');
+              if (period) {
+                const status = computeSaleStatus(period.available);
+                if (status === 'available') {
+                  // ไลน์ — redirect to LINE
+                  window.open(config.social.line, '_blank');
+                } else {
+                  setBookingPeriod(period); setBookingOpen(true);
+                }
+              }
             }}
             className="flex items-center justify-center gap-2 px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-colors shadow-md whitespace-nowrap"
           >

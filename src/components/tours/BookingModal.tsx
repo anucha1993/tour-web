@@ -19,7 +19,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
   const { member, isAuthenticated } = useAuth();
 
   // Period selection
-  const availablePeriods = tour.periods.filter(p => p.sale_status !== 'sold_out');
+  const availablePeriods = tour.periods.filter(p => p.available > 0);
   const [selectedPeriodId, setSelectedPeriodId] = useState<number | null>(
     initialPeriod?.id || availablePeriods[0]?.id || null
   );
