@@ -448,9 +448,12 @@ function DomesticToursContent() {
   const [sortBy, setSortBy] = useState(searchParams.get('sort_by') || '');
   const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);
   const abortRef = useRef<AbortController | null>(null);
+  const loadMorePageRef = useRef(1);
 
   const fetchTours = useCallback(async (page: number = 1, append: boolean = false) => {
-    if (abortRef.current) abortRef.current.abort();
+    if (!append) {
+      if (abortRef.current) abortRef.current.abort();
+    }
     const controller = new AbortController();
     abortRef.current = controller;
 
@@ -463,21 +466,29 @@ function DomesticToursContent() {
       const { promotions, ...restParams } = activeSearchParams;
       const apiParams: Record<string, string | number | undefined> = {
         page,
+        per_page: 10,
         ...restParams,
         ...(promotions && promotions.length > 0 && { promotions: promotions.join(',') }),
         ...(sortBy && { sort_by: sortBy }),
+        ...(append && { skip_filters: 1 }),
       };
-      const response = await domesticToursApi.list(apiParams);
+      const response = await domesticToursApi.list(apiParams, { signal: controller.signal });
       if (controller.signal.aborted) return;
       if (response) {
         if (append) {
-          setTours(prev => [...prev, ...(response.data || [])]);
+          setTours(prev => {
+            const existingIds = new Set(prev.map(t => t.id));
+            const newTours = (response.data || []).filter(t => !existingIds.has(t.id));
+            return [...prev, ...newTours];
+          });
         } else {
           setTours(response.data || []);
         }
         setMeta(response.meta || { current_page: 1, last_page: 1, per_page: 10, total: 0 });
-        setFilters(response.filters || {});
-        setSettings(response.settings || settings);
+        if (!append) {
+          setFilters(response.filters || {});
+          setSettings(response.settings || settings);
+        }
       }
     } catch (error) {
       if (controller.signal.aborted) return;
@@ -492,7 +503,7 @@ function DomesticToursContent() {
   }, [activeSearchParams, sortBy]);
 
   useEffect(() => {
-    if (settings.pagination_mode === 'load_more' && currentPage > 1) return;
+    loadMorePageRef.current = 1;
     fetchTours(currentPage);
     return () => { if (abortRef.current) abortRef.current.abort(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -516,8 +527,8 @@ function DomesticToursContent() {
   };
 
   const handleLoadMore = () => {
-    const nextPage = currentPage + 1;
-    setCurrentPage(nextPage);
+    const nextPage = loadMorePageRef.current + 1;
+    loadMorePageRef.current = nextPage;
     fetchTours(nextPage, true);
   };
 
@@ -656,7 +667,7 @@ function DomesticToursContent() {
 
         {/* Pagination */}
         {isLoadMoreMode ? (
-          meta.current_page < meta.last_page && (
+          tours.length < meta.total && (
             <div className="flex justify-center mt-8">
               <button
                 onClick={handleLoadMore}
@@ -666,7 +677,7 @@ function DomesticToursContent() {
                 {loadingMore ? (
                   <><Loader2 className="w-4 h-4 animate-spin" /> กำลังโหลด...</>
                 ) : (
-                  <>โหลดเพิ่มเติม ({meta.total - tours.length} รายการ)</>
+                  <>โหลดเพิ่มเติม ({Math.min(10, meta.total - tours.length)} จาก {meta.total - tours.length} รายการ)</>
                 )}
               </button>
             </div>

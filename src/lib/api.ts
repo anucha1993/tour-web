@@ -90,6 +90,9 @@ class ApiClient {
 
       return data as ResponseData<T>;
     } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return { success: false, message: 'cancelled', error: 'abort' } as ResponseData<T>;
+      }
       console.error('API Error:', error);
       return {
         success: false,
@@ -99,8 +102,8 @@ class ApiClient {
     }
   }
 
-  async get<T>(endpoint: string): Promise<ResponseData<T>> {
-    return this.request<T>(endpoint, { method: 'GET' });
+  async get<T>(endpoint: string, options?: { signal?: AbortSignal }): Promise<ResponseData<T>> {
+    return this.request<T>(endpoint, { method: 'GET', signal: options?.signal });
   }
 
   async post<T>(endpoint: string, data?: unknown): Promise<ResponseData<T>> {
@@ -1016,7 +1019,7 @@ export interface InternationalToursResponse {
 
 export const internationalToursApi = {
   // List tours with filters and pagination
-  list: (params?: Record<string, string | number | undefined>) => {
+  list: (params?: Record<string, string | number | undefined>, options?: { signal?: AbortSignal }) => {
     const searchParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -1026,7 +1029,7 @@ export const internationalToursApi = {
       });
     }
     const qs = searchParams.toString();
-    return api.get<InternationalToursResponse>(`/tours/international${qs ? `?${qs}` : ''}`);
+    return api.get<InternationalToursResponse>(`/tours/international${qs ? `?${qs}` : ''}`, options);
   },
 
   // Get display settings
@@ -1093,7 +1096,7 @@ export interface DomesticToursResponse {
 
 export const domesticToursApi = {
   // List tours with filters and pagination
-  list: (params?: Record<string, string | number | undefined>) => {
+  list: (params?: Record<string, string | number | undefined>, options?: { signal?: AbortSignal }) => {
     const searchParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -1103,7 +1106,7 @@ export const domesticToursApi = {
       });
     }
     const qs = searchParams.toString();
-    return api.get<DomesticToursResponse>(`/tours/domestic${qs ? `?${qs}` : ''}`);
+    return api.get<DomesticToursResponse>(`/tours/domestic${qs ? `?${qs}` : ''}`, options);
   },
 
   // Get display settings
