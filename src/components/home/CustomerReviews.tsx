@@ -127,7 +127,7 @@ function ImageCarousel({ images }: { images: TourReview['images'] }) {
 // Single review card
 function ReviewCard({ review }: { review: TourReview }) {
   const avgRating = computeAvgRating(review);
-  const tourTitle = review.tour?.tour_name || '';
+  const tourTitle = review.tour?.tour_name || review.tour?.title || review.program_name || '';
   const tourSlug = review.tour?.slug || '';
 
   return (

@@ -592,7 +592,7 @@ export default function MemberReviews() {
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm font-semibold text-gray-900 truncate">
-                        {review.tour?.tour_name || "ทัวร์"}
+                        {review.tour?.tour_name || review.tour?.title || review.program_name || "ทัวร์"}
                       </h3>
                       <div className="text-xs text-gray-400 mt-0.5">
                         {new Date(review.created_at).toLocaleDateString("th-TH", {

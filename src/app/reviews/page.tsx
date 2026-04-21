@@ -61,7 +61,7 @@ const SORT_OPTIONS = [
 
 function ReviewCard({ review }: { review: TourReview }) {
   const avgRating = computeAvgRating(review);
-  const tourTitle = review.tour?.tour_name || review.tour?.title || '';
+  const tourTitle = review.tour?.tour_name || review.tour?.title || review.program_name || '';
   const hasImages = review.images && review.images.length > 0;
 
   return (

@@ -712,7 +712,8 @@ export interface ReviewImage {
 
 export interface TourReview {
   id: number;
-  tour_id: number;
+  tour_id: number | null;
+  program_name: string | null;
   user_id: number | null;
   reviewer_name: string;
   reviewer_avatar_url: string | null;
