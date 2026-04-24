@@ -7,6 +7,7 @@ import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import { TourBadgesProvider } from "@/contexts/TourBadgesContext";
 import LazyFavoritesDrawer from "@/components/home/LazyFavoritesDrawer";
 import LazyFooter from "@/components/layout/LazyFooter";
+import LazyContactPopup from "@/components/layout/LazyContactPopup";
 
 const notoSansThai = localFont({
   src: "./fonts/NotoSansThai-VariableFont_wdth,wght.ttf",
@@ -65,6 +66,7 @@ export default function RootLayout({
             </main>
             <LazyFooter />
             <LazyFavoritesDrawer />
+            <LazyContactPopup />
             </TourBadgesProvider>
           </FavoritesProvider>
         </AuthProvider>
