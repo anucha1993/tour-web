@@ -411,6 +411,12 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
             {tour.duration_days > 0 && ` ${tour.duration_days}D ${tour.duration_nights}N`}
             {tour.transports?.[0]?.airline?.name && ` โดย${tour.transports[0].airline.name}`}
           </h2>
+          {tour.booking_online_enabled && (
+            <span className="hidden sm:inline-flex items-center gap-1 bg-white/90 text-green-600 font-bold text-[10px] sm:text-xs px-2.5 py-1 rounded-full flex-shrink-0 whitespace-nowrap">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              จองออนไลน์ได้ทันที
+            </span>
+          )}
           {selectedPeriod && (
             <div className="hidden sm:flex items-center bg-yellow-300/80 text-orange-700 font-bold text-xs sm:text-sm px-4 py-1.5 rounded-full flex-shrink-0 whitespace-nowrap">
               ที่นั่ง {selectedPeriod.capacity} &nbsp;|&nbsp; จอง {selectedPeriod.booked} &nbsp;|&nbsp; คงเหลือ {selectedPeriod.available}
@@ -455,7 +461,17 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
                 <span className="text-lg font-bold text-orange-500">฿{Number(bookingResult.total_amount).toLocaleString()}</span>
               </div>
               <p className="text-sm text-gray-500 mt-3">สถานะ: <span className="font-semibold text-orange-500">{bookingResult.status_label}</span></p>
-              <p className="text-xs text-gray-400 mt-2">กรุณารอเจ้าหน้าที่ติดต่อกลับเพื่อยืนยันการจอง</p>
+              {bookingResult.is_confirmed_by_provider && bookingResult.provider_booking_ref ? (
+                <div className="mt-3 px-4 py-2.5 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-xs text-green-700 font-semibold uppercase tracking-wide">ยืนยันโดย {bookingResult.provider}</p>
+                  <p className="text-sm font-mono font-bold text-green-700 mt-0.5">{bookingResult.provider_booking_ref}</p>
+                  <p className="text-xs text-green-600 mt-1">การจองได้รับการยืนยันทันทีจาก provider</p>
+                </div>
+              ) : bookingResult.is_outbound ? (
+                <p className="text-xs text-orange-500 mt-2">เจ้าหน้าที่กำลังตรวจสอบและจะติดต่อกลับโดยเร็ว</p>
+              ) : (
+                <p className="text-xs text-gray-400 mt-2">กรุณารอเจ้าหน้าที่ติดต่อกลับเพื่อยืนยันการจอง</p>
+              )}
               <button
                 onClick={() => { setBookingResult(null); onClose(); }}
                 className="mt-5 w-full max-w-xs py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition cursor-pointer"

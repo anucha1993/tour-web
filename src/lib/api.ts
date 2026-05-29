@@ -458,6 +458,7 @@ export interface TourDetail {
   popularity_score: number;
   meta_title: string | null;
   meta_description: string | null;
+  booking_online_enabled?: boolean;
 }
 
 export const tourDetailApi = {
@@ -534,6 +535,12 @@ export interface BookingSubmitResult {
   total_amount: number;
   status: string;
   status_label: string;
+  // Outbound integration (Zego etc.) — present when booking was auto-pushed
+  provider?: string | null;
+  provider_status?: string | null;
+  provider_booking_ref?: string | null;
+  is_outbound?: boolean;
+  is_confirmed_by_provider?: boolean;
 }
 
 // Booking response type
