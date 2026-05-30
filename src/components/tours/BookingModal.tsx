@@ -162,15 +162,18 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
     setIsOtpLoading(true);
     try {
       const res = await bookingApi.requestOtp(phone);
-      if (res.success) {
+      console.log('[OTP] requestOtp response:', JSON.stringify(res, null, 2));
+      // Accept either explicit success flag OR presence of otp_request_id (defensive)
+      if (res.success || res.otp_request_id) {
         setOtpRequestId(res.otp_request_id);
         setOtpStep('sent');
         setOtpCountdown(res.expires_in || 300);
         if (res.debug_otp) setOtpDebugCode(res.debug_otp);
       } else {
-        setOtpError(res.message || 'ไม่สามารถส่ง OTP ได้');
+        setOtpError(res.message || 'ไม่สามารถส่ง OTP ได้ (กรุณาลองใหม่)');
       }
-    } catch {
+    } catch (err) {
+      console.error('[OTP] requestOtp error:', err);
       setOtpError('เกิดข้อผิดพลาดในการส่ง OTP');
     } finally {
       setIsOtpLoading(false);
@@ -183,12 +186,14 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
     setIsOtpLoading(true);
     try {
       const res = await bookingApi.verifyOtp(otpRequestId, otpCode);
-      if (res.success) {
+      console.log('[OTP] verifyOtp response:', res);
+      if (res.success || res.phone_msisdn) {
         setOtpStep('verified');
       } else {
         setOtpError(res.message || 'OTP ไม่ถูกต้อง');
       }
-    } catch {
+    } catch (err) {
+      console.error('[OTP] verifyOtp error:', err);
       setOtpError('เกิดข้อผิดพลาดในการยืนยัน OTP');
     } finally {
       setIsOtpLoading(false);
@@ -708,6 +713,13 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
                       </button>
                     )}
                   </div>
+                  {/* Inline OTP error right below the phone+button row so users see it immediately */}
+                  {otpError && otpStep === 'idle' && (
+                    <div className="mt-2 flex items-start gap-2 text-red-600 text-xs bg-red-50 border border-red-200 px-3 py-2 rounded-lg">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                      <span>{otpError}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
