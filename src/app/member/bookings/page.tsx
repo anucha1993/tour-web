@@ -136,7 +136,7 @@ export default function MemberBookings() {
           <h3 className="text-lg font-semibold text-gray-900 mb-2">ยังไม่มีรายการจอง</h3>
           <p className="text-gray-500 mb-6">เมื่อคุณจองทัวร์ รายการจะแสดงที่นี่</p>
           <Link
-            href="/tours"
+            href="/search"
             className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--color-primary)] text-white font-semibold rounded-lg hover:bg-[var(--color-primary-dark)] transition-colors"
           >
             ค้นหาทัวร์

@@ -43,7 +43,7 @@ export default function QuotationsPage() {
             <ArrowRightIcon className="w-4 h-4" />
           </Link>
           <Link
-            href="/tours"
+            href="/search"
             className="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-colors"
           >
             ค้นหาทัวร์

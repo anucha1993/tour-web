@@ -147,7 +147,7 @@ export default function MemberDashboard() {
             </div>
             <p className="text-gray-500">ยังไม่มีทัวร์ที่ถูกใจ</p>
             <Link 
-              href="/tours" 
+              href="/search" 
               className="inline-block mt-4 text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] text-sm font-medium"
             >
               ค้นหาทัวร์ที่คุณชอบ →
