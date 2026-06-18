@@ -1,10 +1,9 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { reviewApi, TourReview, ReviewTag } from "@/lib/api";
-import { API_URL } from "@/lib/config";
 import {
   StarIcon,
   PlusIcon,
@@ -14,16 +13,19 @@ import {
   CheckCircleIcon,
   ClockIcon,
   XCircleIcon,
-  MagnifyingGlassIcon,
   HashtagIcon,
 } from "@heroicons/react/24/outline";
 import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
 
-interface TourSearchResult {
+interface EligibleTour {
   id: number;
   tour_name: string;
   slug: string;
-  tour_code: string;
+  tour_code: string | null;
+  booking_code: string | null;
+  period_start: string | null;
+  period_end: string | null;
+  already_reviewed: boolean;
 }
 
 const STATUS_MAP: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; color: string }> = {
@@ -51,12 +53,10 @@ export default function MemberReviews() {
   const [currentPage, setCurrentPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
 
-  // Tour search
-  const [tourSearch, setTourSearch] = useState("");
-  const [tourResults, setTourResults] = useState<TourSearchResult[]>([]);
-  const [tourSearching, setTourSearching] = useState(false);
-  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [selectedTour, setSelectedTour] = useState<TourSearchResult | null>(null);
+  // Eligible tours (member must have confirmed booking to review)
+  const [eligibleTours, setEligibleTours] = useState<EligibleTour[]>([]);
+  const [loadingEligible, setLoadingEligible] = useState(false);
+  const [selectedTour, setSelectedTour] = useState<EligibleTour | null>(null);
 
   // Review form
   const [categoryRatings, setCategoryRatings] = useState<Record<string, number>>({});
@@ -72,6 +72,7 @@ export default function MemberReviews() {
   useEffect(() => {
     fetchMyReviews();
     fetchTags();
+    fetchEligibleTours();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
@@ -101,46 +102,22 @@ export default function MemberReviews() {
     }
   };
 
-  const handleTourSearch = (query: string) => {
-    setTourSearch(query);
-    if (searchTimeout.current) clearTimeout(searchTimeout.current);
-    if (query.length < 2) {
-      setTourResults([]);
-      return;
-    }
-    setTourSearching(true);
-    searchTimeout.current = setTimeout(async () => {
-      try {
-        const token = typeof window !== "undefined" ? localStorage.getItem("member_token") : null;
-        const res = await fetch(`${API_URL}/tours/international?search=${encodeURIComponent(query)}&per_page=8`, {
-          headers: {
-            Accept: "application/json",
-            ...(token && { Authorization: `Bearer ${token}` }),
-          },
-        });
-        const data = await res.json();
-        if (data.success) {
-          setTourResults(
-            (data.data?.data || []).map((t: TourSearchResult & Record<string, unknown>) => ({
-              id: t.id,
-              tour_name: t.tour_name || t.title || '',
-              slug: t.slug,
-              tour_code: t.tour_code || "",
-            }))
-          );
-        }
-      } catch {
-        // ignore
-      } finally {
-        setTourSearching(false);
+  const fetchEligibleTours = async () => {
+    setLoadingEligible(true);
+    try {
+      const res = await reviewApi.eligibleTours() as { success?: boolean; data?: EligibleTour[] };
+      if (res.success) {
+        setEligibleTours(res.data || []);
       }
-    }, 300);
+    } catch {
+      // ignore
+    } finally {
+      setLoadingEligible(false);
+    }
   };
 
-  const handleSelectTour = (tour: TourSearchResult) => {
+  const handleSelectTour = (tour: EligibleTour) => {
     setSelectedTour(tour);
-    setTourSearch("");
-    setTourResults([]);
   };
 
   const resetForm = () => {
@@ -150,8 +127,6 @@ export default function MemberReviews() {
     setReviewImages([]);
     setAvatarFile(null);
     setSelectedTags([]);
-    setTourSearch("");
-    setTourResults([]);
     setErrorMsg("");
   };
 
@@ -289,49 +264,64 @@ export default function MemberReviews() {
               </div>
             )}
 
-            {/* Tour Search */}
+            {/* Tour Selector — only tours with confirmed booking */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">เลือกทัวร์ <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">เลือกทัวร์ที่เคยจอง <span className="text-red-500">*</span></label>
               {selectedTour ? (
                 <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-xl">
                   <div className="flex-1">
                     <div className="text-sm text-blue-800 font-medium">{selectedTour.tour_name}</div>
-                    {selectedTour.tour_code && (
-                      <div className="text-xs text-blue-500 mt-0.5">รหัส: {selectedTour.tour_code}</div>
-                    )}
+                    <div className="text-xs text-blue-500 mt-0.5 flex flex-wrap gap-2">
+                      {selectedTour.tour_code && <span>รหัส: {selectedTour.tour_code}</span>}
+                      {selectedTour.booking_code && <span>การจอง: {selectedTour.booking_code}</span>}
+                      {selectedTour.period_start && (
+                        <span>เดินทาง: {selectedTour.period_start}{selectedTour.period_end ? ` – ${selectedTour.period_end}` : ''}</span>
+                      )}
+                    </div>
                   </div>
                   <button onClick={() => setSelectedTour(null)} className="p-1 hover:bg-blue-100 rounded">
                     <XMarkIcon className="w-4 h-4 text-blue-500" />
                   </button>
                 </div>
+              ) : loadingEligible ? (
+                <div className="px-4 py-3 text-sm text-gray-400 text-center border border-gray-200 rounded-xl">กำลังโหลดรายการทัวร์...</div>
+              ) : eligibleTours.length === 0 ? (
+                <div className="px-4 py-6 text-sm text-gray-500 text-center border border-dashed border-gray-300 rounded-xl bg-gray-50">
+                  <ChatBubbleLeftRightIcon className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                  <div>ยังไม่มีทัวร์ที่จองแล้วให้รีวิว</div>
+                  <div className="text-xs text-gray-400 mt-1">คุณต้องเคยจองและยืนยันการจองทัวร์ก่อน จึงจะรีวิวได้</div>
+                </div>
               ) : (
-                <div className="relative">
-                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    value={tourSearch}
-                    onChange={(e) => handleTourSearch(e.target.value)}
-                    placeholder="พิมพ์ชื่อทัวร์เพื่อค้นหา..."
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  {(tourResults.length > 0 || tourSearching) && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-xl shadow-lg z-50 max-h-48 overflow-y-auto">
-                      {tourSearching ? (
-                        <div className="px-4 py-3 text-sm text-gray-400 text-center">กำลังค้นหา...</div>
-                      ) : (
-                        tourResults.map((t) => (
-                          <div
-                            key={t.id}
-                            onClick={() => handleSelectTour(t)}
-                            className="px-4 py-2.5 hover:bg-blue-50 cursor-pointer text-sm border-b last:border-0"
-                          >
-                            <div className="font-medium text-gray-900">{t.tour_name}</div>
-                            {t.tour_code && <div className="text-xs text-gray-500 mt-0.5">รหัส: {t.tour_code}</div>}
+                <div className="border border-gray-200 rounded-xl divide-y max-h-64 overflow-y-auto">
+                  {eligibleTours.map((t) => (
+                    <button
+                      key={`${t.id}-${t.booking_code}`}
+                      type="button"
+                      disabled={t.already_reviewed}
+                      onClick={() => handleSelectTour(t)}
+                      className={`w-full text-left px-4 py-3 text-sm transition-colors ${
+                        t.already_reviewed
+                          ? 'opacity-60 cursor-not-allowed bg-gray-50'
+                          : 'hover:bg-blue-50 cursor-pointer'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-900 truncate">{t.tour_name}</div>
+                          <div className="text-xs text-gray-500 mt-0.5 flex flex-wrap gap-2">
+                            {t.tour_code && <span>รหัส: {t.tour_code}</span>}
+                            {t.booking_code && <span>การจอง: {t.booking_code}</span>}
+                            {t.period_start && (
+                              <span>เดินทาง: {t.period_start}{t.period_end ? ` – ${t.period_end}` : ''}</span>
+                            )}
                           </div>
-                        ))
-                      )}
-                    </div>
-                  )}
+                        </div>
+                        {t.already_reviewed && (
+                          <span className="text-[11px] px-2 py-0.5 bg-green-100 text-green-700 rounded-full whitespace-nowrap">รีวิวแล้ว</span>
+                        )}
+                      </div>
+                    </button>
+                  ))}
                 </div>
               )}
             </div>

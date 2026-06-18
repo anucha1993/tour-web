@@ -120,8 +120,46 @@ class ApiClient {
     });
   }
 
-  async delete<T>(endpoint: string): Promise<ResponseData<T>> {
-    return this.request<T>(endpoint, { method: 'DELETE' });
+  async delete<T>(endpoint: string, data?: unknown): Promise<ResponseData<T>> {
+    return this.request<T>(endpoint, {
+      method: 'DELETE',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  async postFormData<T>(endpoint: string, formData: FormData): Promise<ResponseData<T>> {
+    const url = `${this.baseUrl}${endpoint}`;
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+    };
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        if (response.status === 401) this.setToken(null);
+        return {
+          success: false,
+          message: data.message || 'เกิดข้อผิดพลาด',
+          errors: data.errors,
+          error: data.error,
+        } as ResponseData<T>;
+      }
+      return data as ResponseData<T>;
+    } catch (error) {
+      console.error('API Error:', error);
+      return {
+        success: false,
+        message: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้',
+        error: 'network_error',
+      } as ResponseData<T>;
+    }
   }
 }
 
@@ -201,6 +239,35 @@ export const authApi = {
     password: data.new_password,
     password_confirmation: data.new_password_confirmation,
   }),
+
+  // Avatar
+  uploadAvatar: (file: File) => {
+    const fd = new FormData();
+    fd.append('avatar', file);
+    return api.postFormData<{ avatar: string }>('/web/profile/avatar', fd);
+  },
+  deleteAvatar: () => api.delete('/web/profile/avatar'),
+
+  // Account deletion (PDPA)
+  deleteAccount: (password: string, confirmation: string) =>
+    api.delete('/web/account', { password, confirmation }),
+
+  // Linked social accounts
+  getLinkedAccounts: () =>
+    api.get<{
+      data: {
+        has_password: boolean;
+        google: { linked: boolean; linked_at: string | null };
+        facebook: { linked: boolean; linked_at: string | null };
+        line: { linked: boolean; linked_at: string | null };
+      };
+    }>('/web/profile/linked-accounts'),
+
+  unlinkSocial: (provider: 'google' | 'facebook' | 'line') =>
+    api.delete(`/web/profile/social/${provider}`),
+
+  linkSocial: (provider: 'google' | 'facebook' | 'line', code: string, redirectUri: string) =>
+    api.post(`/web/profile/social/${provider}/link`, { code, redirect_uri: redirectUri }),
 };
 
 // Wishlist API
@@ -878,7 +945,25 @@ export const reviewApi = {
 
   // Auth: Check if member can review a tour
   canReview: (tourSlug: string) =>
-    api.get<{ data: { can_review: boolean; existing_review: TourReview | null } }>(`/web/reviews/${tourSlug}/can-review`),
+    api.get<{ data: { can_review: boolean; has_booking?: boolean; existing_review: TourReview | null } }>(`/web/reviews/${tourSlug}/can-review`),
+
+  // Auth: List tours the member is eligible to review (has confirmed booking)
+  eligibleTours: () =>
+    api.get<{
+      data: Array<{
+        id: number;
+        title: string;
+        tour_name: string;
+        slug: string;
+        tour_code: string | null;
+        cover_image_url: string | null;
+        booking_id: number;
+        booking_code: string | null;
+        period_start: string | null;
+        period_end: string | null;
+        already_reviewed: boolean;
+      }>;
+    }>(`/web/reviews/eligible-tours`),
 
   // Auth: Get member's own reviews
   myReviews: (page?: number) => {
@@ -1852,6 +1937,86 @@ export const notificationApi = {
 
   claim: (id: number) =>
     api.post<{ success: boolean; is_claimed: boolean; claim_code: string; message: string; limit_reached?: boolean }>(`/web/notifications/${id}/claim`),
+};
+
+// ==================== Quotations ====================
+
+export interface QuotationItem {
+  description: string;
+  qty: number;
+  unit_price: number;
+  amount: number;
+}
+
+export interface Quotation {
+  id: number;
+  quotation_number: string;
+  web_member_id: number;
+  tour_id: number | null;
+  period_id: number | null;
+  customer_name: string;
+  customer_phone: string;
+  customer_email: string | null;
+  pax_adult: number;
+  pax_child: number;
+  pax_infant: number;
+  travel_date_preference: string | null;
+  notes: string | null;
+  title: string | null;
+  description: string | null;
+  items: QuotationItem[] | null;
+  subtotal: number | string;
+  discount: number | string;
+  total_amount: number | string;
+  valid_until: string | null;
+  admin_notes: string | null;
+  status: 'requested' | 'draft' | 'sent' | 'accepted' | 'declined' | 'expired' | 'cancelled';
+  sent_at: string | null;
+  accepted_at: string | null;
+  declined_at: string | null;
+  decline_reason: string | null;
+  created_at: string;
+  updated_at: string;
+  tour?: { id: number; title: string; slug: string; cover_image_url: string | null } | null;
+}
+
+export const quotationApi = {
+  list: (params?: { status?: string; page?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.status) sp.append('status', params.status);
+    if (params?.page) sp.append('page', String(params.page));
+    return api.get<{
+      data: {
+        data: Quotation[];
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+      };
+    }>(`/web/quotations?${sp.toString()}`);
+  },
+
+  get: (id: number) =>
+    api.get<{ data: Quotation }>(`/web/quotations/${id}`),
+
+  create: (data: {
+    tour_id?: number | null;
+    period_id?: number | null;
+    customer_name: string;
+    customer_phone: string;
+    customer_email?: string | null;
+    pax_adult: number;
+    pax_child?: number;
+    pax_infant?: number;
+    travel_date_preference?: string;
+    notes?: string;
+  }) => api.post<{ data: Quotation }>('/web/quotations', data),
+
+  accept: (id: number) =>
+    api.post<{ data: Quotation }>(`/web/quotations/${id}/accept`),
+
+  decline: (id: number, reason?: string) =>
+    api.post<{ data: Quotation }>(`/web/quotations/${id}/decline`, { reason }),
 };
 
 export default api;
