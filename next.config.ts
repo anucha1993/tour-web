@@ -43,6 +43,10 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "pub-5cbbaf6280f04ca487a930d56cd23307.r2.dev",
+      },
+      {
+        protocol: "https",
         hostname: "booking.checkingroup.co.th",
       },
       {

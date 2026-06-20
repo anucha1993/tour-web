@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { reviewApi, TourReview, ReviewTag } from "@/lib/api";
+import { API_URL } from "@/lib/config";
 import {
   StarIcon,
   PlusIcon,

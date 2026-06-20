@@ -16,6 +16,11 @@ import {
   Sparkles,
   Copy,
   Check,
+  BookOpen,
+  Phone,
+  MessageCircle,
+  TrendingUp,
+  Clock,
 } from 'lucide-react';
 import {
   internationalToursApi,
@@ -23,6 +28,7 @@ import {
   InternationalTourFilters,
   InternationalTourSettings,
   InternationalTourPeriod,
+  InternationalTourSidebar,
 } from '@/lib/api';
 import TourTabBadges from '@/components/shared/TourTabBadges';
 import TourSearchForm, { SearchParams } from '@/components/shared/TourSearchForm';
@@ -445,6 +451,7 @@ export default function CountryToursPage() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [countryInfo, setCountryInfo] = useState<{ id: number; name_th: string; name_en: string; iso2: string } | null>(null);
+  const [sidebar, setSidebar] = useState<InternationalTourSidebar | null>(null);
 
   const [activeSearchParams, setActiveSearchParams] = useState<SearchParams>({
     search: searchParams.get('search') || undefined,
@@ -510,6 +517,7 @@ export default function CountryToursPage() {
           if (response.active_filters?.country) {
             setCountryInfo(response.active_filters.country);
           }
+          setSidebar(response.sidebar ?? null);
         }
       }
     } catch (error) {
@@ -658,69 +666,220 @@ export default function CountryToursPage() {
           )}
         </div>
 
-        {/* Results header */}
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-base text-gray-600">
-            {loading ? <span className="flex items-center gap-1"><Loader2 className="w-4 h-4 animate-spin" /> กำลังค้นหา...</span> : <><strong className="text-gray-900">{meta.total}</strong> รายการ</>}
-          </span>
-          <select className="border border-gray-200 rounded-lg px-3 py-2 text-base" value={sortBy} onChange={e => setSortBy(e.target.value)}>
-            <option value="">ค่าเริ่มต้น</option>
-            {Object.entries(settings.sort_options || {}).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
-        </div>
+        {/* Results + Sidebar grid */}
+        {(() => {
+          const hasSidebar = settings.show_sidebar !== false && (
+            (settings.sidebar_show_blog_posts !== false && (sidebar?.blog_posts?.length ?? 0) > 0) ||
+            (settings.sidebar_show_popular_tours !== false && (sidebar?.popular_tours?.length ?? 0) > 0) ||
+            (settings.sidebar_show_portfolios && (sidebar?.portfolios?.length ?? 0) > 0) ||
+            (settings.sidebar_show_contact !== false && !!sidebar?.contact)
+          );
+          return (
+            <div className={hasSidebar ? 'grid grid-cols-1 lg:grid-cols-4 gap-6' : ''}>
+              <div className={hasSidebar ? 'lg:col-span-3' : ''}>
+                {/* Results header */}
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-base text-gray-600">
+                    {loading ? <span className="flex items-center gap-1"><Loader2 className="w-4 h-4 animate-spin" /> กำลังค้นหา...</span> : <><strong className="text-gray-900">{meta.total}</strong> รายการ</>}
+                  </span>
+                  <select className="border border-gray-200 rounded-lg px-3 py-2 text-base" value={sortBy} onChange={e => setSortBy(e.target.value)}>
+                    <option value="">ค่าเริ่มต้น</option>
+                    {Object.entries(settings.sort_options || {}).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                  </select>
+                </div>
 
-        {/* Tour List */}
-        {loading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="bg-white rounded-xl border border-gray-100 overflow-hidden animate-pulse">
-                <div className="flex flex-col lg:flex-row"><div className="w-full h-56 lg:w-56 lg:h-56 bg-gray-200" /><div className="flex-1 p-5 space-y-3"><div className="h-5 bg-gray-200 rounded w-3/4" /><div className="h-4 bg-gray-200 rounded w-1/2" /><div className="h-4 bg-gray-200 rounded w-full" /></div></div>
-              </div>
-            ))}
-          </div>
-        ) : tours.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
-            <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <h3 className="text-xl font-semibold text-gray-700 mb-1">ไม่พบรายการทัวร์</h3>
-            <p className="text-base text-gray-500 mb-4">ลองเปลี่ยนเงื่อนไขการค้นหาดูนะครับ</p>
-            <button onClick={clearFilters} className="text-base text-orange-600 hover:underline">ล้างตัวกรองทั้งหมด</button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {tours.map(tour => <TourCard key={tour.id} tour={tour} settings={settings} />)}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {isLoadMoreMode ? (
-          tours.length < meta.total && (
-            <div className="flex justify-center mt-8">
-              <button
-                onClick={handleLoadMore}
-                disabled={loadingMore}
-                className="px-8 py-3 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {loadingMore ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> กำลังโหลด...</>
+                {/* Tour List */}
+                {loading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="bg-white rounded-xl border border-gray-100 overflow-hidden animate-pulse">
+                        <div className="flex flex-col lg:flex-row"><div className="w-full h-56 lg:w-56 lg:h-56 bg-gray-200" /><div className="flex-1 p-5 space-y-3"><div className="h-5 bg-gray-200 rounded w-3/4" /><div className="h-4 bg-gray-200 rounded w-1/2" /><div className="h-4 bg-gray-200 rounded w-full" /></div></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : tours.length === 0 ? (
+                  <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
+                    <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <h3 className="text-xl font-semibold text-gray-700 mb-1">ไม่พบรายการทัวร์</h3>
+                    <p className="text-base text-gray-500 mb-4">ลองเปลี่ยนเงื่อนไขการค้นหาดูนะครับ</p>
+                    <button onClick={clearFilters} className="text-base text-orange-600 hover:underline">ล้างตัวกรองทั้งหมด</button>
+                  </div>
                 ) : (
-                  <>โหลดเพิ่มเติม ({Math.min(10, meta.total - tours.length)} จาก {meta.total - tours.length} รายการ)</>
+                  <div className="space-y-4">
+                    {tours.map(tour => <TourCard key={tour.id} tour={tour} settings={settings} />)}
+                  </div>
                 )}
-              </button>
-            </div>
-          )
-        ) : meta.last_page > 1 && (
-          <div className="flex items-center justify-center gap-2 mt-8">
-            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage <= 1} className="p-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"><ChevronLeft className="w-5 h-5" /></button>
-            {Array.from({ length: meta.last_page }, (_, i) => i + 1)
-              .filter(page => { if (meta.last_page <= 7) return true; if (page === 1 || page === meta.last_page) return true; return Math.abs(page - currentPage) <= 2; })
-              .reduce((acc: (number | string)[], page, i, arr) => { if (i > 0 && typeof arr[i - 1] === 'number' && (page as number) - (arr[i - 1] as number) > 1) acc.push('...'); acc.push(page); return acc; }, [])
-              .map((page, i) => typeof page === 'string'
-                ? <span key={`e-${i}`} className="px-2 text-gray-400">...</span>
-                : <button key={page} onClick={() => setCurrentPage(page as number)} className={`w-11 h-11 rounded-lg text-base font-medium ${currentPage === page ? 'bg-orange-500 text-white' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}>{page}</button>
+
+                {/* Pagination */}
+                {isLoadMoreMode ? (
+                  tours.length < meta.total && (
+                    <div className="flex justify-center mt-8">
+                      <button
+                        onClick={handleLoadMore}
+                        disabled={loadingMore}
+                        className="px-8 py-3 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        {loadingMore ? (
+                          <><Loader2 className="w-4 h-4 animate-spin" /> กำลังโหลด...</>
+                        ) : (
+                          <>โหลดเพิ่มเติม ({Math.min(10, meta.total - tours.length)} จาก {meta.total - tours.length} รายการ)</>
+                        )}
+                      </button>
+                    </div>
+                  )
+                ) : meta.last_page > 1 && (
+                  <div className="flex items-center justify-center gap-2 mt-8">
+                    <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage <= 1} className="p-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"><ChevronLeft className="w-5 h-5" /></button>
+                    {Array.from({ length: meta.last_page }, (_, i) => i + 1)
+                      .filter(page => { if (meta.last_page <= 7) return true; if (page === 1 || page === meta.last_page) return true; return Math.abs(page - currentPage) <= 2; })
+                      .reduce((acc: (number | string)[], page, i, arr) => { if (i > 0 && typeof arr[i - 1] === 'number' && (page as number) - (arr[i - 1] as number) > 1) acc.push('...'); acc.push(page); return acc; }, [])
+                      .map((page, i) => typeof page === 'string'
+                        ? <span key={`e-${i}`} className="px-2 text-gray-400">...</span>
+                        : <button key={page} onClick={() => setCurrentPage(page as number)} className={`w-11 h-11 rounded-lg text-base font-medium ${currentPage === page ? 'bg-orange-500 text-white' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}>{page}</button>
+                      )}
+                    <button onClick={() => setCurrentPage(p => Math.min(meta.last_page, p + 1))} disabled={currentPage >= meta.last_page} className="p-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"><ChevronRight className="w-5 h-5" /></button>
+                  </div>
+                )}
+              </div>
+
+              {hasSidebar && (
+                <aside className="lg:col-span-1 space-y-4">
+                  {settings.sidebar_show_popular_tours !== false && (sidebar?.popular_tours?.length ?? 0) > 0 && (
+                    <div className="bg-white rounded-xl border border-gray-100 p-4">
+                      <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900 mb-3">
+                        <TrendingUp className="w-4 h-4 text-orange-500" />
+                        {settings.sidebar_popular_tours_title || 'ทัวร์ยอดนิยม'}
+                      </h3>
+                      <ul className="space-y-3">
+                        {sidebar!.popular_tours!.map(t => (
+                          <li key={t.id}>
+                            <Link href={`/tours/${t.slug}`} className="group flex gap-3">
+                              <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                                {t.cover_image_url ? (
+                                  <Image src={t.cover_image_url} alt={t.title} fill className="object-cover group-hover:scale-105 transition-transform" sizes="80px" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-gray-300"><MapPin className="w-6 h-6" /></div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 line-clamp-2 group-hover:text-orange-600 transition-colors">{t.title}</p>
+                                {t.duration_days != null && (
+                                  <p className="text-xs text-gray-500 mt-0.5">{t.duration_days} วัน {t.duration_nights ?? 0} คืน</p>
+                                )}
+                                {(t.display_price ?? t.min_price) != null && (
+                                  <p className="text-sm font-semibold text-orange-600 mt-0.5">{formatPrice(t.display_price ?? t.min_price)} บาท</p>
+                                )}
+                              </div>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {settings.sidebar_show_blog_posts !== false && (sidebar?.blog_posts?.length ?? 0) > 0 && (
+                    <div className="bg-white rounded-xl border border-gray-100 p-4">
+                      <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900 mb-3">
+                        <BookOpen className="w-4 h-4 text-orange-500" />
+                        {settings.sidebar_blog_posts_title || 'บทความท่องเที่ยว'}
+                      </h3>
+                      <ul className="space-y-3">
+                        {sidebar!.blog_posts!.map(p => (
+                          <li key={p.id}>
+                            <Link href={`/blog/${p.slug}`} className="group flex gap-3">
+                              <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                                {p.cover_image_url ? (
+                                  <Image src={p.cover_image_url} alt={p.title} fill className="object-cover group-hover:scale-105 transition-transform" sizes="64px" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-gray-300"><BookOpen className="w-5 h-5" /></div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 line-clamp-2 group-hover:text-orange-600 transition-colors">{p.title}</p>
+                                {p.reading_time_min != null && (
+                                  <p className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                                    <Clock className="w-3 h-3" />
+                                    อ่าน {p.reading_time_min} นาที
+                                  </p>
+                                )}
+                              </div>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {settings.sidebar_show_portfolios && (sidebar?.portfolios?.length ?? 0) > 0 && (
+                    <div className="bg-white rounded-xl border border-gray-100 p-4">
+                      <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900 mb-3">
+                        <Sparkles className="w-4 h-4 text-orange-500" />
+                        {settings.sidebar_portfolios_title || 'ผลงานที่ผ่านมา'}
+                      </h3>
+                      <ul className="space-y-3">
+                        {sidebar!.portfolios!.map(item => (
+                          <li key={item.id} className="group rounded-lg overflow-hidden border border-gray-100 hover:border-orange-200 transition-colors">
+                            <Link href="/tours/group" className="block">
+                              <div className="relative aspect-video bg-gray-100">
+                                {item.image_url ? (
+                                  <Image src={item.image_url} alt={item.title} fill className="object-cover group-hover:scale-105 transition-transform" sizes="320px" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-gray-300"><Sparkles className="w-6 h-6" /></div>
+                                )}
+                                {item.group_size && (
+                                  <span className="absolute top-2 right-2 px-2 py-0.5 bg-orange-600/80 text-white text-xs rounded-full backdrop-blur-sm">
+                                    {item.group_size} ท่าน
+                                  </span>
+                                )}
+                              </div>
+                              <div className="p-2">
+                                <p className="text-sm font-semibold text-gray-900 line-clamp-1 group-hover:text-orange-600 transition-colors">{item.title}</p>
+                                {item.destination && (
+                                  <p className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
+                                    <MapPin className="w-3 h-3" />
+                                    {item.destination}
+                                  </p>
+                                )}
+                              </div>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                      <Link href="/tours/group" className="mt-3 inline-flex items-center gap-1 text-sm text-orange-600 hover:text-orange-700 font-medium">
+                        ดูผลงานทั้งหมด <ChevronRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+                  )}
+
+                  {settings.sidebar_show_contact !== false && sidebar?.contact && (sidebar.contact.phone || sidebar.contact.line || sidebar.contact.text) && (
+                    <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl border border-orange-100 p-4">
+                      <h3 className="text-base font-semibold text-gray-900 mb-2">
+                        {sidebar.contact.title || 'ติดต่อสอบถาม'}
+                      </h3>
+                      {sidebar.contact.text && (
+                        <p className="text-sm text-gray-700 mb-3">{sidebar.contact.text}</p>
+                      )}
+                      <div className="space-y-2">
+                        {sidebar.contact.phone && (
+                          <a href={`tel:${sidebar.contact.phone}`} className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg text-sm font-medium text-gray-800 hover:bg-orange-100 transition-colors">
+                            <Phone className="w-4 h-4 text-orange-500" />
+                            {sidebar.contact.phone}
+                          </a>
+                        )}
+                        {sidebar.contact.line && (
+                          <a href={sidebar.contact.line.startsWith('http') ? sidebar.contact.line : `https://line.me/ti/p/~${sidebar.contact.line}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg text-sm font-medium text-gray-800 hover:bg-green-50 transition-colors">
+                            <MessageCircle className="w-4 h-4 text-green-500" />
+                            LINE: {sidebar.contact.line.replace(/^https?:\/\/[^/]+\/?/, '')}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </aside>
               )}
-            <button onClick={() => setCurrentPage(p => Math.min(meta.last_page, p + 1))} disabled={currentPage >= meta.last_page} className="p-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"><ChevronRight className="w-5 h-5" /></button>
-          </div>
-        )}
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

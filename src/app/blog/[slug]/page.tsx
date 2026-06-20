@@ -7,21 +7,32 @@ import {
   Calendar, Clock, Eye, Tag, ChevronRight, ArrowLeft,
   BookOpen, Share2, Loader2, Facebook, Twitter,
 } from 'lucide-react';
-import { blogApi, BlogPost } from '@/lib/api';
+import { blogApi, BlogPost, BlogPageSettings, BlogSidebarTour } from '@/lib/api';
 
 export default function BlogDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const [post, setPost] = useState<BlogPost | null>(null);
   const [related, setRelated] = useState<BlogPost[]>([]);
+  const [recentPosts, setRecentPosts] = useState<BlogPost[]>([]);
+  const [recommendedTours, setRecommendedTours] = useState<BlogSidebarTour[]>([]);
+  const [settings, setSettings] = useState<BlogPageSettings | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!slug) return;
     blogApi.getPost(slug).then(res => {
-      const raw = res as unknown as { data: BlogPost; related: BlogPost[] };
+      const raw = res as unknown as {
+        data: BlogPost;
+        related: BlogPost[];
+        sidebar?: { recent_posts?: BlogPost[]; recommended_tours?: BlogSidebarTour[] };
+        settings?: BlogPageSettings;
+      };
       if (raw?.data) {
         setPost(raw.data);
         setRelated(raw.related || []);
+        setRecentPosts(raw.sidebar?.recent_posts || []);
+        setRecommendedTours(raw.sidebar?.recommended_tours || []);
+        setSettings(raw.settings || null);
       }
       setLoading(false);
     }).catch(() => setLoading(false));
@@ -104,9 +115,9 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
           <span className="text-gray-800 font-medium line-clamp-1">{post.title}</span>
         </nav>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-16">
+        <div className={`grid grid-cols-1 gap-8 pb-16 ${settings?.show_sidebar !== false ? 'lg:grid-cols-12' : ''}`}>
           {/* Main Content */}
-          <article className="lg:col-span-8">
+          <article className={settings?.show_sidebar !== false ? 'lg:col-span-8' : ''}>
             {/* Category Badge */}
             {post.category && (
               <Link
@@ -224,10 +235,11 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
           </article>
 
           {/* Sidebar */}
+          {settings?.show_sidebar !== false && (
           <aside className="lg:col-span-4">
             <div className="sticky top-[180px] space-y-6">
               {/* Author Card */}
-              {post.author_name && (
+              {settings?.sidebar_show_author !== false && post.author_name && (
                 <div className="bg-gray-50 rounded-xl p-6 text-center">
                   {post.author_avatar_url ? (
                     <Image
@@ -247,10 +259,38 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                 </div>
               )}
 
-              {/* Related Posts */}
-              {related.length > 0 && (
+              {/* Recent Posts (newest, not category-filtered) */}
+              {settings?.sidebar_show_recent_posts && recentPosts.length > 0 && (
                 <div className="bg-gray-50 rounded-xl p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">บทความที่เกี่ยวข้อง</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">{settings.sidebar_recent_posts_title || 'บทความท่องเที่ยว'}</h3>
+                  <div className="space-y-4">
+                    {recentPosts.map(r => (
+                      <Link key={r.id} href={`/blog/${r.slug}`} className="flex gap-3 group">
+                        <div className="relative w-20 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200">
+                          {r.cover_image_url ? (
+                            <Image src={r.cover_image_url} alt={r.title} fill className="object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <BookOpen className="w-5 h-5 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-medium text-gray-800 line-clamp-2 group-hover:text-orange-600 transition-colors">
+                            {r.title}
+                          </h4>
+                          <p className="text-xs text-gray-400 mt-1">{formatDate(r.published_at)}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Related Posts */}
+              {settings?.sidebar_show_related_posts !== false && related.length > 0 && (
+                <div className="bg-gray-50 rounded-xl p-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">{settings?.sidebar_related_posts_title || 'บทความที่เกี่ยวข้อง'}</h3>
                   <div className="space-y-4">
                     {related.map(r => (
                       <Link key={r.id} href={`/blog/${r.slug}`} className="flex gap-3 group">
@@ -275,16 +315,49 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                 </div>
               )}
 
+              {/* Recommended Tours */}
+              {settings?.sidebar_show_recommended_tours && recommendedTours.length > 0 && (
+                <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-6 border border-orange-100">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">{settings.sidebar_recommended_tours_title || 'โปรแกรมทัวร์แนะนำ'}</h3>
+                  <div className="space-y-3">
+                    {recommendedTours.map(t => (
+                      <Link key={t.id} href={t.country_slug ? `/tours/country/${t.country_slug}` : `/tours/${t.slug}`} className="block group">
+                        <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden bg-gray-200 mb-2">
+                          {t.cover_image_url ? (
+                            <Image src={t.cover_image_url} alt={t.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              <BookOpen className="w-8 h-8" />
+                            </div>
+                          )}
+                          {t.tour_code && (
+                            <div className="absolute top-2 left-2 bg-white/90 text-gray-700 text-[10px] font-medium px-2 py-0.5 rounded">
+                              {t.tour_code}
+                            </div>
+                          )}
+                        </div>
+                        <h4 className="text-sm font-medium text-gray-800 line-clamp-2 group-hover:text-orange-600 transition-colors">
+                          {t.title}
+                        </h4>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Back to Blog */}
-              <Link
-                href="/blog"
-                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-1 border-solid border-gray-300 text-gray-600 hover:border-orange-500 hover:text-orange-600 transition font-medium"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                กลับไปหน้าบทความ
-              </Link>
+              {settings?.sidebar_show_back_button !== false && (
+                <Link
+                  href="/blog"
+                  className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-1 border-solid border-gray-300 text-gray-600 hover:border-orange-500 hover:text-orange-600 transition font-medium"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  กลับไปหน้าบทความ
+                </Link>
+              )}
             </div>
           </aside>
+          )}
         </div>
       </div>
     </div>

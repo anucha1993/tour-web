@@ -1092,6 +1092,60 @@ export interface InternationalTourSettings {
   cover_image_position?: string;
   hero_text?: string | null;
   pagination_mode?: string;
+  show_sidebar?: boolean;
+  sidebar_show_blog_posts?: boolean;
+  sidebar_show_popular_tours?: boolean;
+  sidebar_show_contact?: boolean;
+  sidebar_show_portfolios?: boolean;
+  sidebar_blog_posts_title?: string;
+  sidebar_popular_tours_title?: string;
+  sidebar_contact_title?: string;
+  sidebar_portfolios_title?: string;
+}
+
+export interface InternationalTourSidebarBlogPost {
+  id: number;
+  title: string;
+  slug: string;
+  cover_image_url: string | null;
+  published_at: string | null;
+  reading_time_min: number | null;
+}
+
+export interface InternationalTourSidebarPopularTour {
+  id: number;
+  slug: string;
+  tour_code: string;
+  title: string;
+  cover_image_url: string | null;
+  duration_days: number | null;
+  duration_nights: number | null;
+  min_price: number | null;
+  display_price: number | null;
+  country_slug: string | null;
+  country_name: string | null;
+}
+
+export interface InternationalTourSidebarPortfolio {
+  id: number;
+  title: string;
+  caption: string | null;
+  group_size: string | null;
+  destination: string | null;
+  image_url: string | null;
+  group_type: string | null;
+}
+
+export interface InternationalTourSidebar {
+  blog_posts?: InternationalTourSidebarBlogPost[];
+  popular_tours?: InternationalTourSidebarPopularTour[];
+  portfolios?: InternationalTourSidebarPortfolio[];
+  contact?: {
+    title: string;
+    phone: string | null;
+    line: string | null;
+    text: string | null;
+  };
 }
 
 export interface InternationalToursResponse {
@@ -1104,6 +1158,7 @@ export interface InternationalToursResponse {
   };
   filters: InternationalTourFilters;
   settings: InternationalTourSettings;
+  sidebar?: InternationalTourSidebar | null;
   active_filters?: {
     country?: { id: number; name_th: string; name_en: string; slug: string; iso2: string } | null;
     city?: { id: number; name_th: string; name_en: string; slug: string; country_id: number } | null;
@@ -1580,6 +1635,33 @@ export interface BlogPageSettings {
   hero_subtitle: string | null;
   hero_image_url: string | null;
   hero_image_position: string;
+  show_sidebar?: boolean;
+  sidebar_show_author?: boolean;
+  sidebar_show_related_posts?: boolean;
+  sidebar_show_recent_posts?: boolean;
+  sidebar_show_recommended_tours?: boolean;
+  sidebar_show_back_button?: boolean;
+  sidebar_related_posts_limit?: number;
+  sidebar_recent_posts_limit?: number;
+  sidebar_recommended_tours_limit?: number;
+  sidebar_recommended_tours_title?: string;
+  sidebar_related_posts_title?: string;
+  sidebar_recent_posts_title?: string;
+}
+
+export interface BlogSidebarTour {
+  id: number;
+  tour_code: string | null;
+  title: string;
+  slug: string;
+  cover_image_url: string | null;
+  country_slug: string | null;
+  country_name: string | null;
+}
+
+export interface BlogSidebarData {
+  recent_posts?: BlogPost[];
+  recommended_tours?: BlogSidebarTour[];
 }
 
 export const blogApi = {
@@ -1606,7 +1688,7 @@ export const blogApi = {
   },
 
   getPost: (slug: string) =>
-    api.get<{ data: BlogPost; related: BlogPost[] }>(`/blog/posts/${slug}`),
+    api.get<{ data: BlogPost; related: BlogPost[]; sidebar?: BlogSidebarData; settings?: BlogPageSettings }>(`/blog/posts/${slug}`),
 
   getFilters: () =>
     api.get<{ success: boolean; countries: BlogFilterCountry[]; cities: BlogFilterCity[] }>('/blog/filters'),

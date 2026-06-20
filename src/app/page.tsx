@@ -28,6 +28,9 @@ export default function HomePage() {
       {/* Flash Sale */}
       <FlashSale />
 
+      {/* Our Clients */}
+      <OurClients />
+
       {/* Promotions Carousel */}
       <Promotions />
 
@@ -48,9 +51,6 @@ export default function HomePage() {
 
       {/* Latest Blog Posts */}
       <LatestBlogPosts />
-
-       {/* Our Clients */}
-      <OurClients />
 
       {/* CTA Section */}
       <section className="py-16 lg:py-20 gradient-hero text-white">
