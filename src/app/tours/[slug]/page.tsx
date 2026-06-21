@@ -24,14 +24,17 @@ import {
   TourDetailVideo,
   ReviewSummary,
   BlogPost,
+  TourReview,
 } from '@/lib/api';
 import FavoriteButton from '@/components/home/FavoriteButton';
 import BookingModal from '@/components/tours/BookingModal';
 import TourTabBadges from '@/components/shared/TourTabBadges';
 import ReviewSection from '@/components/tours/ReviewSection';
 import RelatedToursCarousel from '@/components/tours/RelatedToursCarousel';
+import ToursCountrySidebar from '@/components/tours/ToursCountrySidebar';
 import { useTourBadges } from '@/contexts/TourBadgesContext';
 import { config } from '@/lib/config';
+import { API_URL } from '@/lib/config';
 
 // ===== Related Blog Posts Component =====
 function RelatedBlogPosts({ cities, countryName }: {
@@ -254,15 +257,14 @@ function ViatorGallery({ images, galleryImages, coverUrl, coverAlt, title }: {
   });
   const [current, setCurrent] = useState(0);
   const [lightbox, setLightbox] = useState(false);
-
-  // How many placeholders needed to fill 4 thumbnail slots
-  const placeholderCount = Math.max(0, THUMBNAIL_SLOTS - allImages.length);
+  // Aspect ratio of the currently shown main image (to size the frame exactly, no white bars)
+  const [mainAspect, setMainAspect] = useState<number | null>(null);
 
   return (
     <>
-      <div className="flex bg-gray-100 overflow-hidden rounded-2xl">
-        {/* Thumbnails - left side (always show 6 slots) */}
-        <div className="hidden sm:flex flex-col gap-0.5 p-1 bg-gray-50 w-[130px] flex-shrink-0">
+      <div className="flex items-start bg-gray-100 overflow-hidden rounded-2xl">
+        {/* Thumbnails - left side */}
+        <div className="hidden sm:flex flex-col gap-0.5 p-1 bg-gray-50 w-[130px] flex-shrink-0 self-stretch">
           {/* Actual images */}
           {allImages.slice(0, THUMBNAIL_SLOTS).map((img, idx) => (
             <button
@@ -282,17 +284,6 @@ function ViatorGallery({ images, galleryImages, coverUrl, coverAlt, title }: {
               />
             </button>
           ))}
-          {/* Placeholder slots if not enough images */}
-          {[...Array(placeholderCount)].map((_, idx) => (
-            <div
-              key={`placeholder-${idx}`}
-              className="w-full aspect-square rounded overflow-hidden border-2 border-transparent"
-            >
-              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                <ImageIcon className="w-4 h-4 text-gray-400" />
-              </div>
-            </div>
-          ))}
           {/* "+N more" button if more than 6 images */}
           {allImages.length > THUMBNAIL_SLOTS && (
             <button
@@ -304,9 +295,10 @@ function ViatorGallery({ images, galleryImages, coverUrl, coverAlt, title }: {
           )}
         </div>
 
-        {/* Main Image - shows full image without cropping */}
+        {/* Main Image - frame follows the image ratio so there are no white bars */}
         <div
-          className="relative flex-1 min-h-[350px] sm:min-h-[450px] lg:min-h-[520px] cursor-pointer bg-white "
+          className="relative flex-1 cursor-pointer bg-white"
+          style={mainAspect ? { aspectRatio: String(mainAspect) } : undefined}
           onClick={() => allImages.length > 0 && setLightbox(true)}
         >
           {allImages.length > 0 ? (
@@ -318,6 +310,9 @@ function ViatorGallery({ images, galleryImages, coverUrl, coverAlt, title }: {
               sizes="(max-width: 768px) 100vw, (max-width: 1024px) 55vw, 700px"
               quality={90}
               priority={current === 0}
+              onLoadingComplete={(img) =>
+                setMainAspect(img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : null)
+              }
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-200 to-amber-300">
@@ -505,6 +500,99 @@ function VideoReviewSection({ videos }: { videos: TourDetailVideo[] }) {
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+// ===== Past Group Tours Gallery (same data as homepage reviews) =====
+function resolveReviewImageUrl(url: string): string {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  return API_URL.replace('/api', '') + url;
+}
+
+function PastGroupToursGallery() {
+  const [reviews, setReviews] = useState<TourReview[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+
+  useEffect(() => {
+    fetch(`${API_URL}/reviews/homepage`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.success && Array.isArray(data.data)) {
+          setReviews(data.data);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, []);
+
+  // Flatten review images into portfolio items (only reviews that have images)
+  const items = reviews
+    .filter((r) => r.images && r.images.length > 0)
+    .map((r) => ({
+      id: r.id,
+      image: resolveReviewImageUrl(r.images![0].image_url),
+      reviewerName: r.reviewer_name,
+      tourTitle: r.tour?.tour_name || r.tour?.title || r.program_name || '',
+      rating: r.rating,
+    }));
+
+  if (!loaded || items.length === 0) return null;
+
+  const visible = showAll ? items : items.slice(0, 8);
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 mt-8">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6">
+        <div className="pt-0">
+          <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-800 mb-4">
+            <ImageIcon className="w-5 h-5 text-orange-500" />
+            ผลงานจัดกรุ๊ปทัวร์ที่ผ่านมา
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {visible.map((item) => (
+              <div
+                key={item.id}
+                className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-200"
+              >
+                {item.image ? (
+                  <Image
+                    src={item.image}
+                    alt={item.tourTitle || item.reviewerName}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <ImageIcon className="w-8 h-8 text-gray-300" />
+                  </div>
+                )}
+                {/* Overlay info */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-black/0 flex flex-col justify-end p-3">
+                  <p className="text-white text-xs font-semibold line-clamp-2">{item.tourTitle}</p>
+                  <div className="flex items-center gap-1 mt-1">
+                    <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                    <span className="text-white/90 text-[11px]">{item.reviewerName}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          {items.length > 8 && (
+            <div className="text-center mt-5">
+              <button
+                onClick={() => setShowAll(!showAll)}
+                className="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-medium transition-colors cursor-pointer"
+              >
+                {showAll ? 'แสดงน้อยลง' : `ดูทั้งหมด (${items.length})`}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -1285,6 +1373,9 @@ export default function TourDetailPage() {
           <span className="text-gray-800 font-medium truncate max-w-[200px]">{tour.title}</span>
         </nav>
 
+        {/* ===== Main content + Country Sidebar ===== */}
+        <div className="flex gap-6 items-start">
+          <div className="flex-1 min-w-0">
         {/* ===== Viator-Style Main Card ===== */}
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
 
@@ -1344,6 +1435,43 @@ export default function TourDetailPage() {
                   </button>
                 </>
               )}
+
+              {/* Review action buttons */}
+              <div className="flex items-center gap-2">
+                {reviewSummary && reviewSummary.total_reviews > 0 && (
+                  <button
+                    onClick={() => {
+                      reviewSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                    className="text-xs sm:text-sm text-orange-600 font-medium bg-white hover:bg-orange-50 border border-orange-200 rounded-lg py-1.5 px-3 transition cursor-pointer"
+                  >
+                    อ่านรีวิว
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    reviewSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                  className="text-xs sm:text-sm text-white font-medium bg-orange-500 hover:bg-orange-600 rounded-lg py-1.5 px-3 transition cursor-pointer"
+                >
+                  ✍️ เขียนรีวิว
+                </button>
+                <FavoriteButton tour={favTourData} size="md" />
+                <button
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({ title: tour.title, url: window.location.href });
+                    } else {
+                      navigator.clipboard.writeText(window.location.href);
+                      alert('คัดลอกลิงก์แล้ว!');
+                    }
+                  }}
+                  className="w-9 h-9 flex items-center justify-center text-gray-500 bg-white hover:bg-gray-100 rounded-full transition cursor-pointer shadow-sm border border-gray-200"
+                  aria-label="แชร์"
+                >
+                  <Share2 className="w-4 h-4" />
+                </button>
+              </div>
 
               <span className="text-gray-300 hidden sm:inline">|</span>
 
@@ -1561,145 +1689,76 @@ export default function TourDetailPage() {
                     ดาวน์โหลด PDF
                   </a>
                 )}
-              </div>
 
-              {/* Conditions / Benefits */}
-              {(tour.inclusions || tour.conditions) ? (
-                <div className="space-y-2 text-sm">
-                  {tour.inclusions && (
-                    <div>
-                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                        <Check className="w-3.5 h-3.5 text-green-500" />
-                        รวมในราคาทัวร์
-                      </h4>
-                      <div className="text-xs text-gray-600 leading-relaxed line-clamp-4 whitespace-pre-line">
-                        {tour.inclusions}
+                {/* เงื่อนไขการจอง (ใต้ดาวน์โหลด) */}
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <h4 className="text-xs font-bold text-gray-700 mb-2 flex items-center gap-1.5">
+                    <span className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <Shield className="w-3.5 h-3.5 text-blue-600" />
+                    </span>
+                    เงื่อนไขการจอง
+                  </h4>
+                  {tour.conditions ? (
+                    <div className="text-xs text-gray-600 leading-relaxed line-clamp-5 whitespace-pre-line">
+                      {tour.conditions}
+                    </div>
+                  ) : (
+                    <ul className="text-xs text-gray-600 space-y-2">
+                      <li className="flex items-start gap-1.5">
+                        <Check className="w-3.5 h-3.5 text-orange-500 mt-0.5 flex-shrink-0" />
+                        <span>ยกเลิกได้ตามเงื่อนไข ล่วงหน้า 24 ชม.</span>
+                      </li>
+                      <li className="flex items-start gap-1.5">
+                        <Check className="w-3.5 h-3.5 text-orange-500 mt-0.5 flex-shrink-0" />
+                        <span>จองก่อน จ่ายทีหลัง พร้อมความยืดหยุ่น</span>
+                      </li>
+                    </ul>
+                  )}
+                  {nextDeparture && (
+                    <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-orange-500 flex-shrink-0" />
+                      <div className="text-xs">
+                        <span className="font-semibold text-gray-700">จองล่วงหน้า! </span>
+                        <span className="text-gray-500">เดินทาง {nextDeparture.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}</span>
                       </div>
                     </div>
                   )}
-                  {tour.conditions && (
-                    <div>
-                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 flex items-center gap-1 mt-2">
-                        <Shield className="w-3.5 h-3.5 text-blue-500" />
-                        เงื่อนไข
-                      </h4>
-                      <div className="text-xs text-gray-600 leading-relaxed line-clamp-3 whitespace-pre-line">
-                        {tour.conditions}
-                      </div>
-                    </div>
-                  )}
-                  <button
-                    onClick={() => setActiveTab('conditions')}
-                    className="text-xs text-orange-500 hover:text-orange-600 font-medium cursor-pointer"
-                  >
-                    ดูเงื่อนไขทั้งหมด →
-                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ---- รวมในราคาทัวร์ (full width) ---- */}
+          <div className="px-4 sm:px-5 pb-5 pt-4 border-t border-gray-200">
+            <div className="bg-green-50/50 rounded-xl p-4 border border-green-100/80">
+              <h4 className="text-xs font-bold text-gray-700 mb-2 flex items-center gap-1.5">
+                <span className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <Check className="w-3.5 h-3.5 text-green-600" />
+                </span>
+                รวมในราคาทัวร์
+              </h4>
+              {tour.inclusions ? (
+                <div className="text-xs text-gray-600 leading-relaxed line-clamp-5 whitespace-pre-line">
+                  {tour.inclusions}
                 </div>
               ) : (
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <span className="font-medium">ยกเลิกการเดินทางได้ตามเงื่อนไขในโปรแกรม</span>
-                      <span className="text-gray-600"> ล่วงหน้า 24 ชม.</span>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <span className="font-medium">จองก่อน จ่ายทีหลัง</span>
-                      <span className="text-gray-600"> - พร้อมความยืดหยุ่น</span>
-                    </div>
-                  </div>
-                </div>
+                <ul className="text-xs text-gray-600 space-y-1.5">
+                  <li className="flex items-start gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-green-500 mt-0.5 flex-shrink-0" />
+                    ตั๋วเครื่องบินไป-กลับ พร้อมที่พัก
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-green-500 mt-0.5 flex-shrink-0" />
+                    อาหารตามรายการ พร้อมไกด์นำเที่ยว
+                  </li>
+                </ul>
               )}
-
-              {/* Book ahead */}
-              {nextDeparture && (
-                <div className="mt-4 p-3 bg-gray-50 rounded-lg flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center flex-shrink-0">
-                    <Clock className="w-5 h-5 text-orange-500" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-sm">จองล่วงหน้า!</div>
-                    <div className="text-xs text-gray-500">
-                      เดินทางใกล้สุด {nextDeparture.toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Favorite & Share */}
-              <div className="mt-4 flex items-center gap-2">
-                <FavoriteButton tour={favTourData} size="md" />
-                <button
-                  onClick={() => {
-                    if (navigator.share) {
-                      navigator.share({ title: tour.title, url: window.location.href });
-                    } else {
-                      navigator.clipboard.writeText(window.location.href);
-                      alert('คัดลอกลิงก์แล้ว!');
-                    }
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition cursor-pointer"
-                >
-                  <Share2 className="w-4 h-4" />
-                  แชร์
-                </button>
-              </div>
-
-              {/* Review Summary Widget */}
-              <div className="mt-4 p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200/60">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
-                  </div>
-                  <div>
-                    {reviewSummary && reviewSummary.total_reviews > 0 ? (
-                      <>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xl font-bold text-gray-900">{reviewSummary.average_rating.toFixed(1)}</span>
-                          <div className="flex items-center gap-0.5">
-                            {[1,2,3,4,5].map(i => (
-                              <Star
-                                key={i}
-                                className={`w-3.5 h-3.5 ${i <= Math.round(reviewSummary.average_rating) ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}`}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        <p className="text-xs text-gray-500">จาก {reviewSummary.total_reviews} รีวิว</p>
-                      </>
-                    ) : (
-                      <>
-                        <p className="font-medium text-sm text-gray-700">ยังไม่มีรีวิว</p>
-                        <p className="text-xs text-gray-500">เป็นคนแรกที่รีวิวทัวร์นี้!</p>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  {reviewSummary && reviewSummary.total_reviews > 0 && (
-                    <button
-                      onClick={() => {
-                        reviewSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      }}
-                      className="flex-1 text-sm text-orange-600 font-medium bg-white hover:bg-orange-50 border border-orange-200 rounded-lg py-2 px-3 transition cursor-pointer text-center"
-                    >
-                      อ่านรีวิว
-                    </button>
-                  )}
-                  <button
-                    onClick={() => {
-                      reviewSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }}
-                    className="flex-1 text-sm text-white font-medium bg-orange-500 hover:bg-orange-600 rounded-lg py-2 px-3 transition cursor-pointer text-center"
-                  >
-                    ✍️ เขียนรีวิว
-                  </button>
-                </div>
-              </div>
+              <button
+                onClick={() => setActiveTab('conditions')}
+                className="mt-3 text-xs text-orange-500 hover:text-orange-600 font-semibold cursor-pointer"
+              >
+                ดูเงื่อนไขทั้งหมด →
+              </button>
             </div>
           </div>
 
@@ -1992,6 +2051,16 @@ export default function TourDetailPage() {
           </div>
 
         </div>
+          </div>
+
+          {/* ===== Country Sidebar (same country / city tours) ===== */}
+          <ToursCountrySidebar
+            countryId={tour.primary_country?.id ?? null}
+            countryName={tour.primary_country?.name || ''}
+            cityIds={tour.cities.map((c) => c.id)}
+            currentTourId={tour.id}
+          />
+        </div>
       </div>
 
       {/* ===== Video Reviews Section (outside card) ===== */}
@@ -2002,6 +2071,9 @@ export default function TourDetailPage() {
           </div>
         </div>
       )}
+
+      {/* ===== Past Group Tours Gallery (same data as homepage reviews) ===== */}
+      <PastGroupToursGallery />
 
       {/* ===== Customer Reviews Section (outside card) ===== */}
       <div ref={reviewSectionRef} className="max-w-7xl mx-auto px-4 mt-8">
