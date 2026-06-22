@@ -1101,6 +1101,10 @@ export interface InternationalTourSettings {
   sidebar_popular_tours_title?: string;
   sidebar_contact_title?: string;
   sidebar_portfolios_title?: string;
+  detail_country_sidebar_enabled?: boolean;
+  detail_country_sidebar_title?: string | null;
+  detail_country_sidebar_limit?: number;
+  detail_country_sidebar_sort?: 'same_city' | 'popular' | 'price_asc' | 'latest';
 }
 
 export interface InternationalTourSidebarBlogPost {

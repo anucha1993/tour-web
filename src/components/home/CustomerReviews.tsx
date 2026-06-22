@@ -42,18 +42,14 @@ function StarRating({ rating }: { rating: number }) {
 // Skeleton loading
 function SkeletonCard() {
   return (
-    <div className="flex-shrink-0 w-[320px] sm:w-[360px] bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-12 h-12 rounded-full bg-gray-200 animate-pulse" />
+    <div className="flex-shrink-0 w-[78%] sm:w-[calc((100%-20px)/2)] lg:w-[calc((100%-60px)/4)] bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+      <div className="w-full aspect-[16/10] bg-gray-200 animate-pulse" />
+      <div className="p-5 flex items-center gap-3">
+        <div className="w-11 h-11 rounded-full bg-gray-200 animate-pulse" />
         <div className="flex-1">
           <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mb-2" />
           <div className="h-3 w-16 bg-gray-100 rounded animate-pulse" />
         </div>
-      </div>
-      <div className="space-y-2">
-        <div className="h-3 w-full bg-gray-100 rounded animate-pulse" />
-        <div className="h-3 w-4/5 bg-gray-100 rounded animate-pulse" />
-        <div className="h-3 w-3/5 bg-gray-100 rounded animate-pulse" />
       </div>
     </div>
   );
@@ -76,7 +72,7 @@ function ImageCarousel({ images }: { images: TourReview['images'] }) {
   };
 
   return (
-    <div className="relative w-full aspect-[16/9] rounded-xl overflow-hidden mb-4 bg-gray-100 group/img">
+    <div className="relative w-full aspect-[16/10] overflow-hidden bg-gray-100 group/img">
       {/* Current image */}
       <img
         src={resolveImageUrl(images[current].image_url)}
@@ -128,39 +124,20 @@ function ImageCarousel({ images }: { images: TourReview['images'] }) {
 function ReviewCard({ review }: { review: TourReview }) {
   const avgRating = computeAvgRating(review);
   const tourTitle = review.tour?.tour_name || review.tour?.title || review.program_name || '';
-  const tourSlug = review.tour?.slug || '';
 
   return (
-    <Link href={`/reviews/${review.id}`} className="flex-shrink-0 w-[320px] sm:w-[360px] bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 group block">
-      {/* Quote icon */}
-      <Quote className="w-8 h-8 text-[var(--color-primary)]/20 mb-3 rotate-180" />
-
-      {/* Comment */}
-      <p className="text-sm text-[var(--color-gray-600)] leading-relaxed mb-4 line-clamp-3 min-h-[60px]">
-        {review.comment}
-      </p>
-
-      {/* Tags */}
-      {review.tags && review.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-4">
-          {review.tags.slice(0, 3).map((tag, i) => (
-            <span
-              key={i}
-              className="text-[11px] bg-[var(--color-primary-50)] text-[var(--color-primary)] px-2 py-0.5 rounded-full font-medium"
-            >
-              #{tag}
-            </span>
-          ))}
+    <Link href={`/reviews/${review.id}`} className="flex-shrink-0 w-[78%] sm:w-[calc((100%-20px)/2)] lg:w-[calc((100%-60px)/4)] bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 group block">
+      {/* Review image (emphasized) */}
+      {review.images && review.images.length > 0 ? (
+        <ImageCarousel images={review.images} />
+      ) : (
+        <div className="w-full aspect-[16/10] bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center">
+          <Quote className="w-10 h-10 text-[var(--color-primary)]/20 rotate-180" />
         </div>
       )}
 
-      {/* Review images carousel */}
-      {review.images && review.images.length > 0 && (
-        <ImageCarousel images={review.images} />
-      )}
-
-      {/* Divider */}
-      <div className="border-t border-gray-100 pt-4">
+      {/* Bottom info */}
+      <div className="p-5">
         <div className="flex items-center gap-3">
           {/* Avatar */}
           {review.reviewer_avatar_url ? (
@@ -187,7 +164,7 @@ function ReviewCard({ review }: { review: TourReview }) {
         </div>
 
         {/* Tour name + views */}
-        <div className="flex items-center justify-between mt-2">
+        <div className="flex items-center justify-between mt-3">
           {tourTitle ? (
             <span className="text-xs text-[var(--color-gray-400)] truncate flex-1 min-w-0">
               ทัวร์: {tourTitle}
@@ -212,6 +189,9 @@ function ReviewCard({ review }: { review: TourReview }) {
 export default function CustomerReviews() {
   const [reviews, setReviews] = useState<TourReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [enabled, setEnabled] = useState(true);
+  const [title, setTitle] = useState('รีวิวจากลูกค้า');
+  const [subtitle, setSubtitle] = useState('เสียงจากลูกค้าที่ไว้วางใจเดินทางกับเรา');
   const scrollRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number | null>(null);
   const [isPaused, setIsPaused] = useState(false);
@@ -220,14 +200,17 @@ export default function CustomerReviews() {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const response = await fetch(`${API_URL}/reviews/featured?limit=12`);
+        const response = await fetch(`${API_URL}/reviews/homepage`);
         if (!response.ok) throw new Error('Failed to fetch');
         const data = await response.json();
-        if (data.success && data.data) {
-          setReviews(data.data);
+        if (data.success) {
+          setEnabled(data.enabled !== false);
+          if (data.title) setTitle(data.title);
+          if (data.subtitle) setSubtitle(data.subtitle);
+          if (data.data) setReviews(data.data);
         }
       } catch (err) {
-        console.error('Failed to fetch featured reviews:', err);
+        console.error('Failed to fetch homepage reviews:', err);
       } finally {
         setIsLoading(false);
       }
@@ -267,7 +250,8 @@ export default function CustomerReviews() {
     container.scrollBy({ left: amount, behavior: 'smooth' });
   };
 
-  // Don't render if no reviews and done loading
+  // Don't render if disabled, or no reviews and done loading
+  if (!enabled) return null;
   if (!isLoading && reviews.length === 0) return null;
 
   const loopReviews = reviews.length > 0 ? [...reviews, ...reviews] : [];
@@ -280,10 +264,10 @@ export default function CustomerReviews() {
           <div>
             <h2 className="text-2xl lg:text-3xl font-bold text-[var(--color-gray-800)] flex items-center gap-2">
               <MessageSquare className="w-7 h-7 text-[var(--color-primary)]" />
-              รีวิวจากลูกค้า
+              {title}
             </h2>
             <p className="text-[var(--color-gray-500)] mt-2">
-              เสียงจากลูกค้าที่ไว้วางใจเดินทางกับเรา
+              {subtitle}
             </p>
           </div>
           <Link
@@ -303,8 +287,6 @@ export default function CustomerReviews() {
                 <SkeletonCard key={i} />
               ))}
             </div>
-            <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-gray-50 to-transparent" />
-            <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-gray-50 to-transparent" />
           </div>
         )}
 
@@ -343,10 +325,6 @@ export default function CustomerReviews() {
                 <ReviewCard key={`${review.id}-${index}`} review={review} />
               ))}
             </div>
-
-            {/* Fade edges */}
-            <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-gray-50 to-transparent" />
-            <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-gray-50 to-transparent" />
           </div>
         )}
 

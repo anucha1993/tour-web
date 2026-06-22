@@ -367,12 +367,42 @@ export default function FlashSale() {
     setBookingSaleItems(saleItems);
   };
 
-  // Don't render anything if no flash sales - no skeleton needed since this is below fold
+  // Don't render anything if no flash sales
   if (!loading && flashSales.length === 0) return null;
 
-  // Show compact skeleton while loading
+  // Show skeleton while loading
   if (loading) {
-    return null;
+    return (
+      <section className="py-10 lg:py-14 bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50 relative z-0 overflow-hidden">
+        <div className="container-custom relative">
+          {/* Header skeleton */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-xl bg-orange-200 animate-pulse" />
+              <div className="h-8 w-48 bg-orange-200/70 rounded-lg animate-pulse" />
+            </div>
+            <div className="h-8 w-44 bg-orange-200/60 rounded-lg animate-pulse" />
+          </div>
+
+          {/* Table skeleton */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="divide-y divide-gray-100">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center gap-4 px-4 py-4">
+                  <div className="w-16 h-12 rounded-lg bg-gray-200 animate-pulse flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-3/5 bg-gray-200 rounded animate-pulse" />
+                    <div className="h-3 w-2/5 bg-gray-100 rounded animate-pulse" />
+                  </div>
+                  <div className="h-6 w-20 bg-gray-200 rounded animate-pulse hidden sm:block" />
+                  <div className="h-8 w-8 rounded-lg bg-orange-200 animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (

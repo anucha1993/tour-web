@@ -28,8 +28,8 @@ export default function HomePage() {
       {/* Flash Sale */}
       <FlashSale />
 
-      {/* Our Clients */}
-      <OurClients />
+      {/* Customer Reviews */}
+      <CustomerReviews />
 
       {/* Promotions Carousel */}
       <Promotions />
@@ -43,11 +43,11 @@ export default function HomePage() {
       {/* Recommended Tours - Dynamic from API */}
       <RecommendedTours />
 
-      {/* Customer Reviews */}
-      <CustomerReviews />
-
       {/* Why Choose Us */}
       <WhyChooseUs />
+
+      {/* Our Clients */}
+      <OurClients />
 
       {/* Latest Blog Posts */}
       <LatestBlogPosts />
