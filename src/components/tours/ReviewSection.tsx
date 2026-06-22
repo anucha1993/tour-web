@@ -24,7 +24,7 @@ export default function ReviewSection({ tourSlug }: ReviewSectionProps) {
   const [canReview, setCanReview] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const fetchReviews = useCallback(async (page = 1, sort = 'latest', rating: number | null = null) => {
+  const fetchReviews = useCallback(async (page = 1, sort = 'latest', rating: number | null = null, append = false) => {
     try {
       setLoading(true);
       const params: Record<string, string | number> = { page, sort };
@@ -33,7 +33,7 @@ export default function ReviewSection({ tourSlug }: ReviewSectionProps) {
       const res = await reviewApi.getReviews(tourSlug, params);
       if (res.success && res.data) {
         setSummary(res.data.summary);
-        setReviews(res.data.reviews.data);
+        setReviews((prev) => (append ? [...prev, ...res.data!.reviews.data] : res.data!.reviews.data));
         setTotalReviews(res.data.reviews.total);
         setCurrentPage(res.data.reviews.current_page);
         setLastPage(res.data.reviews.last_page);
@@ -57,12 +57,13 @@ export default function ReviewSection({ tourSlug }: ReviewSectionProps) {
   }, [member, tourSlug]);
 
   useEffect(() => {
-    fetchReviews(currentPage, activeSort, activeRating);
-  }, [fetchReviews, currentPage, activeSort, activeRating]);
+    fetchReviews(1, activeSort, activeRating, false);
+  }, [fetchReviews, activeSort, activeRating]);
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: document.getElementById('reviews-section')?.offsetTop || 0, behavior: 'smooth' });
+  const handleLoadMore = () => {
+    if (currentPage < lastPage && !loading) {
+      fetchReviews(currentPage + 1, activeSort, activeRating, true);
+    }
   };
 
   const handleSortChange = (sort: string) => {
@@ -146,7 +147,8 @@ export default function ReviewSection({ tourSlug }: ReviewSectionProps) {
           totalReviews={totalReviews}
           currentPage={currentPage}
           lastPage={lastPage}
-          onPageChange={handlePageChange}
+          onLoadMore={handleLoadMore}
+          loadingMore={loading && reviews.length > 0}
           onSortChange={handleSortChange}
           onRatingFilter={handleRatingFilter}
           onHelpful={handleHelpful}

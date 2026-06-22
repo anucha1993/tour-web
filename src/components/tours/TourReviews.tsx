@@ -224,7 +224,8 @@ interface TourReviewsProps {
   totalReviews: number;
   currentPage: number;
   lastPage: number;
-  onPageChange: (page: number) => void;
+  onLoadMore: () => void;
+  loadingMore?: boolean;
   onSortChange: (sort: string) => void;
   onRatingFilter: (rating: number | null) => void;
   onHelpful: (reviewId: number) => void;
@@ -238,13 +239,22 @@ export default function TourReviews({
   totalReviews,
   currentPage,
   lastPage,
-  onPageChange,
+  onLoadMore,
+  loadingMore = false,
   onSortChange,
   onRatingFilter,
   onHelpful,
   activeSort,
   activeRating,
 }: TourReviewsProps) {
+  const INITIAL_VISIBLE = 2;
+  const STEP = 5;
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
+
+  useEffect(() => {
+    setVisibleCount(INITIAL_VISIBLE);
+  }, [activeSort, activeRating]);
+
   const sortOptions = [
     { value: 'latest', label: 'ล่าสุด' },
     { value: 'highest', label: 'คะแนนสูงสุด' },
@@ -348,33 +358,49 @@ export default function TourReviews({
 
       {/* Reviews List */}
       <div className="space-y-4">
-        {reviews.map((review) => (
+        {reviews.slice(0, visibleCount).map((review) => (
           <ReviewCard key={review.id} review={review} onHelpful={onHelpful} />
         ))}
       </div>
 
-      {/* Pagination */}
-      {lastPage > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-6">
-          <button
-            onClick={() => onPageChange(currentPage - 1)}
-            disabled={currentPage <= 1}
-            className="px-3 py-1.5 text-sm border rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
-          >
-            ก่อนหน้า
-          </button>
-          <span className="text-sm text-gray-500">
-            {currentPage} / {lastPage}
-          </span>
-          <button
-            onClick={() => onPageChange(currentPage + 1)}
-            disabled={currentPage >= lastPage}
-            className="px-3 py-1.5 text-sm border rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
-          >
-            ถัดไป
-          </button>
-        </div>
-      )}
+      {/* Load More */}
+      {(() => {
+        const hasMoreLoaded = visibleCount < reviews.length;
+        const hasMorePages = currentPage < lastPage;
+        const canLoadMore = hasMoreLoaded || hasMorePages;
+        if (!canLoadMore) return null;
+        const shownCount = Math.min(visibleCount, reviews.length);
+        const remaining = Math.max(0, totalReviews - shownCount);
+        const handleClick = () => {
+          if (hasMoreLoaded) {
+            setVisibleCount((c) => c + STEP);
+          } else if (hasMorePages && !loadingMore) {
+            setVisibleCount((c) => c + STEP);
+            onLoadMore();
+          }
+        };
+        return (
+          <div className="mt-6 flex justify-center">
+            <button
+              onClick={handleClick}
+              disabled={loadingMore}
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {loadingMore ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                  กำลังโหลด...
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-4 h-4" />
+                  ดูรีวิวเพิ่มเติม {remaining > 0 && <span className="text-gray-400">({remaining})</span>}
+                </>
+              )}
+            </button>
+          </div>
+        );
+      })()}
     </div>
   );
 }
