@@ -8,6 +8,7 @@ import {
   BookOpen, Share2, Loader2, Facebook, Twitter,
 } from 'lucide-react';
 import { blogApi, BlogPost, BlogPageSettings, BlogSidebarTour } from '@/lib/api';
+import CustomerReviews from '@/components/home/CustomerReviews';
 
 export default function BlogDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -232,6 +233,11 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                 คัดลอกลิงก์
               </button>
             </div>
+
+            {/* Customer Reviews Section */}
+            <div className="mt-8">
+              <CustomerReviews />
+            </div>
           </article>
 
           {/* Sidebar */}
@@ -322,7 +328,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                   <div className="space-y-3">
                     {recommendedTours.map(t => (
                       <Link key={t.id} href={t.country_slug ? `/tours/country/${t.country_slug}` : `/tours/${t.slug}`} className="block group">
-                        <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden bg-gray-200 mb-2">
+                        <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-gray-200 mb-2">
                           {t.cover_image_url ? (
                             <Image src={t.cover_image_url} alt={t.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
                           ) : (

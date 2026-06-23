@@ -186,12 +186,15 @@ function ReviewCard({ review }: { review: TourReview }) {
   );
 }
 
-export default function CustomerReviews() {
+export default function CustomerReviews({
+  title: titleProp,
+  subtitle: subtitleProp,
+}: { title?: string; subtitle?: string } = {}) {
   const [reviews, setReviews] = useState<TourReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [enabled, setEnabled] = useState(true);
-  const [title, setTitle] = useState('รีวิวจากลูกค้า');
-  const [subtitle, setSubtitle] = useState('เสียงจากลูกค้าที่ไว้วางใจเดินทางกับเรา');
+  const [title, setTitle] = useState(titleProp || 'รีวิวจากลูกค้า');
+  const [subtitle, setSubtitle] = useState(subtitleProp || 'เสียงจากลูกค้าที่ไว้วางใจเดินทางกับเรา');
   const scrollRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number | null>(null);
   const [isPaused, setIsPaused] = useState(false);
@@ -205,8 +208,8 @@ export default function CustomerReviews() {
         const data = await response.json();
         if (data.success) {
           setEnabled(data.enabled !== false);
-          if (data.title) setTitle(data.title);
-          if (data.subtitle) setSubtitle(data.subtitle);
+          if (!titleProp && data.title) setTitle(data.title);
+          if (!subtitleProp && data.subtitle) setSubtitle(data.subtitle);
           if (data.data) setReviews(data.data);
         }
       } catch (err) {
@@ -216,7 +219,7 @@ export default function CustomerReviews() {
       }
     };
     fetchReviews();
-  }, []);
+  }, [titleProp, subtitleProp]);
 
   // Infinite auto-scroll
   const animate = useCallback(() => {

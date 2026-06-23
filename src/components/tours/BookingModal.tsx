@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {
-  X, Minus as MinusIcon, Plus, Phone,
+  X, Minus as MinusIcon, Plus, Phone, Mail,
   Loader2, CheckCircle2, AlertCircle, ChevronDown,
 } from 'lucide-react';
 import { bookingApi, BookingSubmitResult, TourDetail, TourDetailPeriod } from '@/lib/api';
@@ -50,6 +50,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
   const [consentTerms, setConsentTerms] = useState(false);
 
   // OTP flow (guest only)
+  const [otpChannel, setOtpChannel] = useState<'phone' | 'email'>('phone');
   const [otpStep, setOtpStep] = useState<'idle' | 'sent' | 'verified'>('idle');
   const [otpRequestId, setOtpRequestId] = useState<number | null>(null);
   const [otpCode, setOtpCode] = useState('');
@@ -154,14 +155,23 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
 
   // Handlers
   const handleRequestOtp = async () => {
-    if (!phone || phone.length < 10) {
-      setOtpError('กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง');
-      return;
+    if (otpChannel === 'phone') {
+      if (!phone || phone.length < 10) {
+        setOtpError('กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง');
+        return;
+      }
+    } else {
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setOtpError('กรุณากรอกอีเมลให้ถูกต้อง');
+        return;
+      }
     }
     setOtpError('');
     setIsOtpLoading(true);
     try {
-      const res = await bookingApi.requestOtp(phone);
+      const res = otpChannel === 'phone'
+        ? await bookingApi.requestOtp(phone)
+        : await bookingApi.requestEmailOtp(email);
       console.log('[OTP] requestOtp response:', JSON.stringify(res, null, 2));
       // Accept either explicit success flag OR presence of otp_request_id (defensive)
       if (res.success || res.otp_request_id) {
@@ -673,14 +683,17 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
                 </div>
               </div>
 
-              {/* อีเมล / เบอร์โทร + OTP */}
+              {/* อีเมล / เบอร์โทร */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-sm font-bold text-gray-700">อีเมล<span className="text-red-500">*</span></label>
                   <input
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (otpChannel === 'email' && otpStep !== 'idle') { setOtpStep('idle'); setOtpCode(''); }
+                    }}
                     placeholder="อีเมล"
                     className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none transition placeholder:text-gray-400"
                   />
@@ -688,47 +701,87 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
                 <div>
                   <label className="text-sm font-bold text-gray-700">
                     เบอร์โทรศัพท์<span className="text-red-500">*</span>
-                    {!isAuthenticated && otpStep !== 'verified' && <span className="text-gray-400 font-normal ml-1">ยืนยัน OTP</span>}
                   </label>
-                  <div className="mt-1.5 flex gap-2">
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => {
-                        setPhone(e.target.value);
-                        if (otpStep !== 'idle') { setOtpStep('idle'); setOtpCode(''); }
-                      }}
-                      placeholder="เบอร์โทรศัพท์"
-                      disabled={isAuthenticated}
-                      className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none transition disabled:bg-gray-50 placeholder:text-gray-400"
-                    />
-                    {!isAuthenticated && otpStep === 'idle' && (
-                      <button
-                        type="button"
-                        onClick={handleRequestOtp}
-                        disabled={isOtpLoading || !phone || phone.length < 10}
-                        className="px-3 py-2 bg-orange-500 text-white text-xs font-medium rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition whitespace-nowrap cursor-pointer"
-                      >
-                        {isOtpLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'ส่ง OTP'}
-                      </button>
-                    )}
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => {
+                      setPhone(e.target.value);
+                      if (otpChannel === 'phone' && otpStep !== 'idle') { setOtpStep('idle'); setOtpCode(''); }
+                    }}
+                    placeholder="เบอร์โทรศัพท์"
+                    disabled={isAuthenticated}
+                    className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none transition disabled:bg-gray-50 placeholder:text-gray-400"
+                  />
+                </div>
+              </div>
+
+              {/* ยืนยันตัวตนด้วย OTP (guest only) */}
+              {!isAuthenticated && otpStep === 'idle' && (
+                <div className="border border-gray-200 rounded-xl p-3 bg-gray-50/50 space-y-3">
+                  <div className="text-sm font-bold text-gray-700">ยืนยันตัวตน<span className="text-red-500">*</span></div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => { setOtpChannel('phone'); setOtpError(''); }}
+                      className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition cursor-pointer ${
+                        otpChannel === 'phone'
+                          ? 'border-orange-500 bg-orange-50 text-orange-700'
+                          : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                      }`}
+                    >
+                      <Phone className="w-4 h-4" />
+                      ส่ง OTP ทาง SMS
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setOtpChannel('email'); setOtpError(''); }}
+                      className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition cursor-pointer ${
+                        otpChannel === 'email'
+                          ? 'border-orange-500 bg-orange-50 text-orange-700'
+                          : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                      }`}
+                    >
+                      <Mail className="w-4 h-4" />
+                      ส่ง OTP ทาง Email
+                    </button>
                   </div>
-                  {/* Inline OTP error right below the phone+button row so users see it immediately */}
-                  {otpError && otpStep === 'idle' && (
-                    <div className="mt-2 flex items-start gap-2 text-red-600 text-xs bg-red-50 border border-red-200 px-3 py-2 rounded-lg">
+                  <button
+                    type="button"
+                    onClick={handleRequestOtp}
+                    disabled={
+                      isOtpLoading ||
+                      (otpChannel === 'phone' ? !phone || phone.length < 10 : !email)
+                    }
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
+                  >
+                    {isOtpLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
+                      <>
+                        {otpChannel === 'phone'
+                          ? <>ส่ง OTP ไปยังเบอร์ {phone || '...'}</>
+                          : <>ส่ง OTP ไปยังอีเมล {email || '...'}</>}
+                      </>
+                    )}
+                  </button>
+                  {otpError && (
+                    <div className="flex items-start gap-2 text-red-600 text-xs bg-red-50 border border-red-200 px-3 py-2 rounded-lg">
                       <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                       <span>{otpError}</span>
                     </div>
                   )}
                 </div>
-              </div>
+              )}
 
               {/* OTP input (guest, when sent) */}
               {!isAuthenticated && otpStep === 'sent' && (
                 <div className="p-3 bg-orange-50 rounded-xl space-y-2">
                   <div className="flex items-center gap-2 text-sm">
-                    <Phone className="w-4 h-4 text-orange-500" />
-                    <span className="text-gray-700">กรอกรหัส OTP ที่ส่งไปยังเบอร์ {phone}</span>
+                    {otpChannel === 'phone'
+                      ? <Phone className="w-4 h-4 text-orange-500" />
+                      : <Mail className="w-4 h-4 text-orange-500" />}
+                    <span className="text-gray-700">
+                      กรอกรหัส OTP ที่ส่งไปยัง{otpChannel === 'phone' ? 'เบอร์' : 'อีเมล'} {otpChannel === 'phone' ? phone : email}
+                    </span>
                     {otpCountdown > 0 && (
                       <span className="text-xs text-orange-400 ml-auto">
                         {Math.floor(otpCountdown / 60)}:{String(otpCountdown % 60).padStart(2, '0')}

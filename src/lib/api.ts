@@ -667,9 +667,13 @@ export const bookingApi = {
   requestOtp: (phone: string) =>
     api.post<{ otp_request_id: number; expires_in: number; debug_otp?: string }>('/web/booking/request-otp', { phone }),
 
+  // Request email OTP for booking (guest only)
+  requestEmailOtp: (email: string) =>
+    api.post<{ otp_request_id: number; expires_in: number; debug_otp?: string }>('/web/booking/request-email-otp', { email }),
+
   // Verify OTP for booking (guest only)
   verifyOtp: (otp_request_id: number, otp: string) =>
-    api.post<{ phone_msisdn: string }>('/web/booking/verify-otp', { otp_request_id, otp }),
+    api.post<{ phone_msisdn?: string }>('/web/booking/verify-otp', { otp_request_id, otp }),
 
   // Submit regular booking
   submit: (data: {

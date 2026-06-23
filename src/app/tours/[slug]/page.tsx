@@ -24,7 +24,6 @@ import {
   TourDetailVideo,
   ReviewSummary,
   BlogPost,
-  TourReview,
 } from '@/lib/api';
 import FavoriteButton from '@/components/home/FavoriteButton';
 import BookingModal from '@/components/tours/BookingModal';
@@ -32,9 +31,9 @@ import TourTabBadges from '@/components/shared/TourTabBadges';
 import ReviewSection from '@/components/tours/ReviewSection';
 import RelatedToursCarousel from '@/components/tours/RelatedToursCarousel';
 import ToursCountrySidebar from '@/components/tours/ToursCountrySidebar';
+import CustomerReviews from '@/components/home/CustomerReviews';
 import { useTourBadges } from '@/contexts/TourBadgesContext';
 import { config } from '@/lib/config';
-import { API_URL } from '@/lib/config';
 
 // ===== Related Blog Posts Component =====
 function RelatedBlogPosts({ cities, countryName }: {
@@ -505,96 +504,13 @@ function VideoReviewSection({ videos }: { videos: TourDetailVideo[] }) {
   );
 }
 
-// ===== Past Group Tours Gallery (same data as homepage reviews) =====
-function resolveReviewImageUrl(url: string): string {
-  if (!url) return '';
-  if (url.startsWith('http')) return url;
-  return API_URL.replace('/api', '') + url;
-}
-
+// ===== Past Group Tours Gallery (reuses home CustomerReviews carousel) =====
 function PastGroupToursGallery() {
-  const [reviews, setReviews] = useState<TourReview[]>([]);
-  const [loaded, setLoaded] = useState(false);
-  const [showAll, setShowAll] = useState(false);
-
-  useEffect(() => {
-    fetch(`${API_URL}/reviews/homepage`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.success && Array.isArray(data.data)) {
-          setReviews(data.data);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoaded(true));
-  }, []);
-
-  // Flatten review images into portfolio items (only reviews that have images)
-  const items = reviews
-    .filter((r) => r.images && r.images.length > 0)
-    .map((r) => ({
-      id: r.id,
-      image: resolveReviewImageUrl(r.images![0].image_url),
-      reviewerName: r.reviewer_name,
-      tourTitle: r.tour?.tour_name || r.tour?.title || r.program_name || '',
-      rating: r.rating,
-    }));
-
-  if (!loaded || items.length === 0) return null;
-
-  const visible = showAll ? items : items.slice(0, 8);
-
   return (
-    <div className="max-w-7xl mx-auto px-4 mt-8">
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6">
-        <div className="pt-0">
-          <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-800 mb-4">
-            <ImageIcon className="w-5 h-5 text-orange-500" />
-            ผลงานจัดกรุ๊ปทัวร์ที่ผ่านมา
-          </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {visible.map((item) => (
-              <div
-                key={item.id}
-                className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-200"
-              >
-                {item.image ? (
-                  <Image
-                    src={item.image}
-                    alt={item.tourTitle || item.reviewerName}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <ImageIcon className="w-8 h-8 text-gray-300" />
-                  </div>
-                )}
-                {/* Overlay info */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-black/0 flex flex-col justify-end p-3">
-                  <p className="text-white text-xs font-semibold line-clamp-2">{item.tourTitle}</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                    <span className="text-white/90 text-[11px]">{item.reviewerName}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          {items.length > 8 && (
-            <div className="text-center mt-5">
-              <button
-                onClick={() => setShowAll(!showAll)}
-                className="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-medium transition-colors cursor-pointer"
-              >
-                {showAll ? 'แสดงน้อยลง' : `ดูทั้งหมด (${items.length})`}
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+    <CustomerReviews
+      title="ผลงานจัดกรุ๊ปทัวร์ที่ผ่านมา"
+      subtitle="ภาพและรีวิวจริงจากลูกค้าที่ร่วมเดินทางกับเรา"
+    />
   );
 }
 
