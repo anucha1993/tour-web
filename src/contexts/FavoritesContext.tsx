@@ -97,7 +97,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        // Fetch current server wishlist IDs
+        // Fetch current server wishlist items
         const response = await wishlistApi.getAll();
         // Skip sync silently if server returns error (expired token, etc.)
         if (!response.success) return;
@@ -105,9 +105,13 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
         const raw = (response as any).data;
         const items: any[] = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : [];
         const serverIds = new Set<number>();
+        const serverItemsById = new Map<number, any>();
         items.forEach(item => {
           const id = item.tour_id ?? item.id;
-          if (typeof id === 'number') serverIds.add(id);
+          if (typeof id === 'number') {
+            serverIds.add(id);
+            serverItemsById.set(id, item);
+          }
         });
 
         // Push each local favorite to server if not already there
@@ -115,6 +119,33 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
           if (!serverIds.has(fav.id)) {
             try { await wishlistApi.toggle(fav.id); } catch { /* ignore */ }
           }
+        }
+
+        // Merge server items into local that aren't there yet
+        const localIds = new Set(favorites.map(f => f.id));
+        const toAdd: FavoriteTourData[] = [];
+        serverItemsById.forEach((item, id) => {
+          if (localIds.has(id)) return;
+          const t = item.tour || {};
+          toAdd.push({
+            id,
+            title: t.name || t.title || `ทัวร์ #${id}`,
+            slug: t.slug || '',
+            image_url: t.image_url || t.thumbnail || null,
+            price: typeof t.price === 'number' ? t.price : null,
+            country_name: t.country_name || t.destination || '',
+            days: typeof t.days === 'number' ? t.days : 0,
+            nights: typeof t.nights === 'number' ? t.nights : 0,
+            tour_code: t.tour_code,
+            added_at: item.created_at || new Date().toISOString(),
+          });
+        });
+        if (toAdd.length > 0) {
+          setFavorites(prev => {
+            const existingIds = new Set(prev.map(f => f.id));
+            const merged = [...prev, ...toAdd.filter(t => !existingIds.has(t.id))];
+            return merged;
+          });
         }
       } catch {
         // Sync failure is non-critical — localStorage is still source of truth
