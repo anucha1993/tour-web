@@ -380,7 +380,7 @@ function SearchContent() {
     price_max: searchParams.get('price_max') || undefined,
     min_seats: searchParams.get('min_seats') || undefined,
     festival_id: searchParams.get('festival_id') || undefined,
-    promotions: searchParams.get('promotions')?.split(',').filter(Boolean) || undefined,
+    promotions: searchParams.get('promotions')?.split('|').filter(Boolean) || undefined,
     theme: searchParams.get('theme') || undefined,
     special_highlight: searchParams.get('special_highlight') || undefined,
   });
@@ -404,7 +404,7 @@ function SearchContent() {
       const apiParams: Record<string, string | number | undefined> = {
         page,
         ...restParams,
-        ...(promotions && promotions.length > 0 && { promotions: promotions.join(',') }),
+        ...(promotions && promotions.length > 0 && { promotions: promotions.join('|') }),
         ...(sortBy && { sort_by: sortBy }),
       };
       const response = await internationalToursApi.list(apiParams);
@@ -441,7 +441,12 @@ function SearchContent() {
     setActiveSearchParams(params);
     setCurrentPage(1);
     const p = new URLSearchParams();
-    Object.entries(params).forEach(([k, v]) => { if (v) p.set(k === 'search' ? 'q' : k, String(v)); });
+    Object.entries(params).forEach(([k, v]) => {
+      if (!v) return;
+      const key = k === 'search' ? 'q' : k;
+      const value = Array.isArray(v) ? v.join('|') : String(v);
+      p.set(key, value);
+    });
     if (sortBy) p.set('sort_by', sortBy);
     const qs = p.toString();
     router.push(`/search${qs ? `?${qs}` : ''}`, { scroll: false });

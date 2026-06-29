@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react';
 import { tourTabsApi, festivalToursApi, internationalToursApi, FestivalHolidayPublic, FestivalBadge, TourTabData, TourTabTour, TourTabBadge, InternationalTourFilters } from '@/lib/api';
+import { API_URL } from '@/lib/config';
 import FlashSale from '@/components/home/FlashSale';
 import FavoriteButton from '@/components/home/FavoriteButton';
 import TourTabBadges from '@/components/shared/TourTabBadges';
@@ -372,6 +373,7 @@ export default function PromotionsPage() {
   const [festivalBadges, setFestivalBadges] = useState<FestivalBadge[]>([]);
   const [allCities, setAllCities] = useState<{ id: number; name_th: string; country_id: number; country_name: string; tour_count: number }[]>([]);
   const [tourTabBadges, setTourTabBadges] = useState<TourTabBadge[]>([]);
+  const [adminPromotions, setAdminPromotions] = useState<{ id: number; name: string; badge_text: string | null; badge_color: string | null; tour_ids: number[] }[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [activeSearchParams, setActiveSearchParams] = useState<SearchParams>({});
@@ -382,12 +384,13 @@ export default function PromotionsPage() {
   useEffect(() => {
     async function fetchPromotions() {
       try {
-        const [promoRes, festivalRes, badgeRes, intlRes, tabBadgeRes] = await Promise.all([
+        const [promoRes, festivalRes, badgeRes, intlRes, tabBadgeRes, adminPromoRes] = await Promise.all([
           tourTabsApi.promotions(),
           festivalToursApi.list(),
           festivalToursApi.badges(),
           internationalToursApi.list({ per_page: 1 }),
           tourTabsApi.badges(),
+          fetch(`${API_URL}/promotions/public?limit=50`).then((r) => r.json()).catch(() => ({ data: [] })),
         ]);
         if (promoRes.success && promoRes.data) {
           setPromotionTabs(promoRes.data);
@@ -406,6 +409,12 @@ export default function PromotionsPage() {
         }
         if (tabBadgeRes.data) {
           setTourTabBadges(tabBadgeRes.data);
+        }
+        if (adminPromoRes?.data) {
+          setAdminPromotions(
+            adminPromoRes.data
+              .filter((p: { tour_ids?: number[] }) => Array.isArray(p.tour_ids) && p.tour_ids.length > 0)
+          );
         }
       } catch (error) {
         console.error('Failed to fetch promotions:', error);
@@ -438,6 +447,40 @@ export default function PromotionsPage() {
         .map((b) => b.badge_text || b.name),
     };
   }, [promotionTabs, festivals, allCities, tourTabBadges]);
+
+  // Merge promotion-type tabs into the badge chip list so they also appear as filter chips
+  const allBadgeChips = useMemo<TourTabBadge[]>(() => {
+    const byId = new Map<number, TourTabBadge>();
+    for (const b of tourTabBadges) {
+      byId.set(b.id, b);
+    }
+    for (const tab of promotionTabs) {
+      if (byId.has(tab.id)) continue;
+      byId.set(tab.id, {
+        id: tab.id,
+        name: tab.name,
+        badge_text: tab.badge_text || tab.name,
+        badge_color: tab.badge_color || 'orange',
+        badge_icon: tab.badge_icon,
+        tour_ids: tab.tours.map((t) => t.id),
+        display_modes: tab.display_modes,
+      });
+    }
+    // Admin promotions (stored separately from tour tabs) — use negative id namespace to avoid collision
+    const existingNames = new Set(Array.from(byId.values()).map((b) => b.badge_text || b.name));
+    for (const promo of adminPromotions) {
+      const label = promo.badge_text || promo.name;
+      if (existingNames.has(label)) continue;
+      byId.set(-promo.id, {
+        id: -promo.id,
+        name: promo.name,
+        badge_text: label,
+        badge_color: promo.badge_color || 'orange',
+        tour_ids: promo.tour_ids,
+      });
+    }
+    return Array.from(byId.values());
+  }, [tourTabBadges, promotionTabs, adminPromotions]);
 
   const handleSearch = (params: SearchParams) => {
     setActiveSearchParams(params);
@@ -484,7 +527,7 @@ export default function PromotionsPage() {
     const activeBadges = selectedBadges.length > 0 ? selectedBadges : (p.promotions ?? []);
     if (activeBadges.length > 0) {
       for (const promoName of activeBadges) {
-        const matchedBadge = tourTabBadges.find((b) => (b.badge_text || b.name) === promoName);
+        const matchedBadge = allBadgeChips.find((b) => (b.badge_text || b.name) === promoName);
         if (matchedBadge) {
           const badgeTourIds = new Set(matchedBadge.tour_ids);
           filtered = filtered.filter((t) => badgeTourIds.has(t.id));
@@ -654,17 +697,17 @@ export default function PromotionsPage() {
                 departureMonth: true,
                 priceRange: true,
                 festival: true,
-                promotion: true,
+                promotion: false,
                 theme: true,
                 specialHighlight: true,
                 advanced: true,
               }}
             />
             {/* Badge Filter Pills */}
-            {tourTabBadges.length > 0 && (
+            {allBadgeChips.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2 items-center">
                 <span className="text-xs text-gray-400 mr-1">🏷️ โปรโมชั่น:</span>
-                {tourTabBadges.map((badge) => {
+                {allBadgeChips.map((badge) => {
                   const name = badge.badge_text || badge.name;
                   const isActive = selectedBadges.includes(name);
                   const color = badge.badge_color || 'orange';
@@ -848,7 +891,11 @@ export default function PromotionsPage() {
                         <PromotionTourCard
                           key={tour.id}
                           tour={tour}
-                          tabBadge={tab.badge_text ? { text: tab.badge_text, color: tab.badge_color || 'orange', icon: tab.badge_icon } : undefined}
+                          tabBadge={{
+                            text: tab.badge_text || tab.name,
+                            color: tab.badge_color || 'orange',
+                            icon: tab.badge_icon,
+                          }}
                         />
                       ))}
                     </div>

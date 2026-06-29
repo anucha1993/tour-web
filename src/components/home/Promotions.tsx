@@ -68,7 +68,7 @@ export default function Promotions() {
   useEffect(() => {
     const fetchPromotions = async () => {
       try {
-        const response = await fetch(`${API_URL}/promotions/public?limit=10`);
+        const response = await fetch(`${API_URL}/promotions/public?limit=10&with_banner=1`);
         const data = await response.json();
         if (data.success && data.data?.length > 0) {
           setPromotions(data.data);

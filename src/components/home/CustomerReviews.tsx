@@ -299,7 +299,7 @@ export default function CustomerReviews({
             {/* Left Arrow */}
             <button
               onClick={() => scrollBy('left')}
-              className="absolute -left-2 lg:-left-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white hover:bg-gray-50 rounded-full flex items-center justify-center shadow-lg border border-gray-100 opacity-0 group-hover/carousel:opacity-100 transition-opacity"
+              className="absolute left-1 sm:-left-2 lg:-left-5 top-1/2 -translate-y-1/2 z-10 w-9 h-9 sm:w-10 sm:h-10 bg-white/95 hover:bg-white rounded-full flex items-center justify-center shadow-lg border border-gray-100 transition-opacity sm:opacity-0 sm:group-hover/carousel:opacity-100"
               aria-label="เลื่อนซ้าย"
             >
               <ChevronLeft className="w-5 h-5 text-gray-700" />
@@ -308,7 +308,7 @@ export default function CustomerReviews({
             {/* Right Arrow */}
             <button
               onClick={() => scrollBy('right')}
-              className="absolute -right-2 lg:-right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white hover:bg-gray-50 rounded-full flex items-center justify-center shadow-lg border border-gray-100 opacity-0 group-hover/carousel:opacity-100 transition-opacity"
+              className="absolute right-1 sm:-right-2 lg:-right-5 top-1/2 -translate-y-1/2 z-10 w-9 h-9 sm:w-10 sm:h-10 bg-white/95 hover:bg-white rounded-full flex items-center justify-center shadow-lg border border-gray-100 transition-opacity sm:opacity-0 sm:group-hover/carousel:opacity-100"
               aria-label="เลื่อนขวา"
             >
               <ChevronRight className="w-5 h-5 text-gray-700" />
@@ -321,8 +321,9 @@ export default function CustomerReviews({
               onMouseLeave={() => setIsPaused(false)}
               onTouchStart={() => setIsPaused(true)}
               onTouchEnd={() => setIsPaused(false)}
-              className="flex gap-5 overflow-x-hidden scroll-smooth"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              onTouchCancel={() => setIsPaused(false)}
+              className="flex gap-5 overflow-x-auto scroll-smooth scrollbar-hide"
+              style={{ WebkitOverflowScrolling: 'touch' }}
             >
               {loopReviews.map((review, index) => (
                 <ReviewCard key={`${review.id}-${index}`} review={review} />

@@ -64,6 +64,12 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
   const [bookingResult, setBookingResult] = useState<BookingSubmitResult | null>(null);
   const [isOtpLoading, setIsOtpLoading] = useState(false);
 
+  // Member has at least one verified contact channel from provider (e.g. LINE email)
+  const memberHasPhone = !!member?.phone;
+  const memberHasEmail = !!member?.email;
+  const hasVerifiedContact = isAuthenticated && (memberHasPhone || memberHasEmail);
+  const needsOtp = !hasVerifiedContact;
+
   // Pre-fill for logged-in members
   useEffect(() => {
     if (isAuthenticated && member) {
@@ -71,7 +77,17 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
       setLastName(member.last_name || '');
       setEmail(member.email || '');
       setPhone(member.phone || '');
-      setOtpStep('verified');
+      // Only auto-mark verified if member already has at least one contact from provider.
+      // LINE users without phone/email must still verify via OTP.
+      if (member.phone || member.email) {
+        setOtpStep('verified');
+      }
+      // Default OTP channel to whichever field is missing
+      if (!member.phone && member.email) {
+        setOtpChannel('phone');
+      } else if (!member.email && member.phone) {
+        setOtpChannel('email');
+      }
     }
   }, [isAuthenticated, member]);
 
@@ -187,7 +203,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
       setOtpError('เกิดข้อผิดพลาดในการส่ง OTP');
     } finally {
       setIsOtpLoading(false);
-    }
+    } 
   };
 
   const handleVerifyOtp = async () => {
@@ -221,7 +237,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
     if (!lastName.trim()) { setSubmitError('กรุณากรอกนามสกุล'); return; }
     if (!email.trim()) { setSubmitError('กรุณากรอกอีเมล'); return; }
     if (!phone.trim()) { setSubmitError('กรุณากรอกเบอร์โทรศัพท์'); return; }
-    if (!isAuthenticated && otpStep !== 'verified') { setSubmitError('กรุณายืนยัน OTP ก่อน'); return; }
+    if (needsOtp && otpStep !== 'verified') { setSubmitError('กรุณายืนยัน OTP ก่อน'); return; }
     if (!consentTerms) { setSubmitError('กรุณายอมรับเงื่อนไข'); return; }
     // Validate total rooms doesn't exceed passengers (1 person = max 1 room)
     if (isRoomOverCount) { setSubmitError(`จำนวนห้องพักเกินจำนวนผู้เดินทาง (${totalRooms} ห้อง / ${totalPassengers} คน)`); return; }
@@ -695,7 +711,8 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
                       if (otpChannel === 'email' && otpStep !== 'idle') { setOtpStep('idle'); setOtpCode(''); }
                     }}
                     placeholder="อีเมล"
-                    className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none transition placeholder:text-gray-400"
+                    disabled={isAuthenticated && memberHasEmail}
+                    className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none transition disabled:bg-gray-50 placeholder:text-gray-400"
                   />
                 </div>
                 <div>
@@ -710,14 +727,14 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
                       if (otpChannel === 'phone' && otpStep !== 'idle') { setOtpStep('idle'); setOtpCode(''); }
                     }}
                     placeholder="เบอร์โทรศัพท์"
-                    disabled={isAuthenticated}
+                    disabled={isAuthenticated && memberHasPhone}
                     className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none transition disabled:bg-gray-50 placeholder:text-gray-400"
                   />
                 </div>
               </div>
 
-              {/* ยืนยันตัวตนด้วย OTP (guest only) */}
-              {!isAuthenticated && otpStep === 'idle' && (
+              {/* ยืนยันตัวตนด้วย OTP (guests + LINE users missing contact) */}
+              {needsOtp && otpStep === 'idle' && (
                 <div className="border border-gray-200 rounded-xl p-3 bg-gray-50/50 space-y-3">
                   <div className="text-sm font-bold text-gray-700">ยืนยันตัวตน<span className="text-red-500">*</span></div>
                   <div className="grid grid-cols-2 gap-2">
@@ -773,7 +790,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
               )}
 
               {/* OTP input (guest, when sent) */}
-              {!isAuthenticated && otpStep === 'sent' && (
+              {needsOtp && otpStep === 'sent' && (
                 <div className="p-3 bg-orange-50 rounded-xl space-y-2">
                   <div className="flex items-center gap-2 text-sm">
                     {otpChannel === 'phone'
@@ -821,7 +838,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
               )}
 
               {/* OTP verified badge */}
-              {!isAuthenticated && otpStep === 'verified' && (
+              {needsOtp && otpStep === 'verified' && (
                 <div className="flex items-center gap-2 text-green-600 text-sm bg-green-50 px-3 py-2 rounded-lg">
                   <CheckCircle2 className="w-4 h-4" />
                   <span>ยืนยัน OTP สำเร็จ</span>
@@ -884,7 +901,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  disabled={isSubmitting || !consentTerms || (!isAuthenticated && otpStep !== 'verified')}
+                  disabled={isSubmitting || !consentTerms || (needsOtp && otpStep !== 'verified')}
                   className="w-full py-3 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg cursor-pointer flex items-center justify-center gap-2 text-sm"
                 >
                   {isSubmitting ? (

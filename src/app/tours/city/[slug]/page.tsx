@@ -440,7 +440,7 @@ export default function CityToursPage() {
         // ถ้าผู้ใช้เลือกประเทศอื่น ไม่ล็อค city_slug เพื่อให้ค้นหาข้ามประเทศได้
         ...(restParams.country_id ? {} : { city_slug: citySlug }),
         ...restParams,
-        ...(promotions && promotions.length > 0 && { promotions: promotions.join(',') }),
+        ...(promotions && promotions.length > 0 && { promotions: promotions.join('|') }),
         ...(sortBy && { sort_by: sortBy }),
         ...(append && { skip_filters: 1 }),
       };
@@ -492,7 +492,11 @@ export default function CityToursPage() {
     setActiveSearchParams(params);
     setCurrentPage(1);
     const p = new URLSearchParams();
-    Object.entries(params).forEach(([k, v]) => { if (v) p.set(k, v); });
+    Object.entries(params).forEach(([k, v]) => {
+      if (!v) return;
+      const value = Array.isArray(v) ? v.join('|') : String(v);
+      p.set(k, value);
+    });
     if (sortBy) p.set('sort_by', sortBy);
     const qs = p.toString();
     router.push(`/tours/city/${citySlug}${qs ? `?${qs}` : ''}`, { scroll: false });

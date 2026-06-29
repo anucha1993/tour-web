@@ -389,7 +389,7 @@ export default function FestivalDetailPage() {
       const apiParams: Record<string, string | number | undefined> = {
         page,
         ...restParams,
-        ...(promotions && promotions.length > 0 && { promotions: promotions.join(',') }),
+        ...(promotions && promotions.length > 0 && { promotions: promotions.join('|') }),
         ...(sortBy && { sort_by: sortBy }),
       };
       const response = await festivalToursApi.getBySlug(festivalSlug, apiParams);

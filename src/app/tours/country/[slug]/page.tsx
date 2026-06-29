@@ -465,7 +465,7 @@ export default function CountryToursPage() {
     price_max: searchParams.get('price_max') || undefined,
     min_seats: searchParams.get('min_seats') || undefined,
     festival_id: searchParams.get('festival_id') || undefined,
-    promotions: searchParams.get('promotions')?.split(',').filter(Boolean) || undefined,
+    promotions: searchParams.get('promotions')?.split('|').filter(Boolean) || undefined,
     theme: searchParams.get('theme') || undefined,
     special_highlight: searchParams.get('special_highlight') || undefined,
   });
@@ -494,7 +494,7 @@ export default function CountryToursPage() {
         per_page: 10,
         country_slug: countrySlug,
         ...restParams,
-        ...(promotions && promotions.length > 0 && { promotions: promotions.join(',') }),
+        ...(promotions && promotions.length > 0 && { promotions: promotions.join('|') }),
         ...(sortBy && { sort_by: sortBy }),
         ...(append && { skip_filters: 1 }),
       };
@@ -543,7 +543,11 @@ export default function CountryToursPage() {
     setActiveSearchParams(params);
     setCurrentPage(1);
     const p = new URLSearchParams();
-    Object.entries(params).forEach(([k, v]) => { if (v) p.set(k, v); });
+    Object.entries(params).forEach(([k, v]) => {
+      if (!v) return;
+      const value = Array.isArray(v) ? v.join('|') : String(v);
+      p.set(k, value);
+    });
     if (sortBy) p.set('sort_by', sortBy);
     const qs = p.toString();
     router.push(`/tours/country/${countrySlug}${qs ? `?${qs}` : ''}`, { scroll: false });

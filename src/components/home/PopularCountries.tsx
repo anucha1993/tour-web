@@ -114,7 +114,12 @@ export default function PopularCountries({ slug = "homepage" }: PopularCountries
             {countries.map((country) => (
               <Link
                 key={country.id}
-                href={country.link_url || `/tours?country=${country.iso2.toLowerCase()}`}
+                href={
+                  country.link_url ||
+                  (country.slug
+                    ? `/tours/country/${country.slug}`
+                    : `/tours?country=${country.iso2.toLowerCase()}`)
+                }
                 className="group relative aspect-[3/3] rounded-xl overflow-hidden bg-[var(--color-gray-200)]"
               >
                 {/* Background Image */}

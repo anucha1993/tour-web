@@ -162,7 +162,7 @@ export default function ReviewSection({ tourSlug }: ReviewSectionProps) {
         <div className="mt-6 text-center bg-gray-50 rounded-xl py-6 px-4">
           <p className="text-sm text-gray-600 mb-2">เข้าสู่ระบบเพื่อเขียนรีวิว</p>
           <a
-            href="/auth/login"
+            href={`/login?redirect=${encodeURIComponent(typeof window !== 'undefined' ? window.location.pathname : '/')}`}
             className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium"
           >
             เข้าสู่ระบบ →
