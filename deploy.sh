@@ -11,7 +11,7 @@
 # ===== ตั้งค่า Server =====
 SERVER_USER="root"                          # SSH user (เช่น root, admin, etc.)
 SERVER_HOST="147.50.254.113"                # IP หรือ domain ของ server
-SERVER_PATH="/var/www/vhosts/nexttrip.asia/httpdocs"  # path ของ tour-web บน server (Plesk)
+SERVER_PATH="/var/www/vhosts/nexttripholiday.com/httpdocs"  # path ของ tour-web บน server (Plesk)
 SSH_PORT="22"                               # SSH port (ปกติ 22)
 
 # ===== สี =====
@@ -63,7 +63,7 @@ echo -e "${GREEN}✅ Upload complete!${NC}"
 echo -e "${YELLOW}🔄 Step 3: Restarting server...${NC}"
 
 ssh -p ${SSH_PORT} ${SERVER_USER}@${SERVER_HOST} << 'ENDSSH'
-    cd /var/www/vhosts/nexttrip.asia/httpdocs
+    cd /var/www/vhosts/nexttripholiday.com/httpdocs
     
     # Install only production dependencies
     npm install --production --ignore-scripts

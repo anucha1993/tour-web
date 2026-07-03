@@ -3,17 +3,17 @@
 
 export const config = {
   // API Base URL - change this when switching domains
-  apiUrl: process.env.NEXT_PUBLIC_API_URL || "https://api.nexttrip.asia/api",
+  apiUrl: process.env.NEXT_PUBLIC_API_URL || "https://api.nexttripholiday.com/api",
   
   // Site Info
   siteName: "NextTrip Holiday",
-  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://nexttrip.asia",
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://nexttripholiday.com",
   
   // Contact Info
   phone: "02-136-9144",
   hotline: "091-091-6364",
   lineId: "@nexttripholiday",
-  email: "info@nexttrip.asia",
+  email: "info@nexttripholiday.com",
   
   // Social Links
   social: {
