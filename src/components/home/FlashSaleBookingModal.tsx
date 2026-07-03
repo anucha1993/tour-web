@@ -546,7 +546,8 @@ export default function FlashSaleBookingModal({ item, allItems = [], isOpen, onC
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="อีเมล"
-                    className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-red-400 focus:ring-1 focus:ring-red-200 outline-none transition placeholder:text-gray-400"
+                    disabled={isAuthenticated && !!member?.email}
+                    className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-red-400 focus:ring-1 focus:ring-red-200 outline-none transition disabled:bg-gray-50 placeholder:text-gray-400"
                   />
                 </div>
                 <div>
@@ -556,7 +557,7 @@ export default function FlashSaleBookingModal({ item, allItems = [], isOpen, onC
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="เบอร์โทรศัพท์"
-                    disabled={isAuthenticated}
+                    disabled={isAuthenticated && !!member?.phone}
                     className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-red-400 focus:ring-1 focus:ring-red-200 outline-none transition disabled:bg-gray-50 placeholder:text-gray-400"
                   />
                 </div>
