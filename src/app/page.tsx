@@ -1,11 +1,14 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { 
   Phone, 
   Search,
 } from "lucide-react";
 import HeroSlider from "@/components/home/HeroSlider";
 import PopularCountries from "@/components/home/PopularCountries";
+import SeoJsonLd from "@/components/SeoJsonLd";
+import { buildMetadata } from "@/lib/seo";
 
 // SSR-safe dynamic imports (Server Component compatible)
 const Promotions = dynamic(() => import("@/components/home/Promotions"));
@@ -16,9 +19,17 @@ const FlashSale = dynamic(() => import("@/components/home/FlashSale"));
 // Client-only dynamic imports (ssr: false requires Client Component wrapper)
 import { OurClients, CustomerReviews, WhyChooseUs, PopupModal, LatestBlogPosts } from "@/components/home/LazyBelowFold";
 
+// Homepage SEO — pulled from the admin "home" settings in the DB (falls back to global).
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata("home", { path: "" });
+}
+
 export default function HomePage() {
   return (
     <>
+      {/* JSON-LD structured data (from admin SEO) */}
+      <SeoJsonLd slug="home" />
+
       {/* Popup Modal */}
       <PopupModal />
 

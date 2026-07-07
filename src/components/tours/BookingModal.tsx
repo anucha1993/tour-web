@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { bookingApi, BookingSubmitResult, TourDetail, TourDetailPeriod } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { trackInitiateCheckout } from '@/lib/analytics';
 
 interface BookingModalProps {
   tour: TourDetail;
@@ -25,6 +26,16 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
   );
   const selectedPeriod = tour.periods.find(p => p.id === selectedPeriodId) || null;
   const offer = selectedPeriod?.offer || null;
+
+  // Analytics: fire InitiateCheckout when the booking modal opens (gated by consent).
+  useEffect(() => {
+    if (!isOpen) return;
+    trackInitiateCheckout({
+      id: tour.id,
+      name: tour.title,
+      value: tour.display_price ?? tour.min_price ?? tour.price_adult,
+    });
+  }, [isOpen, tour.id, tour.title, tour.display_price, tour.min_price, tour.price_adult]);
 
   // Quantities - Passengers
   const [qtyAdult, setQtyAdult] = useState(1);

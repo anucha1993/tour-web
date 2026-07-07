@@ -30,7 +30,13 @@ function LineCallbackContent() {
 
     loginWithSocial('line', code, redirectUri).then((result) => {
       if (result.success) {
-        router.push('/member');
+        // Friend-gate: if the user hasn't added the LINE OA as a friend,
+        // send them to the add-friend page first (login already succeeded).
+        if (result.line_friend === false) {
+          router.push('/login/need-add-friend');
+        } else {
+          router.push('/member');
+        }
       } else {
         setError(result.message || 'เข้าสู่ระบบด้วย LINE ไม่สำเร็จ');
       }

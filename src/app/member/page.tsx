@@ -18,6 +18,7 @@ import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { formatThaiDate } from "@/lib/date-utils";
 
 interface QuickLink {
   href: string;
@@ -119,11 +120,7 @@ export default function MemberDashboard() {
             <ClockIcon className="w-4 h-4" />
             <span>
               สมาชิกตั้งแต่{" "}
-              {new Date(member.created_at).toLocaleDateString("th-TH", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
+              {formatThaiDate(member.created_at)}
             </span>
           </div>
         </div>

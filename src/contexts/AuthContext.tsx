@@ -9,7 +9,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (login: string, password: string) => Promise<{ success: boolean; message?: string }>;
   loginWithOtp: (otpRequestId: number, otp: string) => Promise<{ success: boolean; message?: string }>;
-  loginWithSocial: (provider: 'google' | 'facebook' | 'line', code: string, redirectUri: string) => Promise<{ success: boolean; message?: string; is_new?: boolean }>;
+  loginWithSocial: (provider: 'google' | 'facebook' | 'line', code: string, redirectUri: string) => Promise<{ success: boolean; message?: string; is_new?: boolean; line_friend?: boolean | null }>;
   logout: () => Promise<void>;
   setMember: (member: Member | null) => void;
   refreshMember: () => Promise<void>;
@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (response.success && response.token && response.member) {
       api.setToken(response.token);
       setMember(response.member);
-      return { success: true, is_new: response.is_new };
+      return { success: true, is_new: response.is_new, line_friend: response.line_friend };
     }
     
     return { success: false, message: response.message };

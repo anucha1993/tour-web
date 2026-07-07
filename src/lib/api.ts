@@ -221,7 +221,7 @@ export const authApi = {
     api.post<{ data: { url: string; state: string } }>(`/web/auth/social/${provider}/redirect`, { redirect_uri: redirectUri }),
 
   socialCallback: (provider: 'google' | 'facebook' | 'line', code: string, redirectUri: string) =>
-    api.post<{ member: Member; token: string; is_new: boolean }>(`/web/auth/social/${provider}/callback`, { code, redirect_uri: redirectUri }),
+    api.post<{ member: Member; token: string; is_new: boolean; line_friend: boolean | null }>(`/web/auth/social/${provider}/callback`, { code, redirect_uri: redirectUri }),
 
   // Get current member
   me: () => api.get<{ member: Member }>('/web/me'),

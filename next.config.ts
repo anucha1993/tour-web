@@ -47,6 +47,10 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "files.nexttrip.world",
+      },
+      {
+        protocol: "https",
         hostname: "booking.checkingroup.co.th",
       },
       {

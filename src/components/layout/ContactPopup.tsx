@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { X, Phone, MessageCircle, Facebook, Mail } from "lucide-react";
 import { API_URL } from "@/lib/config";
+import { trackLead } from "@/lib/analytics";
 
 interface PhoneItem {
   number: string;
@@ -177,6 +178,7 @@ export default function ContactPopup() {
               href={config.line_url || "#"}
               target={config.line_url ? "_blank" : undefined}
               rel="noopener noreferrer"
+              onClick={() => trackLead({ method: "line" })}
               className="block bg-white rounded-lg p-2 my-3 hover:scale-[1.02] transition-transform"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -205,6 +207,7 @@ export default function ContactPopup() {
                   <a
                     key={i}
                     href={tel ? `tel:${tel}` : undefined}
+                    onClick={() => trackLead({ method: "phone" })}
                     className="flex items-center gap-1.5 justify-center hover:underline"
                   >
                     <Phone className="w-3.5 h-3.5" />
@@ -241,6 +244,7 @@ export default function ContactPopup() {
                   href={config.line_url}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackLead({ method: "line" })}
                   className="w-7 h-7 rounded-md bg-white/20 hover:bg-white/30 flex items-center justify-center"
                   aria-label="LINE"
                 >

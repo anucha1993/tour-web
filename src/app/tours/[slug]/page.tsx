@@ -34,6 +34,7 @@ import ToursCountrySidebar from '@/components/tours/ToursCountrySidebar';
 import CustomerReviews from '@/components/home/CustomerReviews';
 import { useTourBadges } from '@/contexts/TourBadgesContext';
 import { config } from '@/lib/config';
+import { trackViewContent } from '@/lib/analytics';
 
 // ===== Related Blog Posts Component =====
 function RelatedBlogPosts({ cities, countryName }: {
@@ -1145,6 +1146,12 @@ export default function TourDetailPage() {
     tourDetailApi.get(slug).then(res => {
       if (res.success && res.data) {
         setTour(res.data);
+        // Analytics: fire ViewContent for this tour program (gated by consent).
+        trackViewContent({
+          id: res.data.id,
+          name: res.data.title,
+          price: res.data.display_price ?? res.data.min_price ?? res.data.price_adult,
+        });
       } else {
         setError(res.message || 'ไม่พบทัวร์ที่ต้องการ');
       }

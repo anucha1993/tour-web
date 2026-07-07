@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Search, MapPin, Calendar, X, ChevronDown, Clock, TrendingUp, Banknote, SlidersHorizontal } from "lucide-react";
 import { API_URL } from "@/lib/config";
 import { searchApi } from "@/lib/api";
+import { trackSearch } from "@/lib/analytics";
 
 interface CountryOption {
   id: number;
@@ -202,6 +203,9 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
   const handleSearch = useCallback(() => {
     setShowAutocomplete(false);
     if (keyword.trim()) saveRecentSearch(keyword.trim());
+    // Analytics: fire Search (gated by consent).
+    const term = keyword.trim() || selectedCountry?.name_th || "";
+    if (term) trackSearch(term);
     const params = new URLSearchParams();
     if (departureDateFrom) params.set("departure_date_from", departureDateFrom);
     if (departureDateTo) params.set("departure_date_to", departureDateTo);
@@ -225,6 +229,7 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
     setKeyword(kw);
     setShowAutocomplete(false);
     saveRecentSearch(kw);
+    if (kw) trackSearch(kw);
     const params = new URLSearchParams();
     if (departureDateFrom) params.set("departure_date_from", departureDateFrom);
     if (departureDateTo) params.set("departure_date_to", departureDateTo);
