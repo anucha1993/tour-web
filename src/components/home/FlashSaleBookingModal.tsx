@@ -55,12 +55,18 @@ export default function FlashSaleBookingModal({ item, allItems = [], isOpen, onC
   const [submitError, setSubmitError] = useState('');
   const [bookingResult, setBookingResult] = useState<BookingSubmitResult | null>(null);
 
+  // Social login placeholder email pattern (e.g. line_XXXX@social.local) — treat as "no real email"
+  const isPlaceholderEmail = (e?: string | null) => !!e && e.endsWith('@social.local');
+  const memberHasRealEmail = !!member?.email && !isPlaceholderEmail(member.email);
+  const memberHasPhone = !!member?.phone;
+
   // Pre-fill for logged-in members
   useEffect(() => {
     if (isAuthenticated && member) {
       setFirstName(member.first_name || '');
       setLastName(member.last_name || '');
-      setEmail(member.email || '');
+      // Skip placeholder emails so the field stays empty & editable
+      setEmail(isPlaceholderEmail(member.email) ? '' : (member.email || ''));
       setPhone(member.phone || '');
     }
   }, [isAuthenticated, member]);
@@ -546,7 +552,7 @@ export default function FlashSaleBookingModal({ item, allItems = [], isOpen, onC
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="อีเมล"
-                    disabled={isAuthenticated && !!member?.email}
+                    disabled={memberHasRealEmail}
                     className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-red-400 focus:ring-1 focus:ring-red-200 outline-none transition disabled:bg-gray-50 placeholder:text-gray-400"
                   />
                 </div>
@@ -557,7 +563,7 @@ export default function FlashSaleBookingModal({ item, allItems = [], isOpen, onC
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="เบอร์โทรศัพท์"
-                    disabled={isAuthenticated && !!member?.phone}
+                    disabled={memberHasPhone}
                     className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-red-400 focus:ring-1 focus:ring-red-200 outline-none transition disabled:bg-gray-50 placeholder:text-gray-400"
                   />
                 </div>
