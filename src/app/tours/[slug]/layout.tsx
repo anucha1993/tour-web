@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { API_URL, SITE_URL } from "@/lib/config";
 import { DEFAULT_OG_IMAGE } from "@/lib/seo";
+import TourJsonLd from "@/components/TourJsonLd";
 
 const SITE_NAME = "Next Trip Holiday";
 
@@ -84,10 +85,18 @@ export async function generateMetadata({
   };
 }
 
-export default function TourDetailLayout({
+export default async function TourDetailLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<{ slug: string }>;
 }) {
-  return <>{children}</>;
+  const { slug } = await params;
+  return (
+    <>
+      <TourJsonLd slug={slug} />
+      {children}
+    </>
+  );
 }

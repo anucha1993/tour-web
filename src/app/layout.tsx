@@ -11,6 +11,7 @@ import LazyFooter from "@/components/layout/LazyFooter";
 import LazyContactPopup from "@/components/layout/LazyContactPopup";
 import CookieConsent from "@/components/CookieConsent";
 import Analytics from "@/components/Analytics";
+import OrganizationJsonLd from "@/components/OrganizationJsonLd";
 import { buildMetadata } from "@/lib/seo";
 
 const notoSansThai = localFont({
@@ -49,6 +50,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://imagedelivery.net" />
       </head>
       <body className={`${notoSansThai.variable} antialiased`}>
+        <OrganizationJsonLd />
         <ConsentProvider>
           <AuthProvider>
             <FavoritesProvider>
