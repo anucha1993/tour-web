@@ -10,6 +10,7 @@ import PopularCountries from "@/components/home/PopularCountries";
 import SeoJsonLd from "@/components/SeoJsonLd";
 import { buildMetadata } from "@/lib/seo";
 import { API_URL } from "@/lib/config";
+import type { FlashSalePublic } from "@/lib/api";
 
 // SSR-safe dynamic imports (Server Component compatible)
 const Promotions = dynamic(() => import("@/components/home/Promotions"));
@@ -81,8 +82,32 @@ async function getCountries(): Promise<CountryOption[]> {
   }
 }
 
+/**
+ * Fetch active flash sales on the server so the (often tall) flash-sale section
+ * is rendered in the initial HTML instead of popping in after a client fetch,
+ * which pushed everything below it down (~0.10 CLS on mobile when a sale is
+ * live). Returns null on error so the client component fetches as a fallback.
+ * Cached for 2 minutes to keep the countdown reasonably fresh.
+ */
+async function getFlashSales(): Promise<FlashSalePublic[] | null> {
+  try {
+    const res = await fetch(`${API_URL}/flash-sales/public`, {
+      next: { revalidate: 120 },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.success && Array.isArray(data.data) ? data.data : [];
+  } catch {
+    return null;
+  }
+}
+
 export default async function HomePage() {
-  const [heroSlides, countries] = await Promise.all([getHeroSlides(), getCountries()]);
+  const [heroSlides, countries, flashSales] = await Promise.all([
+    getHeroSlides(),
+    getCountries(),
+    getFlashSales(),
+  ]);
 
   return (
     <>
@@ -95,13 +120,14 @@ export default async function HomePage() {
       {/* Hero Section with Slider */}
       <HeroSlider initialSlides={heroSlides} initialCountries={countries} />
 
-      {/* Flash Sale */}
-      <FlashSale />
+      {/* Flash Sale — server-fetched so it renders in the SSR HTML (no pop-in CLS) */}
+      <FlashSale initialFlashSales={flashSales ?? undefined} />
 
       {/* Customer Reviews — reserve space so this ssr:false section doesn't
           push content down when it appears on the client (prevents CLS).
-          Heights measured per breakpoint: ~470 (mobile) / ~504 (md) / ~461-501 (lg+). */}
-      <div className="min-h-[480px] md:min-h-[515px] lg:min-h-[510px]">
+          Production review cards render ~526px tall on mobile, so reserve a
+          little above that. */}
+      <div className="min-h-[540px] md:min-h-[560px] lg:min-h-[540px]">
         <CustomerReviews />
       </div>
 

@@ -333,9 +333,16 @@ function MobileFlashRow({ item, index, onBook }: { item: FlashSalePublicItem; in
 }
 
 // ─── Main FlashSale Component ───
-export default function FlashSale() {
-  const [flashSales, setFlashSales] = useState<FlashSalePublic[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function FlashSale({ initialFlashSales }: { initialFlashSales?: FlashSalePublic[] } = {}) {
+  // When the server provides the sales, use them as the initial state so the
+  // section is rendered in the SSR HTML and never pops in later (which pushed
+  // all content below it down = CLS). Fails soft: if the server passed nothing
+  // (undefined, e.g. the fetch errored) we fall back to the client fetch.
+  const hasInitial = Array.isArray(initialFlashSales);
+  const [flashSales, setFlashSales] = useState<FlashSalePublic[]>(
+    () => (initialFlashSales ?? []).filter((fs) => fs.is_running && fs.items.length > 0)
+  );
+  const [loading, setLoading] = useState(!hasInitial);
   const [bookingItem, setBookingItem] = useState<FlashSalePublicItem | null>(null);
   const [bookingSaleItems, setBookingSaleItems] = useState<FlashSalePublicItem[]>([]);
   const { isAuthenticated } = useAuth();
@@ -343,6 +350,7 @@ export default function FlashSale() {
   const pathname = usePathname();
 
   useEffect(() => {
+    if (hasInitial) return;
     const fetchData = async () => {
       try {
         const res = await flashSaleApi.getActive();
@@ -355,7 +363,7 @@ export default function FlashSale() {
       }
     };
     fetchData();
-  }, []);
+  }, [hasInitial]);
 
   // Auth gate: if not logged in → redirect to login with return URL
   const handleBook = (item: FlashSalePublicItem, saleItems: FlashSalePublicItem[]) => {
