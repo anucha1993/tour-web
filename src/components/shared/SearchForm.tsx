@@ -16,6 +16,8 @@ interface CountryOption {
   tour_count: number;
 }
 
+export type { CountryOption };
+
 interface SearchFormProps {
   /** Initial keyword value */
   initialKeyword?: string;
@@ -25,13 +27,19 @@ interface SearchFormProps {
   onSearch?: () => void;
   /** Show quick links row */
   showQuickLinks?: boolean;
+  /**
+   * Countries fetched on the server (used for the quick-links row + country
+   * dropdown). When provided, they are the initial state so the quick-links
+   * row is present in the SSR HTML and never causes a layout shift (CLS).
+   */
+  initialCountries?: CountryOption[];
 }
 
-export default function SearchForm({ initialKeyword = "", variant = "page", onSearch, showQuickLinks = false }: SearchFormProps) {
+export default function SearchForm({ initialKeyword = "", variant = "page", onSearch, showQuickLinks = false, initialCountries }: SearchFormProps) {
   const router = useRouter();
 
   // Countries
-  const [countries, setCountries] = useState<CountryOption[]>([]);
+  const [countries, setCountries] = useState<CountryOption[]>(initialCountries ?? []);
   const [countrySearchText, setCountrySearchText] = useState("");
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(null);
@@ -72,8 +80,10 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
   // Sync keyword when initialKeyword changes
   useEffect(() => { setKeyword(initialKeyword); }, [initialKeyword]);
 
-  // Fetch countries
+  // Fetch countries (skipped when the server already provided them, which
+  // keeps the quick-links row in the initial HTML and avoids a layout shift).
   useEffect(() => {
+    if (initialCountries && initialCountries.length > 0) return;
     const fetchCountries = async () => {
       try {
         const response = await fetch(`${API_URL}/tours/international?per_page=1`);
@@ -84,7 +94,7 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
       } catch { /* ignore */ }
     };
     fetchCountries();
-  }, []);
+  }, [initialCountries]);
 
   // Load recent searches + popular suggestions
   useEffect(() => {

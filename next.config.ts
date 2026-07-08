@@ -53,6 +53,9 @@ const nextConfig: NextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     formats: ['image/avif', 'image/webp'],
+    // Allow a lower quality for the LCP hero image (it sits under a dark
+    // gradient overlay, so the reduction is imperceptible but cuts bytes ~20%).
+    qualities: [65, 75],
     remotePatterns: [
       {
         protocol: 'https',

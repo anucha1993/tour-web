@@ -36,6 +36,14 @@ interface HeroSlide {
   sort_order: number;
 }
 
+interface CountryOption {
+  id: number;
+  name_th: string;
+  slug: string;
+  iso2: string;
+  tour_count: number;
+}
+
 /**
  * Fetch hero slides on the server so the first slide's image is present in the
  * initial HTML. This turns the hero into a real, preloadable LCP element and
@@ -55,8 +63,26 @@ async function getHeroSlides(): Promise<HeroSlide[]> {
   }
 }
 
+/**
+ * Fetch the countries list on the server for the hero SearchForm's quick-links
+ * row. Rendering it in the SSR HTML prevents the row from appearing late and
+ * growing the hero (which caused ~0.22 CLS on mobile). Cached for 1 hour.
+ */
+async function getCountries(): Promise<CountryOption[]> {
+  try {
+    const res = await fetch(`${API_URL}/tours/international?per_page=1`, {
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data?.success && Array.isArray(data.filters?.countries) ? data.filters.countries : [];
+  } catch {
+    return [];
+  }
+}
+
 export default async function HomePage() {
-  const heroSlides = await getHeroSlides();
+  const [heroSlides, countries] = await Promise.all([getHeroSlides(), getCountries()]);
 
   return (
     <>
@@ -67,7 +93,7 @@ export default async function HomePage() {
       <PopupModal />
 
       {/* Hero Section with Slider */}
-      <HeroSlider initialSlides={heroSlides} />
+      <HeroSlider initialSlides={heroSlides} initialCountries={countries} />
 
       {/* Flash Sale */}
       <FlashSale />

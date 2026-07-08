@@ -10,7 +10,7 @@ import { API_URL } from "@/lib/config";
 // always defers to a client-side skeleton swap, which caused layout shift
 // (CLS). The form is critical above-the-fold content, so shipping it in the
 // initial chunk is the right trade-off (TBT has plenty of headroom).
-import SearchForm from "@/components/shared/SearchForm";
+import SearchForm, { type CountryOption } from "@/components/shared/SearchForm";
 
 interface HeroSlide {
   id: number;
@@ -31,9 +31,14 @@ interface HeroSliderProps {
    * we skip the client-side fetch + loading skeleton entirely.
    */
   initialSlides?: HeroSlide[];
+  /**
+   * Countries fetched on the server, forwarded to the SearchForm so its
+   * quick-links row is present in the initial HTML (prevents CLS).
+   */
+  initialCountries?: CountryOption[];
 }
 
-export default function HeroSlider({ initialSlides }: HeroSliderProps = {}) {
+export default function HeroSlider({ initialSlides, initialCountries }: HeroSliderProps = {}) {
   const hasInitial = Boolean(initialSlides && initialSlides.length > 0);
   const [slides, setSlides] = useState<HeroSlide[]>(initialSlides ?? []);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -109,6 +114,7 @@ export default function HeroSlider({ initialSlides }: HeroSliderProps = {}) {
                 fetchPriority={index === 0 ? "high" : "low"}
                 className="object-cover object-top"
                 sizes="100vw"
+                quality={65}
               />
 
               {/* Overlay */}
@@ -234,7 +240,7 @@ export default function HeroSlider({ initialSlides }: HeroSliderProps = {}) {
           </div>
         ) : (
           <div className="bg-white rounded-2xl shadow-2xl p-4 lg:p-6 max-w-6xl relative z-20">
-            <SearchForm variant="hero" showQuickLinks />
+            <SearchForm variant="hero" showQuickLinks initialCountries={initialCountries} />
           </div>
         )}
       </div>
