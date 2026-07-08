@@ -146,7 +146,7 @@ export default function NotificationBell() {
               )}
               <button
                 onClick={() => setOpen(false)}
-                className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-600 transition-colors"
               >
                 <X size={15} />
               </button>
@@ -160,7 +160,7 @@ export default function NotificationBell() {
                 <div className="w-6 h-6 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : notifications.length === 0 ? (
-              <div className="py-10 flex flex-col items-center gap-2 text-gray-400">
+              <div className="py-10 flex flex-col items-center gap-2 text-gray-500">
                 <Bell size={32} className="opacity-30" />
                 <p className="text-sm">ยังไม่มีการแจ้งเตือน</p>
               </div>
@@ -245,7 +245,7 @@ function NotificationItem({
           <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${TYPE_COLORS[n.type] ?? "bg-gray-100 text-gray-500"}`}>
             {TYPE_LABELS[n.type] ?? n.type}
           </span>
-          <span className="text-[10px] text-gray-400">{timeAgo(n.created_at)}</span>
+          <span className="text-[10px] text-gray-500">{timeAgo(n.created_at)}</span>
           {n.is_claimed && (
             <span className="text-[10px] font-semibold text-green-600">✓ รับสิทธิ์แล้ว</span>
           )}

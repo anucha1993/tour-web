@@ -10,7 +10,7 @@ import { api, authApi, pageContentApi } from '@/lib/api';
 
 // Password requirement check component (outside main component)
 const PasswordCheck = ({ valid, text }: { valid: boolean; text: string }) => (
-  <div className={`flex items-center gap-2 text-sm ${valid ? 'text-green-600' : 'text-gray-400'}`}>
+  <div className={`flex items-center gap-2 text-sm ${valid ? 'text-green-600' : 'text-gray-500'}`}>
     {valid ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
     {text}
   </div>
@@ -324,7 +324,7 @@ export default function RegisterPage() {
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Phone className="h-5 w-5 text-gray-400" />
+                      <Phone className="h-5 w-5 text-gray-500" />
                     </div>
                     <input
                       id="phone"
@@ -345,7 +345,7 @@ export default function RegisterPage() {
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Mail className="h-5 w-5 text-gray-400" />
+                      <Mail className="h-5 w-5 text-gray-500" />
                     </div>
                     <input
                       id="email"
@@ -381,9 +381,9 @@ export default function RegisterPage() {
                         className="absolute inset-y-0 right-0 pr-3 flex items-center"
                       >
                         {showPassword ? (
-                          <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                          <EyeOff className="h-5 w-5 text-gray-500 hover:text-gray-600" />
                         ) : (
-                          <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                          <Eye className="h-5 w-5 text-gray-500 hover:text-gray-600" />
                         )}
                       </button>
                     </div>
@@ -408,9 +408,9 @@ export default function RegisterPage() {
                         className="absolute inset-y-0 right-0 pr-3 flex items-center"
                       >
                         {showPasswordConfirm ? (
-                          <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                          <EyeOff className="h-5 w-5 text-gray-500 hover:text-gray-600" />
                         ) : (
-                          <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                          <Eye className="h-5 w-5 text-gray-500 hover:text-gray-600" />
                         )}
                       </button>
                     </div>
@@ -673,7 +673,7 @@ export default function RegisterPage() {
                   type="button"
                   onClick={handleResendOtp}
                   disabled={isLoading || otpExpiresIn > 240}
-                  className="text-sm text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] disabled:text-gray-400 disabled:cursor-not-allowed"
+                  className="text-sm text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] disabled:text-gray-500 disabled:cursor-not-allowed"
                 >
                   ส่งรหัส OTP อีกครั้ง
                 </button>

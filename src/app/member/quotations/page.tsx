@@ -62,7 +62,7 @@ export default function QuotationsPage() {
       </div>
 
       {loading ? (
-        <div className="text-center text-gray-400 py-12">กำลังโหลด...</div>
+        <div className="text-center text-gray-500 py-12">กำลังโหลด...</div>
       ) : list.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 lg:p-12 text-center">
           <div className="w-20 h-20 mx-auto bg-blue-50 rounded-full flex items-center justify-center mb-6">
@@ -109,7 +109,7 @@ export default function QuotationsPage() {
                 {Number(q.total_amount) > 0 && (
                   <div className="font-semibold text-gray-900">฿{formatMoney(q.total_amount)}</div>
                 )}
-                <ChevronRightIcon className="w-4 h-4 text-gray-400 ml-auto mt-1" />
+                <ChevronRightIcon className="w-4 h-4 text-gray-500 ml-auto mt-1" />
               </div>
             </Link>
           ))}

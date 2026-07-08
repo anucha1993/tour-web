@@ -512,7 +512,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
               ) : bookingResult.is_outbound ? (
                 <p className="text-xs text-orange-500 mt-2">เจ้าหน้าที่กำลังตรวจสอบและจะติดต่อกลับโดยเร็ว</p>
               ) : (
-                <p className="text-xs text-gray-400 mt-2">กรุณารอเจ้าหน้าที่ติดต่อกลับเพื่อยืนยันการจอง</p>
+                <p className="text-xs text-gray-500 mt-2">กรุณารอเจ้าหน้าที่ติดต่อกลับเพื่อยืนยันการจอง</p>
               )}
               <button
                 onClick={() => { setBookingResult(null); onClose(); }}
@@ -536,10 +536,10 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
               {selectedPeriod ? (
                 <span>{formatPeriodLabel(selectedPeriod)} — ว่าง {selectedPeriod.available} ที่ {selectedPeriod.offer ? `(฿${selectedPeriod.offer.net_price_adult.toLocaleString()}/ท่าน)` : ''}</span>
               ) : (
-                <span className="text-gray-400">เลือกรอบเดินทาง</span>
+                <span className="text-gray-500">เลือกรอบเดินทาง</span>
               )}
             </button>
-            <ChevronDown className={`absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none transition-transform ${periodDropdownOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none transition-transform ${periodDropdownOpen ? 'rotate-180' : ''}`} />
 
             {/* Custom dropdown list */}
             {periodDropdownOpen && (
@@ -558,7 +558,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
                     </li>
                   ))}
                   {availablePeriods.length === 0 && (
-                    <li className="px-3 py-2.5 text-sm text-gray-400 text-center">ไม่มีรอบเดินทางที่ว่าง</li>
+                    <li className="px-3 py-2.5 text-sm text-gray-500 text-center">ไม่มีรอบเดินทางที่ว่าง</li>
                   )}
                 </ul>
               </>
@@ -639,7 +639,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
                       {row.unitPrice > 0 ? (
                         <span className="text-xs text-orange-500">+{row.unitPrice.toLocaleString()} บาท/ห้อง</span>
                       ) : (
-                        <span className="text-xs text-gray-400">ไม่มีค่าใช้จ่าย</span>
+                        <span className="text-xs text-gray-500">ไม่มีค่าใช้จ่าย</span>
                       )}
                     </div>
                   </div>
@@ -695,7 +695,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     placeholder="ชื่อผู้ติดต่อ"
-                    className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none transition placeholder:text-gray-400"
+                    className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none transition placeholder:text-gray-500"
                   />
                 </div>
                 <div>
@@ -705,7 +705,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     placeholder="นามสกุล"
-                    className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none transition placeholder:text-gray-400"
+                    className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none transition placeholder:text-gray-500"
                   />
                 </div>
               </div>
@@ -723,7 +723,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
                     }}
                     placeholder="อีเมล"
                     disabled={isAuthenticated && memberHasEmail}
-                    className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none transition disabled:bg-gray-50 placeholder:text-gray-400"
+                    className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none transition disabled:bg-gray-50 placeholder:text-gray-500"
                   />
                 </div>
                 <div>
@@ -739,7 +739,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
                     }}
                     placeholder="เบอร์โทรศัพท์"
                     disabled={isAuthenticated && memberHasPhone}
-                    className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none transition disabled:bg-gray-50 placeholder:text-gray-400"
+                    className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none transition disabled:bg-gray-50 placeholder:text-gray-500"
                   />
                 </div>
               </div>
@@ -894,7 +894,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
                   onChange={(e) => setSpecialRequest(e.target.value)}
                   placeholder="ความต้องการพิเศษ"
                   rows={3}
-                  className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none transition resize-none placeholder:text-gray-400"
+                  className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none transition resize-none placeholder:text-gray-500"
                 />
               </div>
 

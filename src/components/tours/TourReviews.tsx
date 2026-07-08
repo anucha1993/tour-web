@@ -111,7 +111,7 @@ function ReviewCard({ review, onHelpful }: ReviewCardProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between flex-wrap gap-1">
             <h4 className="font-medium text-gray-900 text-sm">{displayName}</h4>
-            <span className="text-xs text-gray-400">{createdDate}</span>
+            <span className="text-xs text-gray-500">{createdDate}</span>
           </div>
           <div className="flex items-center gap-2 mt-0.5">
             <StarRating rating={review.rating} />
@@ -191,7 +191,7 @@ function ReviewCard({ review, onHelpful }: ReviewCardProps) {
 
       {/* Footer */}
       <div className="flex items-center justify-between mt-3">
-        <div className="flex items-center gap-1 text-xs text-gray-400">
+        <div className="flex items-center gap-1 text-xs text-gray-500">
           <Eye className="w-3.5 h-3.5" />
           <span>{viewsCount > 0 ? viewsCount.toLocaleString() : 0} เข้าชม</span>
         </div>
@@ -204,7 +204,7 @@ function ReviewCard({ review, onHelpful }: ReviewCardProps) {
           </Link>
           <button
             onClick={() => onHelpful(review.id)}
-            className="flex items-center gap-1 text-xs text-gray-400 hover:text-blue-500 transition-colors"
+            className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-500 transition-colors"
           >
             <ThumbsUp className="w-3.5 h-3.5" />
             <span>มีประโยชน์ {review.helpful_count > 0 ? `(${review.helpful_count})` : ''}</span>
@@ -267,7 +267,7 @@ export default function TourReviews({
       <div className="text-center py-12">
         <User className="w-12 h-12 text-gray-300 mx-auto mb-3" />
         <p className="text-gray-500 text-sm">ยังไม่มีรีวิวสำหรับทัวร์นี้</p>
-        <p className="text-gray-400 text-xs mt-1">เป็นคนแรกที่รีวิว!</p>
+        <p className="text-gray-500 text-xs mt-1">เป็นคนแรกที่รีวิว!</p>
       </div>
     );
   }
@@ -295,7 +295,7 @@ export default function TourReviews({
                 <div className="text-sm font-semibold text-gray-700 mt-0.5">{ratingLabel(summary.average_rating)}</div>
               </div>
             </div>
-            <p className="text-xs text-gray-400 mt-2">จาก {summary.total_reviews} รีวิว</p>
+            <p className="text-xs text-gray-500 mt-2">จาก {summary.total_reviews} รีวิว</p>
           </div>
 
           {/* Divider */}
@@ -394,7 +394,7 @@ export default function TourReviews({
               ) : (
                 <>
                   <ChevronDown className="w-4 h-4" />
-                  ดูรีวิวเพิ่มเติม {remaining > 0 && <span className="text-gray-400">({remaining})</span>}
+                  ดูรีวิวเพิ่มเติม {remaining > 0 && <span className="text-gray-500">({remaining})</span>}
                 </>
               )}
             </button>

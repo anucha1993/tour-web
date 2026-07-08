@@ -120,7 +120,7 @@ export default function NotificationDetailPage() {
 
   if (notFound || !notification) {
     return (
-      <div className="min-h-[400px] flex flex-col items-center justify-center gap-4 text-gray-400">
+      <div className="min-h-[400px] flex flex-col items-center justify-center gap-4 text-gray-500">
         <span className="text-5xl">🔍</span>
         <p className="font-medium">ไม่พบโปรโมชั่นนี้</p>
         <Link
@@ -263,16 +263,16 @@ export default function NotificationDetailPage() {
                       <ClipboardDocumentIcon className="w-4 h-4" />
                       {copied ? "คัดลอกแล้ว ✓" : "คัดลอกรหัส"}
                     </button>
-                    <p className="text-xs text-gray-400">แจ้งรหัสนี้กับเจ้าหน้าที่เมื่อทำการจองเพื่อรับส่วนลด</p>
+                    <p className="text-xs text-gray-500">แจ้งรหัสนี้กับเจ้าหน้าที่เมื่อทำการจองเพื่อรับส่วนลด</p>
                   </div>
                 )}
               </div>
             ) : expired ? (
               <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                <ClockIcon className="w-8 h-8 text-gray-400 flex-shrink-0" />
+                <ClockIcon className="w-8 h-8 text-gray-500 flex-shrink-0" />
                 <div>
                   <p className="font-semibold text-gray-600">โปรโมชั่นนี้สิ้นสุดแล้ว</p>
-                  <p className="text-sm text-gray-400 mt-0.5">ขออภัย ไม่สามารถรับสิทธิ์ได้อีกต่อไป</p>
+                  <p className="text-sm text-gray-500 mt-0.5">ขออภัย ไม่สามารถรับสิทธิ์ได้อีกต่อไป</p>
                 </div>
               </div>
             ) : notification.max_claims !== null && notification.remaining_claims === 0 ? (
@@ -324,7 +324,7 @@ export default function NotificationDetailPage() {
                 {claimError && (
                   <p className="text-sm text-red-500 text-center">{claimError}</p>
                 )}
-                <p className="text-xs text-gray-400 text-center">
+                <p className="text-xs text-gray-500 text-center">
                   กดรับสิทธิ์เพื่อยืนยันการเข้าร่วมโปรโมชั่นนี้
                 </p>
               </div>

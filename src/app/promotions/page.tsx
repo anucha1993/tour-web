@@ -706,7 +706,7 @@ export default function PromotionsPage() {
             {/* Badge Filter Pills */}
             {allBadgeChips.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2 items-center">
-                <span className="text-xs text-gray-400 mr-1">🏷️ โปรโมชั่น:</span>
+                <span className="text-xs text-gray-500 mr-1">🏷️ โปรโมชั่น:</span>
                 {allBadgeChips.map((badge) => {
                   const name = badge.badge_text || badge.name;
                   const isActive = selectedBadges.includes(name);
@@ -839,7 +839,7 @@ export default function PromotionsPage() {
           <div className="text-center py-20">
             <Tag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-600 mb-2">ยังไม่มีโปรโมชั่นในขณะนี้</h2>
-            <p className="text-gray-400 mb-6">กรุณากลับมาตรวจสอบอีกครั้งในภายหลัง</p>
+            <p className="text-gray-500 mb-6">กรุณากลับมาตรวจสอบอีกครั้งในภายหลัง</p>
             <Link
               href="/"
               className="inline-flex items-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
@@ -879,7 +879,7 @@ export default function PromotionsPage() {
                         <p className="text-sm text-gray-500">{tab.description}</p>
                       )}
                     </div>
-                    <div className="text-sm text-gray-400">
+                    <div className="text-sm text-gray-500">
                       {filteredTours.length}{Object.keys(activeSearchParams).length > 0 ? ` / ${tab.tours.length}` : ''} ทัวร์
                     </div>
                   </div>
@@ -902,7 +902,7 @@ export default function PromotionsPage() {
                   ) : (
                     <div className="text-center py-12 bg-white rounded-xl">
                       <Search className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                      <p className="text-gray-400">ไม่พบทัวร์ที่ตรงกับเงื่อนไขการค้นหา</p>
+                      <p className="text-gray-500">ไม่พบทัวร์ที่ตรงกับเงื่อนไขการค้นหา</p>
                       <button onClick={clearFilters} className="mt-2 text-sm text-orange-600 hover:underline">
                         ล้างตัวกรองทั้งหมด
                       </button>

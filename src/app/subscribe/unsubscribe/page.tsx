@@ -105,7 +105,7 @@ function UnsubscribeContent() {
 
         {/* Footer */}
         <div className="px-8 pb-6 text-center">
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-500">
             © {new Date().getFullYear()} NextTrip Holiday — nexttripholiday.com
           </p>
         </div>

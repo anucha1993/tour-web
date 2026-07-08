@@ -377,13 +377,13 @@ function TestimonialsSection({ testimonials, testimonialSettings }: {
                     {t.reviewer_avatar_url ? (
                       <Image src={t.reviewer_avatar_url} alt={t.reviewer_name} fill className="object-cover" />
                     ) : (
-                      <span className="text-gray-400 font-bold text-sm">{t.reviewer_name?.charAt(0)?.toUpperCase() || '?'}</span>
+                      <span className="text-gray-500 font-bold text-sm">{t.reviewer_name?.charAt(0)?.toUpperCase() || '?'}</span>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900 text-sm truncate">{t.reviewer_name}</p>
                     {t.tour && (
-                      <p className="text-[11px] text-gray-400 truncate mt-0.5">🗺️ {t.tour.title}</p>
+                      <p className="text-[11px] text-gray-500 truncate mt-0.5">🗺️ {t.tour.title}</p>
                     )}
                   </div>
                 </div>
@@ -414,7 +414,7 @@ function FAQSection({ faqs }: { faqs: { question: string; answer: string }[] }) 
                 className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors"
               >
                 <span className="font-medium text-gray-900 pr-4">{faq.question}</span>
-                {openIndex === i ? <ChevronUp className="w-5 h-5 text-gray-400 flex-shrink-0" /> : <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />}
+                {openIndex === i ? <ChevronUp className="w-5 h-5 text-gray-500 flex-shrink-0" /> : <ChevronDown className="w-5 h-5 text-gray-500 flex-shrink-0" />}
               </button>
               {openIndex === i && (
                 <div className="px-5 pb-5 text-gray-600 leading-relaxed border-t border-gray-100 pt-4">

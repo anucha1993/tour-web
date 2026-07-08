@@ -319,7 +319,7 @@ export default function BookingDetailPage() {
       </div>
 
       {/* ── Footer ── */}
-      <div className="px-6 print:px-0 py-3 mt-2 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-xs text-gray-400">
+      <div className="px-6 print:px-0 py-3 mt-2 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-xs text-gray-500">
         <span className="flex items-center gap-1"><ShieldCheckSolidIcon className="w-3.5 h-3.5 text-emerald-500" />การจองปลอดภัย 100%</span>
         <a href="tel:-02-136-9144" className="inline-flex items-center gap-1 font-medium text-[var(--color-primary)] hover:underline no-print">
           <PhoneIcon className="w-3.5 h-3.5" />ต้องการช่วยเหลือ? 02-136-9144
@@ -336,7 +336,7 @@ export default function BookingDetailPage() {
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex justify-between gap-4 py-0.5">
-      <span className="text-gray-400 flex-shrink-0">{label}</span>
+      <span className="text-gray-500 flex-shrink-0">{label}</span>
       <span className="text-gray-800 text-right">{value}</span>
     </div>
   );
@@ -347,7 +347,7 @@ function PriceRow({ label, sub, amount }: { label: string; sub: string; amount: 
     <div className="flex justify-between items-center py-1.5">
       <div>
         <span className="text-gray-700">{label}</span>
-        <span className="text-gray-400 text-xs ml-1.5">({sub})</span>
+        <span className="text-gray-500 text-xs ml-1.5">({sub})</span>
       </div>
       <span className="font-medium text-gray-800 tabular-nums">฿{amount.toLocaleString()}</span>
     </div>

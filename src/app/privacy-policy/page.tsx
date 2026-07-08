@@ -124,7 +124,7 @@ export default function PrivacyPolicyPage() {
             <Link href="/" className="text-gray-500 hover:text-blue-600">
               หน้าแรก
             </Link>
-            <span className="text-gray-400">/</span>
+            <span className="text-gray-500">/</span>
             <span className="text-gray-900">นโยบายความเป็นส่วนตัว</span>
           </nav>
         </div>

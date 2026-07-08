@@ -48,7 +48,7 @@ function CountdownDisplay({ endDate }: { endDate: string }) {
   const { days, hours, minutes, seconds, expired } = useCountdown(endDate);
 
   if (expired) {
-    return <span className="text-sm text-gray-400 font-medium">หมดเวลาแล้ว</span>;
+    return <span className="text-sm text-gray-500 font-medium">หมดเวลาแล้ว</span>;
   }
 
   const blocks = [
@@ -66,10 +66,10 @@ function CountdownDisplay({ endDate }: { endDate: string }) {
             <span className="text-lg font-bold font-mono leading-none">
               {String(b.value).padStart(2, '0')}
             </span>
-            <p className="text-[9px] text-gray-400 leading-none mt-0.5">{b.label}</p>
+            <p className="text-[9px] text-gray-500 leading-none mt-0.5">{b.label}</p>
           </div>
           {i < blocks.length - 1 && (
-            <span className="text-gray-400 font-bold text-lg">:</span>
+            <span className="text-gray-500 font-bold text-lg">:</span>
           )}
         </div>
       ))}
@@ -82,7 +82,7 @@ function RowCountdown({ endDate }: { endDate: string }) {
   const { days, hours, minutes, seconds, expired } = useCountdown(endDate);
 
   if (expired) {
-    return <span className="text-xs text-gray-400">หมดเวลา</span>;
+    return <span className="text-xs text-gray-500">หมดเวลา</span>;
   }
 
   return (
@@ -102,7 +102,7 @@ function StockBar({ sold, limit }: { sold: number; limit: number }) {
     <div className="w-full min-w-[80px]">
       <div className="flex justify-between text-[10px] mb-0.5">
         <span className="text-red-500 font-semibold">{percent}%</span>
-        <span className="text-gray-400">เหลือ {remaining}</span>
+        <span className="text-gray-500">เหลือ {remaining}</span>
       </div>
       <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
         <div
@@ -135,7 +135,7 @@ function FlashRow({ item, index, onBook }: { item: FlashSalePublicItem; index: n
       className={`group ${item.is_sold_out ? 'opacity-60' : ''}`}
     >
       {/* Row number */}
-      <td className="px-2 py-2.5 text-center text-xs text-gray-400 border-b border-gray-100 group-hover:bg-orange-50/50 transition-colors">
+      <td className="px-2 py-2.5 text-center text-xs text-gray-500 border-b border-gray-100 group-hover:bg-orange-50/50 transition-colors">
         {index + 1}
       </td>
 
@@ -166,7 +166,7 @@ function FlashRow({ item, index, onBook }: { item: FlashSalePublicItem; index: n
             <p className="text-sm font-semibold text-gray-800 group-hover:text-red-500 transition-colors line-clamp-1">
               {item.title}
             </p>
-            <div className="flex items-center gap-2 text-[11px] text-gray-400 mt-0.5">
+            <div className="flex items-center gap-2 text-[11px] text-gray-500 mt-0.5">
               <span className="font-mono">{item.tour_code}</span>
               <span className="flex items-center gap-0.5">
                 <Calendar className="w-3 h-3" />
@@ -185,7 +185,7 @@ function FlashRow({ item, index, onBook }: { item: FlashSalePublicItem; index: n
         <div className="text-xs text-gray-600 whitespace-nowrap">
           {formatDateThai(item.period_start_date)}
         </div>
-        <div className="text-[10px] text-gray-400 whitespace-nowrap">
+        <div className="text-[10px] text-gray-500 whitespace-nowrap">
           ถึง {formatDateThai(item.period_end_date)}
         </div>
       </td>
@@ -193,11 +193,11 @@ function FlashRow({ item, index, onBook }: { item: FlashSalePublicItem; index: n
       {/* Original price */}
       <td className="px-2 py-2.5 border-b border-gray-100 group-hover:bg-orange-50/50 transition-colors text-right hidden md:table-cell">
         {originalPrice > flashPrice ? (
-          <span className="text-xs text-gray-400 line-through whitespace-nowrap">
+          <span className="text-xs text-gray-500 line-through whitespace-nowrap">
             ฿{originalPrice.toLocaleString()}
           </span>
         ) : (
-          <span className="text-xs text-gray-400">-</span>
+          <span className="text-xs text-gray-500">-</span>
         )}
       </td>
 
@@ -216,7 +216,7 @@ function FlashRow({ item, index, onBook }: { item: FlashSalePublicItem; index: n
             -{discountPercent}%
           </span>
         ) : (
-          <span className="text-xs text-gray-400">-</span>
+          <span className="text-xs text-gray-500">-</span>
         )}
       </td>
 
@@ -227,7 +227,7 @@ function FlashRow({ item, index, onBook }: { item: FlashSalePublicItem; index: n
         ) : item.is_sold_out ? (
           <span className="text-[11px] text-red-600 font-semibold">SOLD OUT</span>
         ) : (
-          <span className="text-xs text-gray-400">-</span>
+          <span className="text-xs text-gray-500">-</span>
         )}
       </td>
 
@@ -236,16 +236,16 @@ function FlashRow({ item, index, onBook }: { item: FlashSalePublicItem; index: n
         {item.quantity_limit && !item.is_sold_out ? (
           <StockBar sold={item.quantity_sold} limit={item.quantity_limit} />
         ) : item.is_sold_out ? (
-          <span className="text-[10px] text-gray-400">-</span>
+          <span className="text-[10px] text-gray-500">-</span>
         ) : (
-          <span className="text-[10px] text-gray-400">ไม่จำกัด</span>
+          <span className="text-[10px] text-gray-500">ไม่จำกัด</span>
         )}
       </td>
 
       {/* Action */}
       <td className="px-2 py-2.5 border-b border-gray-100 group-hover:bg-orange-50/50 transition-colors text-center">
         {item.is_sold_out ? (
-          <span className="text-[10px] text-gray-400 font-semibold">SOLD OUT</span>
+          <span className="text-[10px] text-gray-500 font-semibold">SOLD OUT</span>
         ) : (
           <button
             onClick={(e) => { e.stopPropagation(); onBook(item); }}
@@ -273,7 +273,7 @@ function MobileFlashRow({ item, index, onBook }: { item: FlashSalePublicItem; in
       }`}
     >
       {/* Index */}
-      <span className="text-xs text-gray-400 w-5 text-center flex-shrink-0">{index + 1}</span>
+      <span className="text-xs text-gray-500 w-5 text-center flex-shrink-0">{index + 1}</span>
 
       {/* Thumbnail — link to tour */}
       <Link href={`/tours/${item.slug}`} className="relative w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
@@ -294,7 +294,7 @@ function MobileFlashRow({ item, index, onBook }: { item: FlashSalePublicItem; in
       {/* Info */}
       <Link href={`/tours/${item.slug}`} className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-gray-800 line-clamp-1">{item.title}</p>
-        <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-gray-400">
+        <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-gray-500">
           <span className="font-mono">{item.tour_code}</span>
           <span>·</span>
           <span>{formatDateThai(item.period_start_date)}</span>
@@ -315,7 +315,7 @@ function MobileFlashRow({ item, index, onBook }: { item: FlashSalePublicItem; in
           </span>
         )}
         {originalPrice > flashPrice && (
-          <p className="text-[10px] text-gray-400 line-through">฿{originalPrice.toLocaleString()}</p>
+          <p className="text-[10px] text-gray-500 line-through">฿{originalPrice.toLocaleString()}</p>
         )}
         <p className="text-sm font-bold text-red-500">฿{flashPrice.toLocaleString()}</p>
         {!item.is_sold_out && (
@@ -466,7 +466,7 @@ export default function FlashSale() {
                 </table>
               </div>
               {sale.items.length > 10 && (
-                <div className="text-center py-2 text-xs text-gray-400 border-t border-gray-100 bg-gray-50/50">
+                <div className="text-center py-2 text-xs text-gray-500 border-t border-gray-100 bg-gray-50/50">
                   เลื่อนลงเพื่อดูเพิ่มเติม ({sale.items.length} รายการ)
                 </div>
               )}
@@ -480,7 +480,7 @@ export default function FlashSale() {
                 ))}
               </div>
               {sale.items.length > 10 && (
-                <div className="text-center py-2 text-xs text-gray-400 border-t border-gray-100 bg-gray-50/50">
+                <div className="text-center py-2 text-xs text-gray-500 border-t border-gray-100 bg-gray-50/50">
                   เลื่อนลงเพื่อดูเพิ่มเติม ({sale.items.length} รายการ)
                 </div>
               )}

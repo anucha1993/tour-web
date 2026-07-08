@@ -79,7 +79,7 @@ function RecommendedTourCard({ tour, index }: { tour: TourTabTour; index: number
           {/* Tour code & badges */}
           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
             {tour.tour_code && (
-              <span className="text-[10px] font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{tour.tour_code}</span>
+              <span className="text-[10px] font-mono text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded">{tour.tour_code}</span>
             )}
             {discountPercent > 0 && !isSoldOut && (
               <span className="text-[10px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded">
@@ -100,12 +100,12 @@ function RecommendedTourCard({ tour, index }: { tour: TourTabTour; index: number
           {/* Meta row */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
             <span className="flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5 text-gray-400" />
+              <Calendar className="w-3.5 h-3.5 text-gray-500" />
               {tour.days} วัน {tour.nights} คืน
             </span>
             {tour.airline && (
               <span className="flex items-center gap-1">
-                <Plane className="w-3.5 h-3.5 text-gray-400" />
+                <Plane className="w-3.5 h-3.5 text-gray-500" />
                 {tour.airline}
               </span>
             )}
@@ -116,14 +116,14 @@ function RecommendedTourCard({ tour, index }: { tour: TourTabTour; index: number
               </span>
             )}
             <span className="flex items-center gap-1">
-              <Eye className="w-3.5 h-3.5 text-gray-400" />
+              <Eye className="w-3.5 h-3.5 text-gray-500" />
               <span>{formatViewCount(tour.view_count ?? 0)}</span>
             </span>
           </div>
 
           {/* Departure */}
           {tour.departure_date && (
-            <div className="mt-1.5 text-[11px] text-gray-400">
+            <div className="mt-1.5 text-[11px] text-gray-500">
               📅 {new Date(tour.departure_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}
               {tour.max_departure_date && tour.max_departure_date !== tour.departure_date && (
                 <> - {new Date(tour.max_departure_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}</>
@@ -133,7 +133,7 @@ function RecommendedTourCard({ tour, index }: { tour: TourTabTour; index: number
 
           {/* Hotel star */}
           {tour.hotel_star && tour.hotel_star > 0 && (
-            <div className="flex items-center gap-1 mt-1 text-[11px] text-gray-400">
+            <div className="flex items-center gap-1 mt-1 text-[11px] text-gray-500">
               <Hotel className="w-3.5 h-3.5 text-amber-500" />
               {Array.from({ length: tour.hotel_star }, (_, i) => (
                 <Star key={i} className="w-3 h-3 text-amber-400 fill-amber-400" />
@@ -156,13 +156,13 @@ function RecommendedTourCard({ tour, index }: { tour: TourTabTour; index: number
           )}
           <div className="flex items-end justify-between">
           <div>
-            <p className="text-[10px] uppercase tracking-wider text-gray-400 mb-0.5">เริ่มต้น</p>
+            <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-0.5">เริ่มต้น</p>
             {originalPrice && discountAdult > 0 ? (
               <div className="flex items-baseline gap-2">
                 <span className="text-lg sm:text-xl font-bold text-red-500">
                   ฿{price.toLocaleString()}
                 </span>
-                <span className="text-xs text-gray-400 line-through">
+                <span className="text-xs text-gray-500 line-through">
                   ฿{originalPrice.toLocaleString()}
                 </span>
               </div>

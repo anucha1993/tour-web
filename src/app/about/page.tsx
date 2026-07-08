@@ -206,7 +206,7 @@ export default function AboutPage() {
                     <Image src={item.logo_url} alt={item.name} width={120} height={80} className="object-contain h-20" />
                   ) : (
                     <div className="w-[120px] h-[80px] bg-gray-200 rounded flex items-center justify-center">
-                      <Shield className="w-8 h-8 text-gray-400" />
+                      <Shield className="w-8 h-8 text-gray-500" />
                     </div>
                   )}
                   <div className="text-center">
@@ -337,7 +337,7 @@ export default function AboutPage() {
                       className="object-contain max-h-[80px]"
                     />
                   ) : (
-                    <span className="text-gray-400 text-xs text-center">{client.name}</span>
+                    <span className="text-gray-500 text-xs text-center">{client.name}</span>
                   )}
                 </div>
               ))}

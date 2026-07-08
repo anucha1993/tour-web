@@ -79,11 +79,11 @@ export default function QuotationDetailPage() {
   if (!member) return null;
 
   if (loading) {
-    return <div className="p-6 text-center text-gray-400">กำลังโหลด...</div>;
+    return <div className="p-6 text-center text-gray-500">กำลังโหลด...</div>;
   }
   if (!quotation) {
     return (
-      <div className="p-6 text-center text-gray-400">
+      <div className="p-6 text-center text-gray-500">
         ไม่พบข้อมูล
         <button onClick={() => router.back()} className="block mx-auto mt-2 text-blue-600">กลับ</button>
       </div>

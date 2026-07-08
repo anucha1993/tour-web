@@ -88,7 +88,7 @@ function FestivalCard({ festival }: { festival: FestivalHolidayPublic }) {
                     />
                   )}
                   <span className="font-medium">{country.name_th}</span>
-                  <span className="text-gray-400">({country.tour_count})</span>
+                  <span className="text-gray-500">({country.tour_count})</span>
                 </Link>
               ))}
             </div>

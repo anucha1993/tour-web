@@ -435,10 +435,10 @@ export default function Header() {
                               className="flex items-center justify-between px-4 py-2.5 text-sm text-[var(--color-gray-700)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-50)] transition-colors"
                             >
                               <span className="flex items-center gap-1.5">
-                                <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                                <MapPin className="w-3.5 h-3.5 text-gray-500" />
                                 {city.name_th}
                               </span>
-                              <span className="text-xs text-gray-400 bg-gray-100 rounded-full px-1.5 py-0.5 min-w-[20px] text-center">{city.tour_count}</span>
+                              <span className="text-xs text-gray-500 bg-gray-100 rounded-full px-1.5 py-0.5 min-w-[20px] text-center">{city.tour_count}</span>
                             </Link>
                           ))}
                           <div className="border-t border-gray-100 mt-1 pt-1">
@@ -636,7 +636,7 @@ export default function Header() {
                         <span className="text-base text-gray-700 group-hover/country:text-[var(--color-primary)] font-medium truncate">
                           {country.name_th}
                         </span>
-                        <span className="text-xs text-gray-400 bg-gray-100 rounded-full px-1.5 py-0.5 ml-auto shrink-0">
+                        <span className="text-xs text-gray-500 bg-gray-100 rounded-full px-1.5 py-0.5 ml-auto shrink-0">
                           {country.tour_count}
                         </span>
                       </Link>
@@ -736,7 +736,7 @@ export default function Header() {
                                   >
                                     {country.iso2 && <img src={`https://flagcdn.com/20x15/${country.iso2}.png`} width={20} height={15} alt={country.name_th} className="inline-block shrink-0" />}
                                     <span>{country.name_th}</span>
-                                    <span className="text-[10px] text-gray-400 bg-gray-100 rounded-full px-1.5 py-0.5">{country.tour_count}</span>
+                                    <span className="text-[10px] text-gray-500 bg-gray-100 rounded-full px-1.5 py-0.5">{country.tour_count}</span>
                                   </Link>
                                   {/* City badges - orange border */}
                                   {country.cities.length > 0 && (
@@ -793,10 +793,10 @@ export default function Header() {
                                   className="flex items-center justify-between px-4 py-2.5 text-sm text-[var(--color-gray-600)] hover:text-[var(--color-primary)] transition-colors"
                                 >
                                   <span className="flex items-center gap-1.5">
-                                    <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                                    <MapPin className="w-3.5 h-3.5 text-gray-500" />
                                     {city.name_th}
                                   </span>
-                                  <span className="text-[10px] text-gray-400 bg-gray-100 rounded-full px-1.5 py-0.5">{city.tour_count}</span>
+                                  <span className="text-[10px] text-gray-500 bg-gray-100 rounded-full px-1.5 py-0.5">{city.tour_count}</span>
                                 </Link>
                               ))}
                               <Link

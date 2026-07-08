@@ -198,7 +198,7 @@ function RelatedCard({ review }: { review: TourReview }) {
         <span className="text-xs text-gray-600 truncate flex-1">{review.reviewer_name}</span>
         <StarRating rating={avgRating} size="sm" />
       </div>
-      <div className="flex items-center gap-3 mt-2 text-[11px] text-gray-400">
+      <div className="flex items-center gap-3 mt-2 text-[11px] text-gray-500">
         <span className="flex items-center gap-0.5"><Eye className="w-3 h-3" />{(review.views_count || 0).toLocaleString()}</span>
         <span className="flex items-center gap-0.5"><ThumbsUp className="w-3 h-3" />{review.helpful_count || 0}</span>
       </div>
@@ -277,7 +277,7 @@ export default function ReviewDetailPage({ params }: { params: Promise<{ id: str
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-10 h-10 border-3 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm text-gray-400 mt-4">กำลังโหลดรีวิว...</p>
+          <p className="text-sm text-gray-500 mt-4">กำลังโหลดรีวิว...</p>
         </div>
       </div>
     );
@@ -371,7 +371,7 @@ export default function ReviewDetailPage({ params }: { params: Promise<{ id: str
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-4 mt-1.5 text-xs text-gray-400">
+                    <div className="flex items-center gap-4 mt-1.5 text-xs text-gray-500">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3.5 h-3.5" />
                         {formatDate(review.created_at)}
@@ -482,7 +482,7 @@ export default function ReviewDetailPage({ params }: { params: Promise<{ id: str
                     {review.tour.title}
                   </h3>
                   {review.tour.tour_code && (
-                    <p className="text-xs text-gray-400 mb-3">รหัส: {review.tour.tour_code}</p>
+                    <p className="text-xs text-gray-500 mb-3">รหัส: {review.tour.tour_code}</p>
                   )}
                   <Link
                     href={`/tours/${review.tour.slug}`}

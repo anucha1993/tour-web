@@ -188,7 +188,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
             {/* Tags */}
             {post.tags && post.tags.length > 0 && (
               <div className="flex flex-wrap items-center gap-2 mt-8 pt-6 border-t border-gray-200">
-                <Tag className="w-4 h-4 text-gray-400" />
+                <Tag className="w-4 h-4 text-gray-500" />
                 {post.tags.map(tag => (
                   <Link
                     key={tag}
@@ -203,7 +203,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 
             {/* Share */}
             <div className="flex items-center gap-3 mt-6 pt-6 border-t border-gray-200">
-              <Share2 className="w-4 h-4 text-gray-400" />
+              <Share2 className="w-4 h-4 text-gray-500" />
               <span className="text-sm text-gray-500">แชร์บทความ:</span>
               <button
                 onClick={() => handleShare('facebook')}
@@ -277,7 +277,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                             <Image src={r.cover_image_url} alt={r.title} fill className="object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                              <BookOpen className="w-5 h-5 text-gray-400" />
+                              <BookOpen className="w-5 h-5 text-gray-500" />
                             </div>
                           )}
                         </div>
@@ -285,7 +285,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                           <h4 className="text-sm font-medium text-gray-800 line-clamp-2 group-hover:text-orange-600 transition-colors">
                             {r.title}
                           </h4>
-                          <p className="text-xs text-gray-400 mt-1">{formatDate(r.published_at)}</p>
+                          <p className="text-xs text-gray-500 mt-1">{formatDate(r.published_at)}</p>
                         </div>
                       </Link>
                     ))}
@@ -305,7 +305,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                             <Image src={r.cover_image_url} alt={r.title} fill className="object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                              <BookOpen className="w-5 h-5 text-gray-400" />
+                              <BookOpen className="w-5 h-5 text-gray-500" />
                             </div>
                           )}
                         </div>
@@ -313,7 +313,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                           <h4 className="text-sm font-medium text-gray-800 line-clamp-2 group-hover:text-orange-600 transition-colors">
                             {r.title}
                           </h4>
-                          <p className="text-xs text-gray-400 mt-1">{formatDate(r.published_at)}</p>
+                          <p className="text-xs text-gray-500 mt-1">{formatDate(r.published_at)}</p>
                         </div>
                       </Link>
                     ))}
@@ -332,7 +332,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                           {t.cover_image_url ? (
                             <Image src={t.cover_image_url} alt={t.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <div className="w-full h-full flex items-center justify-center text-gray-500">
                               <BookOpen className="w-8 h-8" />
                             </div>
                           )}

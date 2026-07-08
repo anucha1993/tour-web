@@ -93,7 +93,7 @@ export default function CookieConsent() {
               <button
                 type="button"
                 onClick={closeSettings}
-                className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                className="rounded-full p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-600"
                 aria-label="ปิด"
               >
                 <X className="h-5 w-5" />

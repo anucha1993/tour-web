@@ -205,7 +205,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden mx-4 sm:mx-0 animate-in fade-in slide-in-from-top-4 duration-200">
           {/* Search Input */}
           <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
-            <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
+            <Search className="w-5 h-5 text-gray-500 flex-shrink-0" />
             <input
               ref={inputRef}
               type="text"
@@ -213,7 +213,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="ค้นหาทัวร์ ประเทศ เมือง เทศกาล..."
-              className="flex-1 text-base sm:text-lg outline-none placeholder:text-gray-400 text-gray-900"
+              className="flex-1 text-base sm:text-lg outline-none placeholder:text-gray-500 text-gray-900"
               autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
@@ -221,7 +221,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
             {loading && <Loader2 className="w-5 h-5 text-orange-500 animate-spin flex-shrink-0" />}
             {query && !loading && (
               <button onClick={() => setQuery('')} className="p-1 hover:bg-gray-100 rounded-full">
-                <X className="w-4 h-4 text-gray-400" />
+                <X className="w-4 h-4 text-gray-500" />
               </button>
             )}
             <button
@@ -245,7 +245,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
 
                   return (
                     <div key={type}>
-                      <div className="px-5 py-1.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                      <div className="px-5 py-1.5 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
                         {config.label}
                       </div>
                       {items.map((item) => {
@@ -291,7 +291,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                               {item.type === 'tour' && item.price ? (
                                 <span className="text-sm font-bold text-orange-600">฿{item.price}</span>
                               ) : item.tour_count ? (
-                                <span className="text-xs text-gray-400">{item.tour_count} ทัวร์</span>
+                                <span className="text-xs text-gray-500">{item.tour_count} ทัวร์</span>
                               ) : null}
                             </div>
                           </button>
@@ -320,7 +320,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
               <div className="px-5 py-10 text-center">
                 <Search className="w-10 h-10 text-gray-300 mx-auto mb-3" />
                 <p className="text-gray-500 text-sm">ไม่พบผลลัพธ์สำหรับ &ldquo;{query}&rdquo;</p>
-                <p className="text-gray-400 text-xs mt-1">ลองค้นหาด้วยคำอื่น เช่น ชื่อประเทศ เมือง หรือรหัสทัวร์</p>
+                <p className="text-gray-500 text-xs mt-1">ลองค้นหาด้วยคำอื่น เช่น ชื่อประเทศ เมือง หรือรหัสทัวร์</p>
               </div>
             )}
 
@@ -331,7 +331,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                 {recentSearches.length > 0 && (
                   <div className="mb-2">
                     <div className="flex items-center justify-between px-5 py-1.5">
-                      <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                      <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         ค้นหาล่าสุด
                       </span>
@@ -340,7 +340,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                           clearRecentSearches();
                           setRecentSearches([]);
                         }}
-                        className="text-[11px] text-gray-400 hover:text-red-500 transition-colors"
+                        className="text-[11px] text-gray-500 hover:text-red-500 transition-colors"
                       >
                         ล้าง
                       </button>
@@ -354,7 +354,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                           }}
                           className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-50 hover:bg-orange-50 border border-gray-200 hover:border-orange-300 rounded-full text-xs text-gray-600 hover:text-orange-700 transition-colors"
                         >
-                          <Clock className="w-3 h-3 text-gray-400" />
+                          <Clock className="w-3 h-3 text-gray-500" />
                           {term}
                         </button>
                       ))}
@@ -365,7 +365,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                 {/* Popular Destinations */}
                 {popular?.popular_destinations && popular.popular_destinations.length > 0 && (
                   <div className="mb-2">
-                    <div className="px-5 py-1.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                    <div className="px-5 py-1.5 text-[11px] font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1">
                       <TrendingUp className="w-3 h-3" />
                       จุดหมายยอดนิยม
                     </div>
@@ -392,7 +392,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                 {/* Festivals */}
                 {popular?.festivals && popular.festivals.length > 0 && (
                   <div className="mb-2">
-                    <div className="px-5 py-1.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                    <div className="px-5 py-1.5 text-[11px] font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1">
                       <PartyPopper className="w-3 h-3" />
                       เทศกาล
                     </div>
@@ -415,7 +415,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                 {/* Trending Tours */}
                 {popular?.trending_tours && popular.trending_tours.length > 0 && (
                   <div>
-                    <div className="px-5 py-1.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                    <div className="px-5 py-1.5 text-[11px] font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1">
                       <TrendingUp className="w-3 h-3" />
                       ทัวร์ยอดนิยม
                     </div>
@@ -435,7 +435,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                         <div className="flex-1 min-w-0">
                           <div className="text-sm text-gray-900 truncate">{tour.title}</div>
                           {tour.country && (
-                            <div className="text-xs text-gray-400">{tour.country}</div>
+                            <div className="text-xs text-gray-500">{tour.country}</div>
                           )}
                         </div>
                         {tour.price && (
@@ -450,7 +450,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
           </div>
 
           {/* Footer hint */}
-          <div className="px-5 py-2.5 border-t border-gray-100 bg-gray-50 flex items-center justify-between text-[11px] text-gray-400">
+          <div className="px-5 py-2.5 border-t border-gray-100 bg-gray-50 flex items-center justify-between text-[11px] text-gray-500">
             <div className="flex items-center gap-3">
               <span><kbd className="px-1.5 py-0.5 bg-white border border-gray-200 rounded text-[10px]">↑↓</kbd> เลือก</span>
               <span><kbd className="px-1.5 py-0.5 bg-white border border-gray-200 rounded text-[10px]">Enter</kbd> เปิด</span>

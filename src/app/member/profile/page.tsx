@@ -382,7 +382,7 @@ export default function MemberProfile() {
 
             <div className="flex-1 min-w-[200px]">
               <div className="flex items-center gap-2 mb-2">
-                <PhoneIcon className="w-4 h-4 text-gray-400" />
+                <PhoneIcon className="w-4 h-4 text-gray-500" />
                 <span className="font-medium text-gray-900">{member.phone}</span>
                 {member.is_verified && (
                   <span className="inline-flex items-center gap-1 text-green-600 text-xs">
@@ -394,7 +394,7 @@ export default function MemberProfile() {
               <p className="text-xs text-gray-500 mb-3">
                 * ไม่สามารถเปลี่ยนเบอร์โทรศัพท์ได้ เนื่องจากใช้ในการยืนยันตัวตน
               </p>
-              <p className="text-xs text-gray-400">รองรับ JPG, PNG, WebP — ขนาดไม่เกิน 5MB</p>
+              <p className="text-xs text-gray-500">รองรับ JPG, PNG, WebP — ขนาดไม่เกิน 5MB</p>
             </div>
           </div>
         </div>
@@ -436,7 +436,7 @@ export default function MemberProfile() {
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
               <span className="flex items-center gap-2">
-                <EnvelopeIcon className="w-4 h-4 text-gray-400" />
+                <EnvelopeIcon className="w-4 h-4 text-gray-500" />
                 อีเมล
               </span>
             </label>
@@ -454,7 +454,7 @@ export default function MemberProfile() {
           <div>
             <label htmlFor="line_id" className="block text-sm font-medium text-gray-700 mb-1.5">
               <span className="flex items-center gap-2">
-                <ChatBubbleLeftIcon className="w-4 h-4 text-gray-400" />
+                <ChatBubbleLeftIcon className="w-4 h-4 text-gray-500" />
                 LINE ID
               </span>
             </label>
@@ -543,7 +543,7 @@ export default function MemberProfile() {
                   <button
                     type="button"
                     onClick={() => setPwShow({ ...pwShow, [key]: !pwShow[key] })}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 cursor-pointer"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-500 hover:text-gray-600 cursor-pointer"
                     tabIndex={-1}
                   >
                     {pwShow[key] ? (
@@ -671,7 +671,7 @@ export default function MemberProfile() {
                 <h3 className="text-lg font-bold text-gray-900">ยืนยันการลบบัญชี</h3>
                 <p className="text-sm text-gray-600 mt-1">การกระทำนี้ไม่สามารถยกเลิกได้</p>
               </div>
-              <button onClick={() => setShowDeleteModal(false)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setShowDeleteModal(false)} className="text-gray-500 hover:text-gray-600">
                 <XMarkIcon className="w-5 h-5" />
               </button>
             </div>

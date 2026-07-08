@@ -126,7 +126,7 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
           {tour.cover_image_url ? (
             <Image src={tour.cover_image_url} alt={tour.cover_image_alt || tour.title} fill className="object-cover object-center rounded-2xl lg:rounded-3xl" sizes="(max-width: 1024px) 100vw, 400px" />
           ) : (
-            <div className="w-full h-full bg-gray-200 flex items-center justify-center"><MapPin className="w-8 h-8 text-gray-400" /></div>
+            <div className="w-full h-full bg-gray-200 flex items-center justify-center"><MapPin className="w-8 h-8 text-gray-500" /></div>
           )}
           {tour.badge && <div className="absolute top-2 left-2"><TourBadge badge={tour.badge} /></div>}
           {hasDiscount && tour.max_discount_percent && tour.max_discount_percent > 0 && (
@@ -235,7 +235,7 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
             
             <div className="text-right">
               <div className="text-xs lg:text-sm text-gray-500">ราคาเริ่มต้น</div>
-              {hasDiscount && tour.price_adult && <div className="text-sm lg:text-base text-gray-400 line-through">{formatPrice(tour.price_adult)}</div>}
+              {hasDiscount && tour.price_adult && <div className="text-sm lg:text-base text-gray-500 line-through">{formatPrice(tour.price_adult)}</div>}
               <span className={`text-2xl lg:text-3xl font-bold ${hasDiscount ? 'text-red-600' : 'text-orange-600'}`}>
                 {hasDiscount && tour.price_adult && tour.discount_amount
                   ? formatPrice(tour.price_adult - tour.discount_amount)
@@ -249,7 +249,7 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
 
       {/* Share buttons */}
       <div className="flex items-center gap-1 justify-end px-2 lg:px-4 pt-1 mt-0 lg:mt-[-20px]">
-        <span className="text-xs text-gray-400 mr-0.5">แชร์</span>
+        <span className="text-xs text-gray-500 mr-0.5">แชร์</span>
         <a
           href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/tours/${tour.slug}`)}`}
           target="_blank"
@@ -312,7 +312,7 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
                 {visiblePeriods.map(period => {
                   const isClosed = period.status !== 'open' || period.available <= 0;
                   return (
-                    <tr key={period.id} className={isClosed ? 'bg-gray-50 text-gray-400' : 'hover:bg-orange-50/40'}>
+                    <tr key={period.id} className={isClosed ? 'bg-gray-50 text-gray-500' : 'hover:bg-orange-50/40'}>
                       <td className="px-2 lg:px-4 py-2 lg:py-2.5">
                         <div className="flex items-center gap-1 lg:gap-1.5 whitespace-nowrap">
                           <span className={`font-medium ${isClosed ? '' : 'text-gray-500'}`}>{formatDateRange(period.start_date, period.end_date)}</span>
@@ -332,7 +332,7 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
                         {period.offer ? (
                           period.offer.net_price_adult ? (
                             <div>
-                              {period.offer.discount_adult > 0 && <div className="line-through text-gray-400 text-sm">{formatPrice(period.offer.price_adult)}</div>}
+                              {period.offer.discount_adult > 0 && <div className="line-through text-gray-500 text-sm">{formatPrice(period.offer.price_adult)}</div>}
                               <span className={`font-bold ${period.offer.discount_adult > 0 ? 'text-red-600' : isClosed ? '' : 'text-gray-500'}`}>{formatPrice(period.offer.net_price_adult)}</span>
                             </div>
                           ) : <span className="text-xs text-orange-500 font-medium">ติดต่อฝ่ายขาย</span>
@@ -343,7 +343,7 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
                         {period.offer ? (
                           (period.offer.net_price_single ?? period.offer.price_single) ? (
                             <div>
-                              {period.offer.discount_single > 0 && period.offer.price_single && <div className="line-through text-gray-400 text-sm">{formatPrice(period.offer.price_single)}</div>}
+                              {period.offer.discount_single > 0 && period.offer.price_single && <div className="line-through text-gray-500 text-sm">{formatPrice(period.offer.price_single)}</div>}
                               <span className={`font-bold ${period.offer.discount_single > 0 ? 'text-red-600' : isClosed ? '' : 'text-gray-500'}`}>{formatPrice(period.offer.net_price_single ?? period.offer.price_single)}</span>
                             </div>
                           ) : <span className="text-xs text-orange-500 font-medium">ติดต่อฝ่ายขาย</span>
@@ -675,7 +675,7 @@ export default function CityToursPage() {
               .filter(page => { if (meta.last_page <= 7) return true; if (page === 1 || page === meta.last_page) return true; return Math.abs(page - currentPage) <= 2; })
               .reduce((acc: (number | string)[], page, i, arr) => { if (i > 0 && typeof arr[i - 1] === 'number' && (page as number) - (arr[i - 1] as number) > 1) acc.push('...'); acc.push(page); return acc; }, [])
               .map((page, i) => typeof page === 'string'
-                ? <span key={`e-${i}`} className="px-2 text-gray-400">...</span>
+                ? <span key={`e-${i}`} className="px-2 text-gray-500">...</span>
                 : <button key={page} onClick={() => setCurrentPage(page as number)} className={`w-11 h-11 rounded-lg text-base font-medium ${currentPage === page ? 'bg-orange-500 text-white' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}>{page}</button>
               )}
             <button onClick={() => setCurrentPage(p => Math.min(meta.last_page, p + 1))} disabled={currentPage >= meta.last_page} className="p-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"><ChevronRight className="w-5 h-5" /></button>

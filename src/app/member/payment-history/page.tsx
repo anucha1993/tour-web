@@ -189,7 +189,7 @@ export default function MemberPaymentHistory() {
       {filteredPayments.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
           <div className="w-20 h-20 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-            <BanknotesIcon className="w-10 h-10 text-gray-400" />
+            <BanknotesIcon className="w-10 h-10 text-gray-500" />
           </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">ไม่พบรายการชำระเงิน</h3>
           <p className="text-gray-500">ไม่มีรายการที่ตรงกับเงื่อนไขที่เลือก</p>

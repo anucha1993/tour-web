@@ -217,7 +217,7 @@ export default function MemberLayout({
                       {member.level.name}
                     </span>
                     {typeof member.total_points === 'number' && (
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-gray-500">
                         {member.total_points.toLocaleString()} pts
                       </span>
                     )}
@@ -231,7 +231,7 @@ export default function MemberLayout({
           <nav className="p-4 space-y-6 overflow-y-auto max-h-[calc(100vh-200px)]">
             {menuGroups.map((group) => (
               <div key={group.title}>
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                   {group.title}
                 </h3>
                 <ul className="space-y-1">
@@ -260,7 +260,7 @@ export default function MemberLayout({
                             {(badges[item.badgeKey] ?? 0) > 99 ? '99+' : badges[item.badgeKey]}
                           </span>
                         )}
-                        <ChevronRightIcon className="w-4 h-4 text-gray-400" />
+                        <ChevronRightIcon className="w-4 h-4 text-gray-500" />
                       </Link>
                     </li>
                   ))}

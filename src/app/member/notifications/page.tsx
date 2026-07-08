@@ -104,10 +104,10 @@ export default function MemberNotificationsPage() {
             <div className="w-8 h-8 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : notifications.length === 0 ? (
-          <div className="py-16 flex flex-col items-center gap-3 text-gray-400">
+          <div className="py-16 flex flex-col items-center gap-3 text-gray-500">
             <Bell className="w-12 h-12 opacity-20" />
             <p className="text-sm font-medium">ยังไม่มีโปรโมชั่นสำหรับคุณในขณะนี้</p>
-            <p className="text-xs text-gray-400">เราจะแจ้งเตือนเมื่อมีโปรโมชั่นพิเศษสำหรับคุณ</p>
+            <p className="text-xs text-gray-500">เราจะแจ้งเตือนเมื่อมีโปรโมชั่นพิเศษสำหรับคุณ</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-50">
@@ -175,9 +175,9 @@ function NotificationRow({
           >
             {TYPE_LABELS[n.type] ?? n.type}
           </span>
-          <span className="text-xs text-gray-400">{timeAgo(n.created_at)}</span>
+          <span className="text-xs text-gray-500">{timeAgo(n.created_at)}</span>
           {n.ends_at && (
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-gray-500">
               หมดอายุ{" "}
               {new Date(n.ends_at).toLocaleDateString("th-TH", {
                 day: "numeric",

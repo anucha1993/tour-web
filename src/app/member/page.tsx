@@ -140,7 +140,7 @@ export default function MemberDashboard() {
         {favorites.length === 0 ? (
           <div className="bg-white rounded-xl p-8 text-center border border-gray-100">
             <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <HeartIcon className="w-8 h-8 text-gray-400" />
+              <HeartIcon className="w-8 h-8 text-gray-500" />
             </div>
             <p className="text-gray-500">ยังไม่มีทัวร์ที่ถูกใจ</p>
             <Link 
@@ -198,7 +198,7 @@ export default function MemberDashboard() {
                       <span className="text-[var(--color-primary)] font-bold text-lg">
                         ฿{tour.price.toLocaleString()}
                       </span>
-                      <span className="text-gray-400 text-xs">/ท่าน</span>
+                      <span className="text-gray-500 text-xs">/ท่าน</span>
                     </div>
                   )}
                 </div>
@@ -230,7 +230,7 @@ export default function MemberDashboard() {
         {notifications.length === 0 ? (
           <div className="bg-white rounded-xl p-6 text-center border border-gray-100">
             <BellIcon className="w-10 h-10 mx-auto text-gray-200 mb-2" />
-            <p className="text-gray-400 text-sm">ยังไม่มีโปรโมชั่นสำหรับคุณในขณะนี้</p>
+            <p className="text-gray-500 text-sm">ยังไม่มีโปรโมชั่นสำหรับคุณในขณะนี้</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -261,7 +261,7 @@ export default function MemberDashboard() {
                     {n.title}
                   </p>
                   {n.ends_at && (
-                    <p className="text-[10px] text-gray-400 mt-1">
+                    <p className="text-[10px] text-gray-500 mt-1">
                       หมดอายุ{" "}
                       {new Date(n.ends_at).toLocaleDateString("th-TH", {
                         day: "numeric",
@@ -298,7 +298,7 @@ export default function MemberDashboard() {
                   </h3>
                   <p className="text-sm text-gray-500 mt-1">{link.description}</p>
                 </div>
-                <div className="text-gray-400 group-hover:text-[var(--color-primary)] transition-colors">
+                <div className="text-gray-500 group-hover:text-[var(--color-primary)] transition-colors">
                   <svg
                     className="w-5 h-5"
                     fill="none"

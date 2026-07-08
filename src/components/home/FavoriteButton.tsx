@@ -27,7 +27,7 @@ export default function FavoriteButton({ tour, className = '', size = 'md' }: Fa
       className={`cursor-pointer ${sizeClasses} rounded-full flex items-center justify-center transition-all duration-200 ${
         active
           ? 'bg-red-500 text-white shadow-md scale-110'
-          : 'bg-white/80 backdrop-blur-sm text-gray-400 hover:text-red-500 hover:bg-white shadow-sm'
+          : 'bg-white/80 backdrop-blur-sm text-gray-500 hover:text-red-500 hover:bg-white shadow-sm'
       } ${className}`}
       aria-label={active ? 'นำออกจากรายการโปรด' : 'เพิ่มในรายการโปรด'}
     >

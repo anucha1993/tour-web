@@ -235,7 +235,7 @@ function LoginContent() {
                   }}
                   className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                     !otpEnabled
-                      ? 'text-gray-400 cursor-not-allowed opacity-60'
+                      ? 'text-gray-500 cursor-not-allowed opacity-60'
                       : method === 'otp'
                         ? 'bg-white text-gray-900 shadow-sm'
                         : 'text-gray-500 hover:text-gray-700'
@@ -274,7 +274,7 @@ function LoginContent() {
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Mail className="h-5 w-5 text-gray-400" />
+                        <Mail className="h-5 w-5 text-gray-500" />
                       </div>
                       <input
                         id="login"
@@ -295,7 +295,7 @@ function LoginContent() {
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Lock className="h-5 w-5 text-gray-400" />
+                        <Lock className="h-5 w-5 text-gray-500" />
                       </div>
                       <input
                         id="password"
@@ -313,9 +313,9 @@ function LoginContent() {
                         className="absolute inset-y-0 right-0 pr-3 flex items-center"
                       >
                         {showPassword ? (
-                          <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                          <EyeOff className="h-5 w-5 text-gray-500 hover:text-gray-600" />
                         ) : (
-                          <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                          <Eye className="h-5 w-5 text-gray-500 hover:text-gray-600" />
                         )}
                       </button>
                     </div>
@@ -366,7 +366,7 @@ function LoginContent() {
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Phone className="h-5 w-5 text-gray-400" />
+                        <Phone className="h-5 w-5 text-gray-500" />
                       </div>
                       <input
                         id="phone"

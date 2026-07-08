@@ -502,7 +502,7 @@ export default function TourPackageDetailPage() {
                           <div className="p-3">
                             <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                               {tour.tour_code && (
-                                <span className="text-[10px] font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{tour.tour_code}</span>
+                                <span className="text-[10px] font-mono text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded">{tour.tour_code}</span>
                               )}
                               {tour.duration_days > 0 && (
                                 <span className="text-[10px] text-gray-500 flex items-center gap-0.5">
@@ -521,7 +521,7 @@ export default function TourPackageDetailPage() {
                                   ฿{price.toLocaleString()}
                                 </span>
                                 {originalPrice && (
-                                  <span className="text-xs text-gray-400 line-through">
+                                  <span className="text-xs text-gray-500 line-through">
                                     ฿{originalPrice.toLocaleString()}
                                   </span>
                                 )}

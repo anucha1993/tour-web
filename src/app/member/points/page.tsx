@@ -121,7 +121,7 @@ export default function MemberPointsPage() {
       case "spend":
         return "text-red-600";
       case "expire":
-        return "text-gray-400";
+        return "text-gray-500";
       case "adjust":
         return "text-blue-600";
       default:
@@ -230,7 +230,7 @@ export default function MemberPointsPage() {
               <p className="text-xl font-bold text-red-600 mt-1">
                 {summary.expiring_points.toLocaleString()}
               </p>
-              <p className="text-xs text-gray-400">ภายใน 30 วัน</p>
+              <p className="text-xs text-gray-500">ภายใน 30 วัน</p>
             </div>
           </div>
 
@@ -324,7 +324,7 @@ export default function MemberPointsPage() {
                   </div>
                 );
               }) : (
-                <p className="text-sm text-gray-400">ไม่มีกฎการให้คะแนนที่เปิดใช้งาน</p>
+                <p className="text-sm text-gray-500">ไม่มีกฎการให้คะแนนที่เปิดใช้งาน</p>
               )}
             </div>
           </div>
@@ -396,7 +396,7 @@ export default function MemberPointsPage() {
                       {txn.points > 0 ? "+" : ""}
                       {txn.points.toLocaleString()}
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-500">
                       คงเหลือ {txn.balance_after.toLocaleString()}
                     </p>
                   </div>

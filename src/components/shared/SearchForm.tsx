@@ -278,7 +278,7 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
               className={`${inputCls} pl-10 pr-10`}
             />
             {keyword && (
-              <button onClick={() => setKeyword("")} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 cursor-pointer">
+              <button onClick={() => setKeyword("")} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-600 cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             )}
@@ -296,7 +296,7 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
                   {matchingRecent.length > 0 && (
                     <>
                       {!keyword.trim() && (
-                        <div className="px-3 py-1.5 text-xs text-gray-400 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+                        <div className="px-3 py-1.5 text-xs text-gray-500 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
                           <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> ค้นหาล่าสุด</span>
                           <button onClick={(e) => { e.stopPropagation(); clearAllRecent(); }} className="text-blue-500 hover:text-blue-700 cursor-pointer">ลบทั้งหมด</button>
                         </div>
@@ -308,7 +308,7 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
                             onClick={() => searchWithKeyword(term)} onMouseEnter={() => setSelectedAutoIndex(idx)}>
                             <Clock className="w-4 h-4 text-gray-300 flex-shrink-0" />
                             <span className="flex-1 truncate">{keyword.trim() ? highlightMatch(term, keyword) : term}</span>
-                            <button onClick={(e) => { e.stopPropagation(); removeRecentSearch(term); }} className="opacity-0 group-hover:opacity-100 text-xs text-gray-400 hover:text-red-500 cursor-pointer flex-shrink-0">ลบ</button>
+                            <button onClick={(e) => { e.stopPropagation(); removeRecentSearch(term); }} className="opacity-0 group-hover:opacity-100 text-xs text-gray-500 hover:text-red-500 cursor-pointer flex-shrink-0">ลบ</button>
                           </div>
                         );
                       })}
@@ -317,7 +317,7 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
                   {apiSuggestions.length > 0 && (
                     <>
                       {!keyword.trim() && (
-                        <div className="px-3 py-1.5 text-xs text-gray-400 bg-gray-50 border-b border-gray-100 flex items-center gap-1">
+                        <div className="px-3 py-1.5 text-xs text-gray-500 bg-gray-50 border-b border-gray-100 flex items-center gap-1">
                           <TrendingUp className="w-3.5 h-3.5" /> ยอดนิยม
                         </div>
                       )}
@@ -361,11 +361,11 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
               {countrySearchText && (
-                <button onClick={handleClearCountry} className="p-1 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 cursor-pointer">
+                <button onClick={handleClearCountry} className="p-1 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-600 cursor-pointer">
                   <X className="w-4 h-4" />
                 </button>
               )}
-              <button onClick={() => setShowCountryDropdown(!showCountryDropdown)} className="p-1 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 cursor-pointer">
+              <button onClick={() => setShowCountryDropdown(!showCountryDropdown)} className="p-1 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-600 cursor-pointer">
                 <ChevronDown className={`w-4 h-4 transition-transform ${showCountryDropdown ? "rotate-180" : ""}`} />
               </button>
             </div>
@@ -384,11 +384,11 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
                       <img src={`https://flagcdn.com/w20/${c.iso2.toLowerCase()}.png`} alt="" className="w-5 h-3.5 object-cover rounded-sm" />
                       {c.name_th}
                     </span>
-                    <span className={`text-xs ${selectedCountry?.id === c.id ? "text-blue-100" : "text-gray-400"}`}>({c.tour_count})</span>
+                    <span className={`text-xs ${selectedCountry?.id === c.id ? "text-blue-100" : "text-gray-500"}`}>({c.tour_count})</span>
                   </div>
                 ))}
                 {filteredCountries.length === 0 && countrySearchText && (
-                  <div className="px-4 py-3 text-sm text-gray-400 text-center">ไม่พบประเทศที่ค้นหา</div>
+                  <div className="px-4 py-3 text-sm text-gray-500 text-center">ไม่พบประเทศที่ค้นหา</div>
                 )}
               </div>
             )}
@@ -441,17 +441,17 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
                 onClick={() => setShowDateDropdown(!showDateDropdown)}
                 className={`${inputCls} pl-10 pr-16 cursor-pointer text-sm min-h-[48px] flex items-center`}
               >
-                <span className={selectedDateLabel ? "text-gray-800" : "text-gray-400"}>
+                <span className={selectedDateLabel ? "text-gray-800" : "text-gray-500"}>
                   {selectedDateLabel || "เลือกช่วงวัน"}
                 </span>
               </div>
               <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
                 {selectedDateLabel && (
-                  <button onClick={(e) => { e.stopPropagation(); handleClearDate(); }} className="p-1 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 cursor-pointer">
+                  <button onClick={(e) => { e.stopPropagation(); handleClearDate(); }} className="p-1 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-600 cursor-pointer">
                     <X className="w-4 h-4" />
                   </button>
                 )}
-                <button onClick={() => setShowDateDropdown(!showDateDropdown)} className="p-1 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 cursor-pointer">
+                <button onClick={() => setShowDateDropdown(!showDateDropdown)} className="p-1 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-600 cursor-pointer">
                   <ChevronDown className={`w-4 h-4 transition-transform ${showDateDropdown ? "rotate-180" : ""}`} />
                 </button>
               </div>
@@ -506,17 +506,17 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
                 onClick={() => setShowPriceDropdown(!showPriceDropdown)}
                 className={`${inputCls} pl-10 pr-8 cursor-pointer text-sm min-h-[48px] flex items-center`}
               >
-                <span className={selectedPriceLabel ? "text-gray-800" : "text-gray-400"}>
+                <span className={selectedPriceLabel ? "text-gray-800" : "text-gray-500"}>
                   {selectedPriceLabel || "ทุกราคา"}
                 </span>
               </div>
               <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
                 {selectedPriceLabel && (
-                  <button onClick={(e) => { e.stopPropagation(); handleClearPrice(); }} className="p-1 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 cursor-pointer">
+                  <button onClick={(e) => { e.stopPropagation(); handleClearPrice(); }} className="p-1 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-600 cursor-pointer">
                     <X className="w-4 h-4" />
                   </button>
                 )}
-                <button onClick={() => setShowPriceDropdown(!showPriceDropdown)} className="p-1 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 cursor-pointer">
+                <button onClick={() => setShowPriceDropdown(!showPriceDropdown)} className="p-1 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-600 cursor-pointer">
                   <ChevronDown className={`w-4 h-4 transition-transform ${showPriceDropdown ? "rotate-180" : ""}`} />
                 </button>
               </div>

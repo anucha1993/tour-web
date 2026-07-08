@@ -34,7 +34,7 @@ export default function Error({
           ขออภัยในความไม่สะดวก ระบบเกิดข้อผิดพลาดชั่วคราว กรุณาลองใหม่อีกครั้ง
         </p>
         {error?.digest && (
-          <p className="mt-1 text-xs text-gray-400">รหัสอ้างอิง: {error.digest}</p>
+          <p className="mt-1 text-xs text-gray-500">รหัสอ้างอิง: {error.digest}</p>
         )}
 
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">

@@ -130,7 +130,7 @@ function RelatedBlogPosts({ cities, countryName }: {
                   {post.excerpt && (
                     <p className="text-xs text-gray-500 line-clamp-2 flex-1">{post.excerpt}</p>
                   )}
-                  <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                  <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
                       {formatDate(post.published_at)}
@@ -371,7 +371,7 @@ function ViatorGallery({ images, galleryImages, coverUrl, coverAlt, title }: {
               key={`m-placeholder-${idx}`}
               className="w-14 h-14 flex-shrink-0 rounded-md bg-gray-200 flex items-center justify-center"
             >
-              <ImageIcon className="w-4 h-4 text-gray-400" />
+              <ImageIcon className="w-4 h-4 text-gray-500" />
             </div>
           ))
         )}
@@ -529,7 +529,7 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
 
   if (periods.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-400">
+      <div className="text-center py-8 text-gray-500">
         <Calendar className="w-10 h-10 mx-auto mb-2 opacity-50" />
         <p>ไม่มีรอบเดินทางในขณะนี้</p>
       </div>
@@ -574,7 +574,7 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
               const periodBadges = getPeriodBadges(tourId, offer?.discount_adult || 0, period.id);
               const hasPromo = isPromoActive(offer);
               return (
-                <tr key={period.id} className={isClosed ? 'bg-gray-50 text-gray-400' : 'hover:bg-orange-50/40'}>
+                <tr key={period.id} className={isClosed ? 'bg-gray-50 text-gray-500' : 'hover:bg-orange-50/40'}>
                   <td className="px-4 py-3 text-left">
                     <div className="flex flex-wrap items-center gap-1.5 whitespace-nowrap">
                       <span className={`font-medium ${isClosed ? '' : 'text-gray-600'}`}>
@@ -607,7 +607,7 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
                     {offer ? (
                       <div>
                         {offer.discount_adult > 0 && (
-                          <div className="line-through text-gray-400 text-sm">{formatPeriodPrice(offer.price_adult)}</div>
+                          <div className="line-through text-gray-500 text-sm">{formatPeriodPrice(offer.price_adult)}</div>
                         )}
                         <span className={`font-bold ${offer.discount_adult > 0 ? 'text-red-600' : isClosed ? '' : 'text-gray-600'}`}>
                           {formatPeriodPrice(offer.net_price_adult)}
@@ -620,7 +620,7 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
                       (offer.net_price_single ?? offer.price_single) ? (
                         <div>
                           {offer.discount_single > 0 && offer.price_single && (
-                            <div className="line-through text-gray-400 text-sm">{formatPeriodPrice(offer.price_single)}</div>
+                            <div className="line-through text-gray-500 text-sm">{formatPeriodPrice(offer.price_single)}</div>
                           )}
                           <span className={`font-bold ${offer.discount_single > 0 ? 'text-red-600' : isClosed ? '' : 'text-gray-600'}`}>
                             {formatPeriodPrice(offer.net_price_single ?? offer.price_single)}
@@ -712,7 +712,7 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
                     <div>
                       <div className="text-xs text-gray-500">ราคาผู้ใหญ่</div>
                       {offer.discount_adult > 0 && (
-                        <div className="text-xs text-gray-400 line-through">{formatPeriodPrice(offer.price_adult)}</div>
+                        <div className="text-xs text-gray-500 line-through">{formatPeriodPrice(offer.price_adult)}</div>
                       )}
                       <div className={`font-bold ${offer.discount_adult > 0 ? 'text-red-600' : 'text-orange-500'}`}>
                         {formatPeriodPrice(offer.net_price_adult)}
@@ -723,7 +723,7 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
                       {(offer.net_price_single ?? offer.price_single) ? (
                         <>
                           {offer.discount_single > 0 && offer.price_single && (
-                            <div className="text-xs text-gray-400 line-through">{formatPeriodPrice(offer.price_single)}</div>
+                            <div className="text-xs text-gray-500 line-through">{formatPeriodPrice(offer.price_single)}</div>
                           )}
                           <div className={`font-bold ${offer.discount_single > 0 ? 'text-red-600' : 'text-gray-700'}`}>
                             {formatPeriodPrice(offer.net_price_single ?? offer.price_single)}
@@ -876,7 +876,7 @@ function ItinerarySection({ itineraries }: { itineraries: TourDetailItinerary[] 
                 <td className="px-3 py-3">
                   <div className="font-medium text-gray-800 group-hover:text-orange-600 transition-colors">{day.title}</div>
                   {day.description && (
-                    <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{day.description}</p>
+                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{day.description}</p>
                   )}
                 </td>
                 <td className="px-3 py-3">
@@ -886,11 +886,11 @@ function ItinerarySection({ itineraries }: { itineraries: TourDetailItinerary[] 
                         <span key={i} className="text-xs bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded font-medium">{p}</span>
                       ))}
                       {places.length > 2 && (
-                        <span className="text-xs text-gray-400">+{places.length - 2}</span>
+                        <span className="text-xs text-gray-500">+{places.length - 2}</span>
                       )}
                     </div>
                   ) : (
-                    <span className="text-xs text-gray-300">-</span>
+                    <span className="text-xs text-gray-500">-</span>
                   ); })()}
                 </td>
                 <td className="px-3 py-3 text-center">
@@ -925,7 +925,7 @@ function ItinerarySection({ itineraries }: { itineraries: TourDetailItinerary[] 
                       )}
                     </div>
                   ) : (
-                    <span className="text-xs text-gray-300">-</span>
+                    <span className="text-xs text-gray-500">-</span>
                   )}
                 </td>
               </tr>
@@ -950,7 +950,7 @@ function ItinerarySection({ itineraries }: { itineraries: TourDetailItinerary[] 
               </span>
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-gray-800 text-sm truncate">{day.title}</div>
-                <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-400">
+                <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
                   <span className="flex gap-0.5">
                     {day.has_breakfast && <Coffee className="w-3 h-3 text-green-500" />}
                     {day.has_lunch && <Sun className="w-3 h-3 text-green-500" />}
@@ -984,17 +984,17 @@ function ItinerarySection({ itineraries }: { itineraries: TourDetailItinerary[] 
             <div className="p-3 bg-gray-50 rounded-lg">
               <div className="text-xs text-gray-500 font-medium mb-1.5">อาหาร</div>
               <div className="flex gap-3">
-                <span className={`flex items-center gap-1 text-xs font-medium ${selected.has_breakfast ? 'text-green-600' : 'text-gray-300'}`}>
+                <span className={`flex items-center gap-1 text-xs font-medium ${selected.has_breakfast ? 'text-green-600' : 'text-gray-500'}`}>
                   <Coffee className="w-3.5 h-3.5" /> เช้า
                 </span>
-                <span className={`flex items-center gap-1 text-xs font-medium ${selected.has_lunch ? 'text-green-600' : 'text-gray-300'}`}>
+                <span className={`flex items-center gap-1 text-xs font-medium ${selected.has_lunch ? 'text-green-600' : 'text-gray-500'}`}>
                   <Sun className="w-3.5 h-3.5" /> เที่ยง
                 </span>
-                <span className={`flex items-center gap-1 text-xs font-medium ${selected.has_dinner ? 'text-green-600' : 'text-gray-300'}`}>
+                <span className={`flex items-center gap-1 text-xs font-medium ${selected.has_dinner ? 'text-green-600' : 'text-gray-500'}`}>
                   <Moon className="w-3.5 h-3.5" /> เย็น
                 </span>
               </div>
-              {selected.meals_note && <div className="text-xs text-gray-400 mt-1">{selected.meals_note}</div>}
+              {selected.meals_note && <div className="text-xs text-gray-500 mt-1">{selected.meals_note}</div>}
             </div>
 
             {/* Accommodation */}
@@ -1080,7 +1080,7 @@ function TransportSection({ transports }: { transports: TourDetail['transports']
           {t.flight_no && <span className="mr-2">{t.flight_no}</span>}
           {t.depart_time && <span>{t.depart_time}</span>}
           {t.arrive_time && <span> → {t.arrive_time}</span>}
-          {t.airline?.name && <span className="ml-2 text-gray-400">({t.airline.name})</span>}
+          {t.airline?.name && <span className="ml-2 text-gray-500">({t.airline.name})</span>}
         </div>
       </div>
     </div>
@@ -1305,7 +1305,7 @@ export default function TourDetailPage() {
           {/* ---- Title Section ---- */}
           <div className="p-4 sm:p-5">
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <span className="text-xs font-mono text-gray-400 bg-gray-50 px-2 py-0.5 rounded">{tour.tour_code}</span>
+              <span className="text-xs font-mono text-gray-500 bg-gray-50 px-2 py-0.5 rounded">{tour.tour_code}</span>
               {badgeInfo && <Badge color={badgeInfo.color}>{badgeInfo.text}</Badge>}
               {discountPercent > 0 && <Badge color="red">ลด {discountPercent}%</Badge>}
               {tour.discount_label && (
@@ -1321,7 +1321,7 @@ export default function TourDetailPage() {
             <div className="flex flex-wrap items-center gap-3 text-sm">
               {(tour.hotel_star || tour.hotel_star_max) && (
                 <div className="flex items-center gap-1">
-                  <Building2 className="w-4 h-4 text-gray-400" />
+                  <Building2 className="w-4 h-4 text-gray-500" />
                   {[...Array(tour.hotel_star || tour.hotel_star_max || 0)].map((_, i) => (
                     <Star key={i} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                   ))}
@@ -1473,7 +1473,7 @@ export default function TourDetailPage() {
                   {tour.min_price && <span className="text-sm text-gray-500">ต่อท่าน</span>}
                 </div>
                 {tour.discount_adult && tour.discount_adult > 0 && tour.price_adult && (
-                  <div className="text-sm text-gray-400">
+                  <div className="text-sm text-gray-500">
                     ราคาปกติ <span className="line-through">฿{tour.price_adult.toLocaleString()}</span>
                   </div>
                 )}
@@ -1508,11 +1508,11 @@ export default function TourDetailPage() {
                       <div className="flex items-center gap-1 text-xs font-semibold text-gray-800 flex-wrap">
                         <Plane className="w-3 h-3 text-orange-500 flex-shrink-0" />
                         <span>{new Date(selectedDisplayPeriod.start_date + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}</span>
-                        <ArrowRight className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                        <ArrowRight className="w-3 h-3 text-gray-500 flex-shrink-0" />
                         <span>{new Date(selectedDisplayPeriod.end_date + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}</span>
                       </div>
                     ) : (
-                      <div className="text-xs text-gray-400">ไม่มีรอบเดินทาง</div>
+                      <div className="text-xs text-gray-500">ไม่มีรอบเดินทาง</div>
                     )}
                   </button>
                   {/* Period dropdown list */}
@@ -1538,7 +1538,7 @@ export default function TourDetailPage() {
                               <div className="text-xs font-medium">
                                 {sD.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })} → {eD.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}
                               </div>
-                              <div className="text-xs text-gray-400">{isSoldOut ? 'เต็มแล้ว' : `ว่าง ${period.available} ที่`}</div>
+                              <div className="text-xs text-gray-500">{isSoldOut ? 'เต็มแล้ว' : `ว่าง ${period.available} ที่`}</div>
                             </div>
                             {isSelected && <Check className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />}
                           </button>
@@ -1551,7 +1551,7 @@ export default function TourDetailPage() {
                 <div className="flex-1 p-2 border border-gray-200 rounded-lg">
                   <div className="text-xs text-gray-500 mb-1">ที่นั่งว่าง</div>
                   <div className="text-sm font-medium flex items-center gap-1">
-                    <Users className={`w-4 h-4 ${selectedDisplayPeriod && selectedDisplayPeriod.available <= 5 && selectedDisplayPeriod.available > 0 ? 'text-red-400' : 'text-gray-400'}`} />
+                    <Users className={`w-4 h-4 ${selectedDisplayPeriod && selectedDisplayPeriod.available <= 5 && selectedDisplayPeriod.available > 0 ? 'text-red-400' : 'text-gray-500'}`} />
                     {selectedDisplayPeriod
                       ? <span className={selectedDisplayPeriod.available <= 5 && selectedDisplayPeriod.available > 0 ? 'text-red-500 font-bold' : ''}>
                           {selectedDisplayPeriod.available} ที่
@@ -1921,7 +1921,7 @@ export default function TourDetailPage() {
                 tour.itineraries.length > 0 ? (
                   <ItinerarySection itineraries={tour.itineraries} />
                 ) : (
-                  <div className="text-center py-8 text-gray-400">
+                  <div className="text-center py-8 text-gray-500">
                     <MapPin className="w-10 h-10 mx-auto mb-2 opacity-50" />
                     <p>ยังไม่มีโปรแกรมทัวร์รายวัน</p>
                   </div>
@@ -1962,7 +1962,7 @@ export default function TourDetailPage() {
                     </div>
                   )}
                   {!tour.inclusions && !tour.exclusions && !tour.conditions && (
-                    <div className="text-center py-8 text-gray-400">
+                    <div className="text-center py-8 text-gray-500">
                       <Shield className="w-10 h-10 mx-auto mb-2 opacity-50" />
                       <p>ยังไม่มีเงื่อนไข</p>
                     </div>

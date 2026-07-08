@@ -114,7 +114,7 @@ export default function MemberBookings() {
       {/* Loading State */}
       {loading && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
-          <ArrowPathIcon className="w-10 h-10 mx-auto text-gray-400 animate-spin" />
+          <ArrowPathIcon className="w-10 h-10 mx-auto text-gray-500 animate-spin" />
           <p className="text-gray-500 mt-4">กำลังโหลดข้อมูล...</p>
         </div>
       )}
@@ -131,7 +131,7 @@ export default function MemberBookings() {
       {!loading && !error && bookings.length === 0 && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
           <div className="w-20 h-20 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-            <ClipboardDocumentListIcon className="w-10 h-10 text-gray-400" />
+            <ClipboardDocumentListIcon className="w-10 h-10 text-gray-500" />
           </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">ยังไม่มีรายการจอง</h3>
           <p className="text-gray-500 mb-6">เมื่อคุณจองทัวร์ รายการจะแสดงที่นี่</p>
@@ -206,11 +206,11 @@ export default function MemberBookings() {
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
                       <div className="flex items-center gap-1.5 text-gray-600">
-                        <MapPinIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <MapPinIcon className="w-4 h-4 text-gray-500 flex-shrink-0" />
                         <span className="truncate">{booking.tour?.destination || "ไม่ระบุ"}</span>
                       </div>
                       <div className="flex items-center gap-1.5 text-gray-600">
-                        <CalendarIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <CalendarIcon className="w-4 h-4 text-gray-500 flex-shrink-0" />
                         <span className="truncate">
                           {booking.period
                             ? formatDateRange(booking.period.start_date, booking.period.end_date)
@@ -218,12 +218,12 @@ export default function MemberBookings() {
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5 text-gray-600">
-                        <UserGroupIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <UserGroupIcon className="w-4 h-4 text-gray-500 flex-shrink-0" />
                         <span>{getTotalPassengers(booking)} ท่าน</span>
                       </div>
                       <div className="text-right sm:text-left">
                         {isFlashSale && booking.flash_sale_item && (
-                          <span className="text-xs text-gray-400 line-through mr-1">
+                          <span className="text-xs text-gray-500 line-through mr-1">
                             ฿{(Number(booking.total_amount) / (1 - booking.flash_sale_item.discount_percent / 100)).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                           </span>
                         )}

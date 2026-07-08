@@ -86,7 +86,7 @@ function SidebarTourCard({ tour }: { tour: InternationalTourItem }) {
         <div className="mt-1.5">
           {originalPrice ? (
             <div className="flex items-baseline gap-1.5">
-              <span className="text-[11px] text-gray-400 line-through">฿{originalPrice.toLocaleString()}</span>
+              <span className="text-[11px] text-gray-500 line-through">฿{originalPrice.toLocaleString()}</span>
               <span className="text-base font-bold text-red-500">฿{price.toLocaleString()}</span>
             </div>
           ) : (

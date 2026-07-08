@@ -49,7 +49,7 @@ function FavoriteItem({ tour, onRemove }: { tour: FavoriteTourData; onRemove: (i
               ฿{tour.price.toLocaleString()}
             </span>
           ) : (
-            <span className="text-xs text-gray-400">สอบถามราคา</span>
+            <span className="text-xs text-gray-500">สอบถามราคา</span>
           )}
           <button
             onClick={(e) => {
@@ -123,7 +123,7 @@ export default function FavoritesDrawer() {
           </div>
           <button
             onClick={closeDrawer}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 text-gray-500 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
             aria-label="ปิด"
           >
             <X className="w-5 h-5" />
@@ -137,7 +137,7 @@ export default function FavoritesDrawer() {
               <Heart className="w-10 h-10 text-gray-300" />
             </div>
             <h3 className="text-lg font-semibold text-gray-700 mb-2">ยังไม่มีรายการโปรด</h3>
-            <p className="text-sm text-gray-400 mb-6">
+            <p className="text-sm text-gray-500 mb-6">
               กดไอคอน <Heart className="w-4 h-4 inline text-red-400" /> บนทัวร์ที่สนใจ<br />
               เพื่อบันทึกไว้ดูภายหลัง
             </p>
@@ -173,7 +173,7 @@ export default function FavoritesDrawer() {
                     clearFavorites();
                   }
                 }}
-                className="w-full py-2 text-xs text-gray-400 hover:text-red-500 transition-colors"
+                className="w-full py-2 text-xs text-gray-500 hover:text-red-500 transition-colors"
               >
                 ล้างรายการทั้งหมด
               </button>

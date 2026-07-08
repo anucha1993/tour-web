@@ -264,12 +264,12 @@ export default function TourSearchForm({
           {show.country && (
             <div className="flex-1 min-w-0 px-3 py-2.5 lg:py-3 relative" ref={countryRef}>
               <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
+                <MapPin className="w-4 h-4 text-gray-500 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="text-[14px] text-gray-600 leading-none mb-0.5">ประเทศ</div>
                   <input
                     type="text"
-                    className="w-full bg-transparent text-sm font-medium text-gray-800 focus:outline-none placeholder:text-gray-400 placeholder:font-normal truncate"
+                    className="w-full bg-transparent text-sm font-medium text-gray-800 focus:outline-none placeholder:text-gray-500 placeholder:font-normal truncate"
                     placeholder="ทุกประเทศ"
                     value={showCountryDrop ? countrySearch : (selectedCountryName || countrySearch)}
                     onChange={e => {
@@ -317,7 +317,7 @@ export default function TourSearchForm({
                     </button>
                   ))}
                   {filteredCountries.length === 0 && (
-                    <p className="text-xs text-gray-400 text-center py-3">ไม่พบประเทศ</p>
+                    <p className="text-xs text-gray-500 text-center py-3">ไม่พบประเทศ</p>
                   )}
                 </div>
               )}
@@ -328,12 +328,12 @@ export default function TourSearchForm({
           {show.search && (
             <div className="flex-1 min-w-0 px-3 py-2.5 lg:py-3 border-t lg:border-t-0 border-gray-200">
               <div className="flex items-center gap-2">
-                <Search className="w-4 h-4 text-gray-400 shrink-0" />
+                <Search className="w-4 h-4 text-gray-500 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="text-[14px] text-gray-600 leading-none mb-0.5">โปรแกรมทัวร์</div>
                   <input
                     type="text"
-                    className="w-full bg-transparent text-sm font-medium text-gray-800 focus:outline-none placeholder:text-gray-400 placeholder:font-normal"
+                    className="w-full bg-transparent text-sm font-medium text-gray-800 focus:outline-none placeholder:text-gray-500 placeholder:font-normal"
                     placeholder="ค้นหา โปรแกรมทัวร์"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
@@ -353,12 +353,12 @@ export default function TourSearchForm({
           {show.airline && (
             <div className="flex-1 min-w-0 px-3 py-2.5 lg:py-3 border-t lg:border-t-0 border-gray-200 relative" ref={airlineRef}>
               <div className="flex items-center gap-2">
-                <Plane className="w-4 h-4 text-gray-400 shrink-0" />
+                <Plane className="w-4 h-4 text-gray-500 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="text-[14px] text-gray-600 leading-none mb-0.5">สายการบิน</div>
                   <input
                     type="text"
-                    className="w-full bg-transparent text-sm font-medium text-gray-800 focus:outline-none placeholder:text-gray-400 placeholder:font-normal truncate"
+                    className="w-full bg-transparent text-sm font-medium text-gray-800 focus:outline-none placeholder:text-gray-500 placeholder:font-normal truncate"
                     placeholder="สายการบินทั้งหมด"
                     value={showAirlineDrop ? airlineSearch : (selectedAirlineName || airlineSearch)}
                     onChange={e => {
@@ -406,7 +406,7 @@ export default function TourSearchForm({
                     </button>
                   ))}
                   {filteredAirlines.length === 0 && (
-                    <p className="text-xs text-gray-400 text-center py-3">ไม่พบสายการบิน</p>
+                    <p className="text-xs text-gray-500 text-center py-3">ไม่พบสายการบิน</p>
                   )}
                 </div>
               )}
@@ -417,10 +417,10 @@ export default function TourSearchForm({
           {show.month && (
             <div className="flex-1 min-w-0 px-3 py-2.5 lg:py-3 border-t lg:border-t-0 border-gray-200 relative" ref={monthRef}>
               <div className="flex items-center gap-2 cursor-pointer" onClick={() => setShowMonthDrop(!showMonthDrop)}>
-                <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
+                <Calendar className="w-4 h-4 text-gray-500 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="text-[14px] text-gray-600 leading-none mb-0.5">เดือนที่เดินทาง</div>
-                  <div className={`text-sm font-medium truncate ${monthLabel ? 'text-gray-800' : 'text-gray-400'}`}>
+                  <div className={`text-sm font-medium truncate ${monthLabel ? 'text-gray-800' : 'text-gray-500'}`}>
                     {monthLabel || 'วันเดินทางทั้งหมด'}
                   </div>
                 </div>
@@ -448,7 +448,7 @@ export default function TourSearchForm({
                       ))}
                     </div>
                   ) : (
-                    <p className="text-xs text-gray-400 text-center py-2">ไม่มีรอบเดินทาง</p>
+                    <p className="text-xs text-gray-500 text-center py-2">ไม่มีรอบเดินทาง</p>
                   )}
                   {selectedMonths.length > 0 && (
                     <div className="flex justify-between items-center mt-2.5 pt-2 border-t border-gray-100">
@@ -464,7 +464,7 @@ export default function TourSearchForm({
           {/* Clear + Search button */}
           <div className="flex items-center gap-2 px-3 py-2.5 lg:py-3 border-t lg:border-t-0 border-gray-200 shrink-0">
             {hasActive && (
-              <button onClick={handleClear} className="text-xs text-gray-400 hover:text-gray-600 whitespace-nowrap">
+              <button onClick={handleClear} className="text-xs text-gray-500 hover:text-gray-600 whitespace-nowrap">
                 Clear
               </button>
             )}
@@ -514,7 +514,7 @@ export default function TourSearchForm({
       {/* ═══ Festival / Holiday badges ═══ */}
       {show.festival && (filters.festivals ?? []).length > 0 && (
         <div className="flex flex-wrap gap-1.5 items-center">
-          <span className="text-xs text-gray-400">🎉 เทศกาล:</span>
+          <span className="text-xs text-gray-500">🎉 เทศกาล:</span>
           {(filters.festivals ?? []).map((f) => (
             <button
               key={f.id}
@@ -542,7 +542,7 @@ export default function TourSearchForm({
       {/* ═══ Promotion badges ═══ */}
       {show.promotion && (filters.promotions ?? []).length > 0 && (
         <div className="flex flex-wrap gap-1.5 items-center">
-          <span className="text-xs text-gray-400">🏷️ โปรโมชั่น:</span>
+          <span className="text-xs text-gray-500">🏷️ โปรโมชั่น:</span>
           {(filters.promotions ?? []).map((name) => (
             <button
               key={name}
@@ -571,7 +571,7 @@ export default function TourSearchForm({
       {/* ═══ Theme badges ═══ */}
       {show.theme && (filters.themes ?? []).length > 0 && (
         <div className="flex flex-wrap gap-1.5 items-center">
-          <span className="text-xs text-gray-400">📂 หมวดหมู่:</span>
+          <span className="text-xs text-gray-500">📂 หมวดหมู่:</span>
           {(filters.themes ?? []).map((name) => (
             <button
               key={name}
@@ -605,7 +605,7 @@ export default function TourSearchForm({
         const hasMore = all.length > LIMIT;
         return (
           <div className="flex flex-wrap gap-1.5 items-center">
-            <span className="text-xs text-gray-400">⭐ ไฮไลท์พิเศษ:</span>
+            <span className="text-xs text-gray-500">⭐ ไฮไลท์พิเศษ:</span>
             {visible.map((name) => (
               <button
                 key={name}
@@ -645,7 +645,7 @@ export default function TourSearchForm({
         <button
           type="button"
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="flex items-center gap-1 text-xs text-gray-400 hover:text-orange-500 transition-colors"
+          className="flex items-center gap-1 text-xs text-gray-500 hover:text-orange-500 transition-colors"
         >
           <SlidersHorizontal className="w-3 h-3" />
           ตัวกรองเพิ่มเติม
@@ -723,7 +723,7 @@ export default function TourSearchForm({
 
           {/* Apply row */}
           <div className="flex justify-end gap-2 mt-3 pt-3 border-t border-gray-100">
-            <button type="button" onClick={() => { handleClear(); setShowAdvanced(false); }} className="text-xs text-gray-400 hover:text-gray-600 px-3 py-1.5">ล้างทั้งหมด</button>
+            <button type="button" onClick={() => { handleClear(); setShowAdvanced(false); }} className="text-xs text-gray-500 hover:text-gray-600 px-3 py-1.5">ล้างทั้งหมด</button>
             <button type="button" onClick={handleSearch} className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors">ค้นหา</button>
           </div>
         </div>

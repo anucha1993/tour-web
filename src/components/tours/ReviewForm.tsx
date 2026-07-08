@@ -272,7 +272,7 @@ export default function ReviewForm({ tourSlug, onSuccess, onCancel }: ReviewForm
           className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
         />
         <div className="flex justify-end mt-1">
-          <span className={`text-xs ${comment.length > 180 ? 'text-red-500' : 'text-gray-400'}`}>
+          <span className={`text-xs ${comment.length > 180 ? 'text-red-500' : 'text-gray-500'}`}>
             {comment.length}/200
           </span>
         </div>

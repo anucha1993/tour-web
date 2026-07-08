@@ -77,7 +77,7 @@ function PackageCard({ pkg }: { pkg: TourPackagePublic }) {
               </span>
             ))}
             {pkg.hashtags.length > 5 && (
-              <span className="text-xs text-gray-400">+{pkg.hashtags.length - 5}</span>
+              <span className="text-xs text-gray-500">+{pkg.hashtags.length - 5}</span>
             )}
           </div>
         )}
@@ -248,7 +248,7 @@ function TourPackagesContent() {
                     ) : (
                       <span className="flex-1 text-left text-gray-500">ทุกประเทศ</span>
                     )}
-                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showCountryDropdown ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${showCountryDropdown ? 'rotate-180' : ''}`} />
                   </button>
                   
                   {showCountryDropdown && (

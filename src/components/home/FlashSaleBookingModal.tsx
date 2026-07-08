@@ -273,7 +273,7 @@ export default function FlashSaleBookingModal({ item, allItems = [], isOpen, onC
                 <span className="text-xl font-bold text-red-500">฿{Number(bookingResult.total_amount).toLocaleString()}</span>
               </div>
               <p className="text-sm text-gray-500 mt-4">สถานะ: <span className="font-semibold text-orange-500">{bookingResult.status_label}</span></p>
-              <p className="text-xs text-gray-400 mt-2">กรุณารอเจ้าหน้าที่ติดต่อกลับเพื่อยืนยันการจอง</p>
+              <p className="text-xs text-gray-500 mt-2">กรุณารอเจ้าหน้าที่ติดต่อกลับเพื่อยืนยันการจอง</p>
               <button
                 onClick={() => { setBookingResult(null); onClose(); }}
                 className="mt-6 px-8 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition cursor-pointer"
@@ -310,7 +310,7 @@ export default function FlashSaleBookingModal({ item, allItems = [], isOpen, onC
             <div className="text-right flex-shrink-0">
               <div className="flex items-center gap-1.5">
                 {originalPrice > flashPrice && (
-                  <span className="text-xs text-gray-400 line-through">฿{originalPrice.toLocaleString()}</span>
+                  <span className="text-xs text-gray-500 line-through">฿{originalPrice.toLocaleString()}</span>
                 )}
                 <span className="text-lg font-bold text-red-500">฿{flashPrice.toLocaleString()}</span>
               </div>
@@ -359,7 +359,7 @@ export default function FlashSaleBookingModal({ item, allItems = [], isOpen, onC
                         ฿{Number(si.flash_price).toLocaleString()}
                       </span>
                       {siRemaining !== null && (
-                        <span className="text-[10px] text-gray-400">เหลือ {siRemaining} ที่</span>
+                        <span className="text-[10px] text-gray-500">เหลือ {siRemaining} ที่</span>
                       )}
                     </div>
                   </button>
@@ -480,7 +480,7 @@ export default function FlashSaleBookingModal({ item, allItems = [], isOpen, onC
                           ))}
                         </div>
                       </div>
-                      <span className="text-xs text-gray-400">ไม่มีค่าใช้จ่าย</span>
+                      <span className="text-xs text-gray-500">ไม่มีค่าใช้จ่าย</span>
                     </div>
                   </div>
                   <div className="flex justify-center">
@@ -528,7 +528,7 @@ export default function FlashSaleBookingModal({ item, allItems = [], isOpen, onC
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     placeholder="ชื่อผู้ติดต่อ"
-                    className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-red-400 focus:ring-1 focus:ring-red-200 outline-none transition placeholder:text-gray-400"
+                    className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-red-400 focus:ring-1 focus:ring-red-200 outline-none transition placeholder:text-gray-500"
                   />
                 </div>
                 <div>
@@ -538,7 +538,7 @@ export default function FlashSaleBookingModal({ item, allItems = [], isOpen, onC
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     placeholder="นามสกุล"
-                    className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-red-400 focus:ring-1 focus:ring-red-200 outline-none transition placeholder:text-gray-400"
+                    className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-red-400 focus:ring-1 focus:ring-red-200 outline-none transition placeholder:text-gray-500"
                   />
                 </div>
               </div>
@@ -553,7 +553,7 @@ export default function FlashSaleBookingModal({ item, allItems = [], isOpen, onC
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="อีเมล"
                     disabled={memberHasRealEmail}
-                    className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-red-400 focus:ring-1 focus:ring-red-200 outline-none transition disabled:bg-gray-50 placeholder:text-gray-400"
+                    className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-red-400 focus:ring-1 focus:ring-red-200 outline-none transition disabled:bg-gray-50 placeholder:text-gray-500"
                   />
                 </div>
                 <div>
@@ -564,7 +564,7 @@ export default function FlashSaleBookingModal({ item, allItems = [], isOpen, onC
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="เบอร์โทรศัพท์"
                     disabled={memberHasPhone}
-                    className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-red-400 focus:ring-1 focus:ring-red-200 outline-none transition disabled:bg-gray-50 placeholder:text-gray-400"
+                    className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-red-400 focus:ring-1 focus:ring-red-200 outline-none transition disabled:bg-gray-50 placeholder:text-gray-500"
                   />
                 </div>
               </div>
@@ -585,7 +585,7 @@ export default function FlashSaleBookingModal({ item, allItems = [], isOpen, onC
                   onChange={(e) => setSpecialRequest(e.target.value)}
                   placeholder="ความต้องการพิเศษ"
                   rows={3}
-                  className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-red-400 focus:ring-1 focus:ring-red-200 outline-none transition resize-none placeholder:text-gray-400"
+                  className="mt-1.5 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-red-400 focus:ring-1 focus:ring-red-200 outline-none transition resize-none placeholder:text-gray-500"
                 />
               </div>
 

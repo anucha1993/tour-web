@@ -96,7 +96,7 @@ export default function PaymentChannelsPage() {
             <Link href="/" className="text-gray-500 hover:text-blue-600">
               หน้าแรก
             </Link>
-            <span className="text-gray-400">/</span>
+            <span className="text-gray-500">/</span>
             <span className="text-gray-900">ช่องทางการชำระเงิน</span>
           </nav>
         </div>

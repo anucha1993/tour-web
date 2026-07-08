@@ -141,14 +141,14 @@ function ReviewCard({ review }: { review: TourReview }) {
                   {review.reviewer_name}
                 </div>
                 {tourTitle && (
-                  <div className="text-xs text-gray-400 truncate">ทัวร์: {tourTitle}</div>
+                  <div className="text-xs text-gray-500 truncate">ทัวร์: {tourTitle}</div>
                 )}
               </div>
             </div>
 
             {/* Stats + read more */}
             <div className="flex items-center justify-between mt-3">
-              <div className="flex items-center gap-3 text-xs text-gray-400">
+              <div className="flex items-center gap-3 text-xs text-gray-500">
                 <span className="flex items-center gap-1">
                   <Eye className="w-3.5 h-3.5" />
                   {(review.views_count || 0).toLocaleString()}
@@ -346,12 +346,12 @@ export default function ReviewsPage() {
                     onChange={e => setSearchInput(e.target.value)}
                     className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-100 outline-none text-sm"
                   />
-                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Search className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
                   {searchInput && (
                     <button
                       type="button"
                       onClick={() => { setSearchInput(''); setSearchQuery(''); setPage(1); }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-600"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -402,9 +402,9 @@ export default function ReviewsPage() {
                     className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition"
                   >
                     <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
-                      <Star className="w-4 h-4 text-gray-400" /> คะแนน
+                      <Star className="w-4 h-4 text-gray-500" /> คะแนน
                     </h3>
-                    {openSections.rating ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                    {openSections.rating ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
                   </button>
                   {openSections.rating && (
                     <div className="border-t border-gray-100 px-4 py-3">
@@ -440,7 +440,7 @@ export default function ReviewsPage() {
                                   style={{ width: `${pct}%` }}
                                 />
                               </div>
-                              <span className={`w-8 text-right text-xs ${isActive ? 'text-orange-600 font-semibold' : 'text-gray-400'}`}>{count}</span>
+                              <span className={`w-8 text-right text-xs ${isActive ? 'text-orange-600 font-semibold' : 'text-gray-500'}`}>{count}</span>
                             </button>
                           );
                         })}
@@ -457,7 +457,7 @@ export default function ReviewsPage() {
                   className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition"
                 >
                   <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">ประเภทลูกค้า</h3>
-                  {openSections.tourType ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                  {openSections.tourType ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
                 </button>
                 {openSections.tourType && (
                   <div className="border-t border-gray-100">
@@ -501,7 +501,7 @@ export default function ReviewsPage() {
                   className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition"
                 >
                   <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">เรียงตาม</h3>
-                  {openSections.sort ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                  {openSections.sort ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
                 </button>
                 {openSections.sort && (
                   <div className="border-t border-gray-100">
@@ -536,7 +536,7 @@ export default function ReviewsPage() {
               <div className="text-center py-20">
                 <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-gray-600 mb-2">ไม่พบรีวิว</h3>
-                <p className="text-gray-400 mb-4">ลองเปลี่ยนตัวกรองหรือคำค้นหา</p>
+                <p className="text-gray-500 mb-4">ลองเปลี่ยนตัวกรองหรือคำค้นหา</p>
                 {isFiltered && (
                   <button
                     onClick={clearAllFilters}
@@ -580,7 +580,7 @@ export default function ReviewsPage() {
                       }, [])
                       .map((item, idx) =>
                         typeof item === 'string' ? (
-                          <span key={`dots-${idx}`} className="px-2 text-gray-400">...</span>
+                          <span key={`dots-${idx}`} className="px-2 text-gray-500">...</span>
                         ) : (
                           <button
                             key={item}

@@ -137,7 +137,7 @@ export default function ReviewSection({ tourSlug }: ReviewSectionProps) {
       {loading && !summary ? (
         <div className="text-center py-12">
           <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm text-gray-400 mt-3">กำลังโหลดรีวิว...</p>
+          <p className="text-sm text-gray-500 mt-3">กำลังโหลดรีวิว...</p>
         </div>
       ) : summary ? (
         <TourReviewsDisplay

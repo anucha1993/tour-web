@@ -253,7 +253,7 @@ export default function MemberReviews() {
           <div className="px-6 py-4 border-b bg-gray-50 flex items-center justify-between">
             <h2 className="text-base font-semibold text-gray-900">เขียนรีวิวทัวร์</h2>
             <button onClick={() => { resetForm(); setShowWriteForm(false); }} className="p-1 hover:bg-gray-200 rounded-lg">
-              <XMarkIcon className="w-5 h-5 text-gray-400" />
+              <XMarkIcon className="w-5 h-5 text-gray-500" />
             </button>
           </div>
 
@@ -285,12 +285,12 @@ export default function MemberReviews() {
                   </button>
                 </div>
               ) : loadingEligible ? (
-                <div className="px-4 py-3 text-sm text-gray-400 text-center border border-gray-200 rounded-xl">กำลังโหลดรายการทัวร์...</div>
+                <div className="px-4 py-3 text-sm text-gray-500 text-center border border-gray-200 rounded-xl">กำลังโหลดรายการทัวร์...</div>
               ) : eligibleTours.length === 0 ? (
                 <div className="px-4 py-6 text-sm text-gray-500 text-center border border-dashed border-gray-300 rounded-xl bg-gray-50">
                   <ChatBubbleLeftRightIcon className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                   <div>ยังไม่มีทัวร์ที่จองแล้วให้รีวิว</div>
-                  <div className="text-xs text-gray-400 mt-1">คุณต้องเคยจองและยืนยันการจองทัวร์ก่อน จึงจะรีวิวได้</div>
+                  <div className="text-xs text-gray-500 mt-1">คุณต้องเคยจองและยืนยันการจองทัวร์ก่อน จึงจะรีวิวได้</div>
                 </div>
               ) : (
                 <div className="border border-gray-200 rounded-xl divide-y max-h-64 overflow-y-auto">
@@ -329,7 +329,7 @@ export default function MemberReviews() {
 
             {/* Profile Photo */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">รูปโปรไฟล์ <span className="text-xs text-gray-400">(ไม่บังคับ, ไม่เกิน 2MB)</span></label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">รูปโปรไฟล์ <span className="text-xs text-gray-500">(ไม่บังคับ, ไม่เกิน 2MB)</span></label>
               <div className="flex items-center gap-4">
                 <label className="relative block w-16 h-16 rounded-full overflow-hidden border-2 border-dashed border-gray-300 cursor-pointer hover:border-blue-400 transition-colors bg-gray-50 flex-shrink-0">
                   {avatarFile ? (
@@ -337,7 +337,7 @@ export default function MemberReviews() {
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center">
                       <PhotoIcon className="w-5 h-5 text-gray-300" />
-                      <span className="text-[8px] text-gray-400 mt-0.5">เลือกรูป</span>
+                      <span className="text-[8px] text-gray-500 mt-0.5">เลือกรูป</span>
                     </div>
                   )}
                   <input
@@ -357,14 +357,14 @@ export default function MemberReviews() {
                     >ลบรูป</button>
                   </div>
                 ) : (
-                  <p className="text-xs text-gray-400">อัปโหลดรูปโปรไฟล์ของคุณเพื่อแสดงในรีวิว</p>
+                  <p className="text-xs text-gray-500">อัปโหลดรูปโปรไฟล์ของคุณเพื่อแสดงในรีวิว</p>
                 )}
               </div>
             </div>
 
             {/* Overall Rating (auto-computed) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">คะแนนรวม <span className="text-xs text-gray-400">(คำนวณจากค่าเฉลี่ย)</span></label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">คะแนนรวม <span className="text-xs text-gray-500">(คำนวณจากค่าเฉลี่ย)</span></label>
               {(() => {
                 const catVals = Object.values(categoryRatings).map(Number).filter(v => v > 0);
                 const avg = catVals.length ? parseFloat((catVals.reduce((a, b) => a + b, 0) / catVals.length).toFixed(1)) : 0;
@@ -387,7 +387,7 @@ export default function MemberReviews() {
                       })}
                     </div>
                     {avg > 0 && <span className="text-sm font-semibold text-yellow-600 ml-1">{avg}/5</span>}
-                    {avg === 0 && <span className="text-sm text-gray-400 ml-1">ยังไม่มีคะแนน</span>}
+                    {avg === 0 && <span className="text-sm text-gray-500 ml-1">ยังไม่มีคะแนน</span>}
                   </div>
                 );
               })()}
@@ -417,7 +417,7 @@ export default function MemberReviews() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
                   <HashtagIcon className="w-4 h-4" />
-                  แฮชแท็ก <span className="text-xs text-gray-400">(ไม่บังคับ)</span>
+                  แฮชแท็ก <span className="text-xs text-gray-500">(ไม่บังคับ)</span>
                 </label>
                 {/* Selected tags */}
                 {selectedTags.length > 0 && (
@@ -479,14 +479,14 @@ export default function MemberReviews() {
                 maxLength={200}
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               />
-              <div className="text-xs text-gray-400 text-right mt-1">{comment.length}/200</div>
+              <div className="text-xs text-gray-500 text-right mt-1">{comment.length}/200</div>
             </div>
 
             {/* Review Images */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 รูปภาพรีวิว <span className="text-red-500">*</span>
-                <span className="text-xs text-gray-400 ml-1">(อย่างน้อย 1 รูป, สูงสุด 6 รูป, ภาพละไม่เกิน 5MB)</span>
+                <span className="text-xs text-gray-500 ml-1">(อย่างน้อย 1 รูป, สูงสุด 6 รูป, ภาพละไม่เกิน 5MB)</span>
               </label>
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
                 {reviewImages.map((file, idx) => (
@@ -504,7 +504,7 @@ export default function MemberReviews() {
                 {reviewImages.length < 6 && (
                   <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-blue-400 transition-colors">
                     <PhotoIcon className="w-6 h-6 text-gray-300 mb-1" />
-                    <span className="text-[10px] text-gray-400">เพิ่มรูป</span>
+                    <span className="text-[10px] text-gray-500">เพิ่มรูป</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -569,7 +569,7 @@ export default function MemberReviews() {
         <div className="text-center py-16">
           <ChatBubbleLeftRightIcon className="w-16 h-16 text-gray-200 mx-auto mb-4" />
           <h3 className="text-gray-500 font-medium mb-1">ยังไม่มีรีวิว</h3>
-          <p className="text-sm text-gray-400">เขียนรีวิวเพื่อแบ่งปันประสบการณ์ทัวร์ของคุณ</p>
+          <p className="text-sm text-gray-500">เขียนรีวิวเพื่อแบ่งปันประสบการณ์ทัวร์ของคุณ</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -585,7 +585,7 @@ export default function MemberReviews() {
                       <h3 className="text-sm font-semibold text-gray-900 truncate">
                         {review.tour?.tour_name || review.tour?.title || review.program_name || "ทัวร์"}
                       </h3>
-                      <div className="text-xs text-gray-400 mt-0.5">
+                      <div className="text-xs text-gray-500 mt-0.5">
                         {new Date(review.created_at).toLocaleDateString("th-TH", {
                           day: "numeric",
                           month: "long",
