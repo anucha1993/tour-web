@@ -15,9 +15,13 @@ import OrganizationJsonLd from "@/components/OrganizationJsonLd";
 import { buildMetadata } from "@/lib/seo";
 
 const notoSansThai = localFont({
-  src: "./fonts/NotoSansThai-VariableFont_wdth,wght.ttf",
+  src: "./fonts/NotoSansThai-VariableFont.woff2",
   variable: "--font-noto-sans-thai",
-  display: "swap",
+  // "optional" + preload eliminates font-swap layout shift (CLS): the browser
+  // uses the font if it arrives within the short block period, otherwise keeps
+  // the fallback for this load without ever swapping. The font is small (61KB)
+  // and preloaded, so it almost always wins the race on real connections.
+  display: "optional",
 });
 
 // Site-wide default metadata is pulled from the admin "global" SEO settings in the DB.

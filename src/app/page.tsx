@@ -9,6 +9,7 @@ import HeroSlider from "@/components/home/HeroSlider";
 import PopularCountries from "@/components/home/PopularCountries";
 import SeoJsonLd from "@/components/SeoJsonLd";
 import { buildMetadata } from "@/lib/seo";
+import { API_URL } from "@/lib/config";
 
 // SSR-safe dynamic imports (Server Component compatible)
 const Promotions = dynamic(() => import("@/components/home/Promotions"));
@@ -24,7 +25,39 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata("home", { path: "" });
 }
 
-export default function HomePage() {
+interface HeroSlide {
+  id: number;
+  url: string;
+  alt: string;
+  title: string | null;
+  subtitle: string | null;
+  button_text: string | null;
+  button_link: string | null;
+  sort_order: number;
+}
+
+/**
+ * Fetch hero slides on the server so the first slide's image is present in the
+ * initial HTML. This turns the hero into a real, preloadable LCP element and
+ * removes the client fetch -> hydrate -> render chain. Cached for 5 minutes.
+ * Fails soft: on any error we return [] and the client component fetches instead.
+ */
+async function getHeroSlides(): Promise<HeroSlide[]> {
+  try {
+    const res = await fetch(`${API_URL}/hero-slides/public`, {
+      next: { revalidate: 300 },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data?.success && Array.isArray(data.data) ? data.data : [];
+  } catch {
+    return [];
+  }
+}
+
+export default async function HomePage() {
+  const heroSlides = await getHeroSlides();
+
   return (
     <>
       {/* JSON-LD structured data (from admin SEO) */}
@@ -34,13 +67,17 @@ export default function HomePage() {
       <PopupModal />
 
       {/* Hero Section with Slider */}
-      <HeroSlider />
+      <HeroSlider initialSlides={heroSlides} />
 
       {/* Flash Sale */}
       <FlashSale />
 
-      {/* Customer Reviews */}
-      <CustomerReviews />
+      {/* Customer Reviews — reserve space so this ssr:false section doesn't
+          push content down when it appears on the client (prevents CLS).
+          Heights measured per breakpoint: ~470 (mobile) / ~504 (md) / ~461-501 (lg+). */}
+      <div className="min-h-[480px] md:min-h-[515px] lg:min-h-[510px]">
+        <CustomerReviews />
+      </div>
 
       {/* Promotions Carousel */}
       <Promotions />
@@ -54,8 +91,12 @@ export default function HomePage() {
       {/* Recommended Tours - Dynamic from API */}
       <RecommendedTours />
 
-      {/* Why Choose Us */}
-      <WhyChooseUs />
+      {/* Why Choose Us — reserve space (prevents CLS). Heights vary a lot by
+          breakpoint because the cards stack on mobile: ~952 (mobile) /
+          ~584 (md) / ~436 (lg+). */}
+      <div className="min-h-[965px] md:min-h-[595px] lg:min-h-[445px]">
+        <WhyChooseUs />
+      </div>
 
       {/* Our Clients */}
       <OurClients />

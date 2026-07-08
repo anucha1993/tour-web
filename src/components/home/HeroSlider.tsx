@@ -1,39 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { API_URL } from "@/lib/config";
-
-// Lazy load SearchForm - it pulls in api.ts (1500+ lines)
-const SearchForm = dynamic(() => import("@/components/shared/SearchForm"), {
-  ssr: false,
-  loading: () => (
-    <div className="bg-white rounded-2xl shadow-2xl p-4 lg:p-6 max-w-6xl">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="md:col-span-2">
-          <div className="h-4 bg-gray-200 rounded w-24 mb-2" />
-          <div className="h-12 bg-gray-200 rounded-lg" />
-        </div>
-        <div>
-          <div className="h-4 bg-gray-200 rounded w-32 mb-2" />
-          <div className="h-12 bg-gray-200 rounded-lg" />
-        </div>
-        <div className="flex items-end">
-          <div className="h-12 bg-orange-300 rounded-lg w-full" />
-        </div>
-      </div>
-      <div className="mt-4 pt-4 border-t border-gray-100 flex gap-2">
-        <div className="h-4 bg-gray-200 rounded w-16" />
-        <div className="h-4 bg-gray-200 rounded w-12" />
-        <div className="h-4 bg-gray-200 rounded w-12" />
-        <div className="h-4 bg-gray-200 rounded w-12" />
-      </div>
-    </div>
-  ),
-});
+// Import SearchForm directly (not next/dynamic) so it is server-rendered as
+// part of the hero's initial HTML. next/dynamic inside a client component
+// always defers to a client-side skeleton swap, which caused layout shift
+// (CLS). The form is critical above-the-fold content, so shipping it in the
+// initial chunk is the right trade-off (TBT has plenty of headroom).
+import SearchForm from "@/components/shared/SearchForm";
 
 interface HeroSlide {
   id: number;
@@ -46,13 +23,26 @@ interface HeroSlide {
   sort_order: number;
 }
 
-export default function HeroSlider() {
-  const [slides, setSlides] = useState<HeroSlide[]>([]);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+interface HeroSliderProps {
+  /**
+   * Slides fetched on the server and passed in from the page.
+   * When provided, the first slide's <Image priority> is rendered in the
+   * initial SSR HTML so it becomes a proper (preloadable) LCP element and
+   * we skip the client-side fetch + loading skeleton entirely.
+   */
+  initialSlides?: HeroSlide[];
+}
 
-  // Fetch slides from API
+export default function HeroSlider({ initialSlides }: HeroSliderProps = {}) {
+  const hasInitial = Boolean(initialSlides && initialSlides.length > 0);
+  const [slides, setSlides] = useState<HeroSlide[]>(initialSlides ?? []);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isLoading, setIsLoading] = useState(!hasInitial);
+
+  // Fetch slides from API only when the server didn't already provide them
+  // (fallback path — keeps the component working if the SSR fetch failed).
   useEffect(() => {
+    if (hasInitial) return;
     const fetchSlides = async () => {
       try {
         const response = await fetch(`${API_URL}/hero-slides/public`);
@@ -67,7 +57,7 @@ export default function HeroSlider() {
       }
     };
     fetchSlides();
-  }, []);
+  }, [hasInitial]);
 
   // Auto-play slider
   useEffect(() => {

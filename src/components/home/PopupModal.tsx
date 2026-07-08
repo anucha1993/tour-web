@@ -199,7 +199,8 @@ export default function PopupModal() {
           </button>
         )}
 
-        {/* Image */}
+        {/* Image — popup shows after a delay and is never the LCP element,
+            so load it lazily to avoid competing with the hero image. */}
         {currentPopup.image_url && (
           <div className="relative w-full">
             <Image
@@ -208,7 +209,8 @@ export default function PopupModal() {
               width={currentPopup.width || 600}
               height={currentPopup.height || 400}
               className="w-full h-auto object-cover"
-              priority
+              loading="lazy"
+              sizes="(max-width: 512px) 100vw, 512px"
             />
           </div>
         )}
