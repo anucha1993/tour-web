@@ -354,7 +354,7 @@ export default function AboutPage() {
             ด้วยประสบการณ์และความเชี่ยวชาญ เราพร้อมดูแลทุกทริปของคุณ
           </p>
           <div className="flex items-center justify-center gap-4 flex-wrap">
-            <Link href="/tours" className="bg-white text-orange-600 px-8 py-3 rounded-lg font-semibold hover:bg-orange-50 transition">
+            <Link href="/tours/international" className="bg-white text-orange-600 px-8 py-3 rounded-lg font-semibold hover:bg-orange-50 transition">
               ค้นหาทัวร์
             </Link>
             <a href="tel:021369144" className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white/10 transition">

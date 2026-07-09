@@ -381,7 +381,7 @@ export default function TourTabs() {
             </p>
           </div>
           <Link
-            href="/tours"
+            href="/tours/international"
             className="flex items-center gap-1 text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] font-medium transition-colors"
           >
             ดูทัวร์ทั้งหมด
