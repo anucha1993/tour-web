@@ -631,7 +631,20 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
                   </td>
                   <td className="px-4 py-3">{period.capacity}</td>
                   <td className="px-4 py-3">{period.booked}</td>
-                  <td className="px-4 py-3"><PeriodAvailabilityBadge period={period} /></td>
+                  <td className="px-4 py-3">
+                    {!isClosed && onBookPeriod ? (
+                      <button
+                        type="button"
+                        onClick={() => onBookPeriod(period)}
+                        className="cursor-pointer transition-transform hover:scale-105"
+                        aria-label={`จองรอบ ${formatPeriodDateRange(period.start_date, period.end_date)}`}
+                      >
+                        <PeriodAvailabilityBadge period={period} />
+                      </button>
+                    ) : (
+                      <PeriodAvailabilityBadge period={period} />
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-center">
                     {onBookPeriod && (() => {
                       const saleStatus = computeSaleStatus(period.available);
@@ -686,7 +699,18 @@ function PeriodTable({ periods, onBookPeriod, tourId }: { periods: TourDetailPer
                 <span className="font-semibold text-gray-800">
                   {formatPeriodDateRange(period.start_date, period.end_date)}
                 </span>
-                <PeriodAvailabilityBadge period={period} />
+                {!isClosed && onBookPeriod ? (
+                  <button
+                    type="button"
+                    onClick={() => onBookPeriod(period)}
+                    className="cursor-pointer transition-transform hover:scale-105"
+                    aria-label={`จองรอบ ${formatPeriodDateRange(period.start_date, period.end_date)}`}
+                  >
+                    <PeriodAvailabilityBadge period={period} />
+                  </button>
+                ) : (
+                  <PeriodAvailabilityBadge period={period} />
+                )}
               </div>
               <div className="flex flex-wrap items-center gap-1.5 mb-2">
                 <span className="text-xs text-gray-500">{getPeriodDayOfWeek(period.start_date)}</span>

@@ -21,6 +21,33 @@ const nextConfig: NextConfig = {
   // once analytics IDs are finalized.
   async headers() {
     return [
+      // Long-cache immutable static assets (JS, CSS, images from Next build)
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      // Long-cache the optimized image proxy responses
+      {
+        source: '/_next/image',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=2592000, s-maxage=31536000, stale-while-revalidate=86400' },
+        ],
+      },
+      // Fonts + favicons
+      {
+        source: '/fonts/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      {
+        source: '/:all*(svg|jpg|jpeg|png|webp|avif|gif|ico|woff|woff2|ttf)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=86400' },
+        ],
+      },
       {
         source: '/:path*',
         headers: [

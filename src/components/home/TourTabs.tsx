@@ -65,7 +65,8 @@ function TourCard({ tour }: { tour: TourTabTour }) {
             alt={tour.title}
             fill
             className={`object-cover group-hover:scale-105 transition-transform duration-300 ${isSoldOut ? 'grayscale-[30%]' : ''}`}
-            sizes="(max-width: 640px) 100vw, (max-width: 800px) 50vw, 25vw"
+            sizes="(max-width: 640px) 90vw, (max-width: 800px) 45vw, 22vw"
+            quality={65}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-[var(--color-gray-400)]">

@@ -292,7 +292,7 @@ export default function FlashSaleBookingModal({ item, allItems = [], isOpen, onC
               จอง Flash Sale
             </h2>
           </div>
-          <button onClick={onClose} className="text-white/80 hover:text-white transition cursor-pointer flex-shrink-0">
+          <button onClick={onClose} aria-label="ปิด" className="text-white/80 hover:text-white transition cursor-pointer flex-shrink-0">
             <X className="w-6 h-6" />
           </button>
         </div>

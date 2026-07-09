@@ -464,7 +464,7 @@ export default function BookingModal({ tour, isOpen, onClose, selectedPeriod: in
               ที่นั่ง {selectedPeriod.capacity} &nbsp;|&nbsp; จอง {selectedPeriod.booked} &nbsp;|&nbsp; คงเหลือ {selectedPeriod.available}
             </div>
           )}
-          <button onClick={onClose} className="text-white/80 hover:text-white transition cursor-pointer flex-shrink-0">
+          <button onClick={onClose} aria-label="ปิด" className="text-white/80 hover:text-white transition cursor-pointer flex-shrink-0">
             <X className="w-6 h-6" />
           </button>
         </div>

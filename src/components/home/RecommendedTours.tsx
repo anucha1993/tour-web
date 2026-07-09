@@ -56,7 +56,8 @@ function RecommendedTourCard({ tour, index }: { tour: TourTabTour; index: number
             alt={tour.title}
             fill
             className={`object-cover group-hover:scale-105 transition-transform duration-500 ${isSoldOut ? 'grayscale-[30%]' : ''}`}
-            sizes="(max-width: 640px) 100vw, 260px"
+            sizes="(max-width: 640px) 90vw, 260px"
+            quality={65}
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center">
