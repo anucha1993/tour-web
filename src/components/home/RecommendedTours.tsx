@@ -266,7 +266,7 @@ export default function RecommendedTours() {
             )}
           </div>
           <Link
-            href="/tours"
+            href="/tours/international"
             className="flex items-center gap-1 text-amber-600 hover:text-amber-700 font-medium transition-colors"
           >
             ดูทัวร์ทั้งหมด
