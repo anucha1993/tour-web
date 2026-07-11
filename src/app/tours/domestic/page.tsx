@@ -505,7 +505,7 @@ function DomesticToursContent() {
   useEffect(() => {
     loadMorePageRef.current = 1;
     fetchTours(currentPage);
-    return () => { if (abortRef.current) abortRef.current.abort(); };
+    // no cleanup abort — fetchTours() handles it (avoids stuck load-more spinner)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, fetchTours]);
 

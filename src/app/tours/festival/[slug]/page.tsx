@@ -414,7 +414,7 @@ export default function FestivalDetailPage() {
 
   useEffect(() => {
     fetchTours(currentPage);
-    return () => { if (abortRef.current) abortRef.current.abort(); };
+    // no cleanup abort — fetchTours() handles it (avoids stuck load-more spinner)
   }, [currentPage, fetchTours]);
 
   // Fetch other festivals for badge navigation

@@ -433,7 +433,9 @@ function SearchContent() {
   useEffect(() => {
     if (settings.pagination_mode === 'load_more' && currentPage > 1) return;
     fetchTours(currentPage);
-    return () => { if (abortRef.current) abortRef.current.abort(); };
+    // NOTE: don't abort in cleanup — fetchTours() aborts prior request on each call.
+    // Aborting in cleanup breaks "load more" because setCurrentPage() re-runs the
+    // effect and its cleanup aborts the in-flight append fetch → spinner stays stuck.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, fetchTours]);
 
