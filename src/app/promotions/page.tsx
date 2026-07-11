@@ -14,10 +14,8 @@ import {
   Hotel,
   Sparkles,
   Search,
-  X,
 } from 'lucide-react';
-import { tourTabsApi, festivalToursApi, internationalToursApi, FestivalHolidayPublic, FestivalBadge, TourTabData, TourTabTour, TourTabBadge, InternationalTourFilters } from '@/lib/api';
-import { API_URL } from '@/lib/config';
+import { tourTabsApi, festivalToursApi, internationalToursApi, FestivalHolidayPublic, FestivalBadge, TourTabData, TourTabTour, InternationalTourFilters } from '@/lib/api';
 import FlashSale from '@/components/home/FlashSale';
 import FavoriteButton from '@/components/home/FavoriteButton';
 import TourTabBadges from '@/components/shared/TourTabBadges';
@@ -32,26 +30,6 @@ const BADGE_COLORS: Record<string, string> = {
   blue: 'bg-blue-500',
   purple: 'bg-purple-500',
   pink: 'bg-pink-500',
-};
-
-const BADGE_BORDER_COLORS: Record<string, string> = {
-  red: 'border-red-400 text-red-600 hover:bg-red-50',
-  orange: 'border-orange-400 text-orange-600 hover:bg-orange-50',
-  yellow: 'border-yellow-400 text-yellow-600 hover:bg-yellow-50',
-  green: 'border-green-400 text-green-600 hover:bg-green-50',
-  blue: 'border-blue-400 text-blue-600 hover:bg-blue-50',
-  purple: 'border-purple-400 text-purple-600 hover:bg-purple-50',
-  pink: 'border-pink-400 text-pink-600 hover:bg-pink-50',
-};
-
-const BADGE_ACTIVE_COLORS: Record<string, string> = {
-  red: 'bg-red-500 text-white border-red-500',
-  orange: 'bg-orange-500 text-white border-orange-500',
-  yellow: 'bg-yellow-500 text-white border-yellow-500',
-  green: 'bg-green-500 text-white border-green-500',
-  blue: 'bg-blue-500 text-white border-blue-500',
-  purple: 'bg-purple-500 text-white border-purple-500',
-  pink: 'bg-pink-500 text-white border-pink-500',
 };
 
 function PromotionTourCard({ tour, tabBadge }: { tour: TourTabTour; tabBadge?: { text: string; color: string; icon?: string } }) {
@@ -372,25 +350,21 @@ export default function PromotionsPage() {
   const [festivals, setFestivals] = useState<FestivalHolidayPublic[]>([]);
   const [festivalBadges, setFestivalBadges] = useState<FestivalBadge[]>([]);
   const [allCities, setAllCities] = useState<{ id: number; name_th: string; country_id: number; country_name: string; tour_count: number }[]>([]);
-  const [tourTabBadges, setTourTabBadges] = useState<TourTabBadge[]>([]);
-  const [adminPromotions, setAdminPromotions] = useState<{ id: number; name: string; badge_text: string | null; badge_color: string | null; tour_ids: number[] }[]>([]);
+  const [intlPromotions, setIntlPromotions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [activeSearchParams, setActiveSearchParams] = useState<SearchParams>({});
   const [sortBy, setSortBy] = useState<SortOption>('default');
-  const [selectedBadges, setSelectedBadges] = useState<string[]>([]);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function fetchPromotions() {
       try {
-        const [promoRes, festivalRes, badgeRes, intlRes, tabBadgeRes, adminPromoRes] = await Promise.all([
+        const [promoRes, festivalRes, badgeRes, intlRes] = await Promise.all([
           tourTabsApi.promotions(),
           festivalToursApi.list(),
           festivalToursApi.badges(),
           internationalToursApi.list({ per_page: 1 }),
-          tourTabsApi.badges(),
-          fetch(`${API_URL}/promotions/public?limit=50`).then((r) => r.json()).catch(() => ({ data: [] })),
         ]);
         if (promoRes.success && promoRes.data) {
           setPromotionTabs(promoRes.data);
@@ -407,14 +381,8 @@ export default function PromotionsPage() {
         if (intlRes?.filters?.cities) {
           setAllCities(intlRes.filters.cities);
         }
-        if (tabBadgeRes.data) {
-          setTourTabBadges(tabBadgeRes.data);
-        }
-        if (adminPromoRes?.data) {
-          setAdminPromotions(
-            adminPromoRes.data
-              .filter((p: { tour_ids?: number[] }) => Array.isArray(p.tour_ids) && p.tour_ids.length > 0)
-          );
+        if (intlRes?.filters?.promotions) {
+          setIntlPromotions(intlRes.filters.promotions);
         }
       } catch (error) {
         console.error('Failed to fetch promotions:', error);
@@ -426,7 +394,7 @@ export default function PromotionsPage() {
     fetchPromotions();
   }, []);
 
-  // Build filters from loaded data for TourSearchForm (merge with festivals)
+  // Build filters from loaded data for TourSearchForm (merge with festivals + promotions)
   const filters = useMemo(() => {
     const base = buildFiltersFromTours(promotionTabs);
     return {
@@ -442,45 +410,10 @@ export default function PromotionsPage() {
         start_date: f.start_date,
         end_date: f.end_date,
       })),
-      promotions: tourTabBadges
-        .filter((b) => !promotionTabs.some((t) => t.id === b.id))
-        .map((b) => b.badge_text || b.name),
+      // Same promotion list as the country page (offer-level promotions from the international tours API)
+      promotions: intlPromotions,
     };
-  }, [promotionTabs, festivals, allCities, tourTabBadges]);
-
-  // Merge promotion-type tabs into the badge chip list so they also appear as filter chips
-  const allBadgeChips = useMemo<TourTabBadge[]>(() => {
-    const byId = new Map<number, TourTabBadge>();
-    for (const b of tourTabBadges) {
-      byId.set(b.id, b);
-    }
-    for (const tab of promotionTabs) {
-      if (byId.has(tab.id)) continue;
-      byId.set(tab.id, {
-        id: tab.id,
-        name: tab.name,
-        badge_text: tab.badge_text || tab.name,
-        badge_color: tab.badge_color || 'orange',
-        badge_icon: tab.badge_icon,
-        tour_ids: tab.tours.map((t) => t.id),
-        display_modes: tab.display_modes,
-      });
-    }
-    // Admin promotions (stored separately from tour tabs) — use negative id namespace to avoid collision
-    const existingNames = new Set(Array.from(byId.values()).map((b) => b.badge_text || b.name));
-    for (const promo of adminPromotions) {
-      const label = promo.badge_text || promo.name;
-      if (existingNames.has(label)) continue;
-      byId.set(-promo.id, {
-        id: -promo.id,
-        name: promo.name,
-        badge_text: label,
-        badge_color: promo.badge_color || 'orange',
-        tour_ids: promo.tour_ids,
-      });
-    }
-    return Array.from(byId.values());
-  }, [tourTabBadges, promotionTabs, adminPromotions]);
+  }, [promotionTabs, festivals, allCities, intlPromotions]);
 
   const handleSearch = (params: SearchParams) => {
     setActiveSearchParams(params);
@@ -495,15 +428,6 @@ export default function PromotionsPage() {
   const clearFilters = () => {
     setActiveSearchParams({});
     setSortBy('default');
-    setSelectedBadges([]);
-  };
-
-  const toggleBadge = (badgeName: string) => {
-    setSelectedBadges(prev =>
-      prev.includes(badgeName)
-        ? prev.filter(b => b !== badgeName)
-        : [...prev, badgeName]
-    );
   };
 
   const scrollToSection = (slug: string) => {
@@ -523,16 +447,13 @@ export default function PromotionsPage() {
 
     const p = activeSearchParams;
 
-    // Badge (promotion) filter — AND logic: tour must match ALL selected badges
-    const activeBadges = selectedBadges.length > 0 ? selectedBadges : (p.promotions ?? []);
+    // Promotion filter — AND logic: tour must have ALL selected promotions (match by active_promotions name, same as country page)
+    const activeBadges = p.promotions ?? [];
     if (activeBadges.length > 0) {
-      for (const promoName of activeBadges) {
-        const matchedBadge = allBadgeChips.find((b) => (b.badge_text || b.name) === promoName);
-        if (matchedBadge) {
-          const badgeTourIds = new Set(matchedBadge.tour_ids);
-          filtered = filtered.filter((t) => badgeTourIds.has(t.id));
-        }
-      }
+      filtered = filtered.filter((t) => {
+        const names = (t.active_promotions ?? []).map((ap) => ap.name);
+        return activeBadges.every((promoName) => names.includes(promoName));
+      });
     }
 
     // Text search
@@ -628,7 +549,7 @@ export default function PromotionsPage() {
   const totalFilteredTours = useMemo(() => {
     return promotionTabs.reduce((sum, tab) => sum + getFilteredTours(tab.tours).length, 0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [promotionTabs, activeSearchParams, sortBy, selectedBadges]);
+  }, [promotionTabs, activeSearchParams, sortBy]);
 
   const isInitialLoad = loading && promotionTabs.length === 0;
 
@@ -683,7 +604,6 @@ export default function PromotionsPage() {
               </div>
             </div>
           ) : (
-            <>
             <TourSearchForm
               filters={filters}
               onSearch={handleSearch}
@@ -697,47 +617,12 @@ export default function PromotionsPage() {
                 departureMonth: true,
                 priceRange: true,
                 festival: true,
-                promotion: false,
+                promotion: true,
                 theme: true,
                 specialHighlight: true,
                 advanced: true,
               }}
             />
-            {/* Badge Filter Pills */}
-            {allBadgeChips.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2 items-center">
-                <span className="text-xs text-gray-500 mr-1">🏷️ โปรโมชั่น:</span>
-                {allBadgeChips.map((badge) => {
-                  const name = badge.badge_text || badge.name;
-                  const isActive = selectedBadges.includes(name);
-                  const color = badge.badge_color || 'orange';
-                  return (
-                    <button
-                      key={badge.id}
-                      onClick={() => toggleBadge(name)}
-                      className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border transition-all ${
-                        isActive
-                          ? (BADGE_ACTIVE_COLORS[color] || 'bg-orange-500 text-white border-orange-500')
-                          : (BADGE_BORDER_COLORS[color] || 'border-orange-400 text-orange-600 hover:bg-orange-50')
-                      }`}
-                    >
-                      {badge.badge_icon && <span>{badge.badge_icon}</span>}
-                      {name}
-                    </button>
-                  );
-                })}
-                {selectedBadges.length > 0 && (
-                  <button
-                    onClick={() => setSelectedBadges([])}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
-                  >
-                    <X className="w-3 h-3" />
-                    ล้าง
-                  </button>
-                )}
-              </div>
-            )}
-            </>
           )}
         </div>
 
