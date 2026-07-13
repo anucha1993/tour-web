@@ -106,7 +106,7 @@ function ConfirmContent() {
                   <li className="flex items-center gap-1.5">✅ บันทึกทัวร์โปรดและเขียนรีวิว</li>
                 </ul>
                 <Link
-                  href="/member/register"
+                  href="/register"
                   className="inline-flex items-center gap-2 bg-[var(--color-primary)] hover:opacity-90 text-white px-5 py-2.5 rounded-lg font-medium transition-all text-sm w-full justify-center"
                 >
                   🎉 สมัครสมาชิกฟรี
