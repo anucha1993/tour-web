@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { usePathname } from "next/navigation";
 import { X, Phone, MessageCircle, Facebook, Mail } from "lucide-react";
 import { API_URL } from "@/lib/config";
 import { trackLead } from "@/lib/analytics";
@@ -29,6 +30,39 @@ interface ContactPopupConfig {
   delay_seconds: number;
   show_close_button: boolean;
   show_on_mobile: boolean;
+  page_filter_mode?: "all" | "include" | "exclude";
+  page_patterns?: string[];
+}
+
+// Convert a simple glob pattern to a RegExp.
+// Supported wildcards:
+//   *  = any characters within one path segment (no '/')
+//   ** = any characters across path segments (may include '/')
+// Trailing slash on either side is ignored for matching.
+function globToRegExp(glob: string): RegExp {
+  const norm = glob.replace(/\/+$/, "") || "/";
+  const DOUBLE = "\x00\x00";
+  const escaped = norm
+    .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+    .replace(/\*\*/g, DOUBLE)
+    .replace(/\*/g, "[^/]*")
+    .split(DOUBLE)
+    .join(".*");
+  return new RegExp("^" + escaped + "/?$");
+}
+
+function matchesAnyPattern(pathname: string, patterns: string[]): boolean {
+  const target = pathname.replace(/\/+$/, "") || "/";
+  for (const p of patterns) {
+    const pat = (p || "").trim();
+    if (!pat) continue;
+    try {
+      if (globToRegExp(pat).test(target)) return true;
+    } catch {
+      /* ignore invalid pattern */
+    }
+  }
+  return false;
 }
 
 const STORAGE_KEY = "contact_popup_dismissed_at";
@@ -65,6 +99,7 @@ export default function ContactPopup() {
   const [config, setConfig] = useState<ContactPopupConfig | null>(null);
   const [visible, setVisible] = useState(false);
   const [minimized, setMinimized] = useState(false);
+  const pathname = usePathname() || "/";
 
   useEffect(() => {
     let cancelled = false;
@@ -91,10 +126,25 @@ export default function ContactPopup() {
   useEffect(() => {
     if (!config) return;
     if (!shouldShow(config.display_frequency)) return;
+
+    // Page filter: decide whether current path is allowed
+    const mode = config.page_filter_mode || "all";
+    if (mode !== "all") {
+      const patterns = Array.isArray(config.page_patterns) ? config.page_patterns : [];
+      const hit = matchesAnyPattern(pathname, patterns);
+      const allowed = mode === "include" ? hit : !hit;
+      if (!allowed) {
+        // Hide popup on disallowed pages (e.g. after navigation)
+        setVisible(false);
+        setMinimized(false);
+        return;
+      }
+    }
+
     const delay = Math.max(0, Math.min(60, config.delay_seconds ?? 0)) * 1000;
     const t = setTimeout(() => setVisible(true), delay);
     return () => clearTimeout(t);
-  }, [config]);
+  }, [config, pathname]);
 
   const handleClose = useCallback(() => {
     setVisible(false);

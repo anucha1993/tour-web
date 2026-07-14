@@ -23,8 +23,9 @@ const TikTokIcon = ({ className }: { className?: string }) => (
 interface NavMenuItem {
   label: string;
   href: string;
+  target?: '_self' | '_blank';
   megaMenu?: boolean; // flag for mega menu items (international tours)
-  submenu?: { label: string; href: string; tourCount?: number }[];
+  submenu?: { label: string; href: string; target?: '_self' | '_blank'; tourCount?: number }[];
 }
 
 interface IntlCity {
@@ -190,13 +191,15 @@ export default function Header() {
         }
 
         if (menusRes?.success && menusRes.data?.header) {
-          const apiMenus: NavMenuItem[] = menusRes.data.header.map((item: { title: string; url: string; children?: { title: string; url: string }[] }) => {
+          const apiMenus: NavMenuItem[] = menusRes.data.header.map((item: { title: string; url: string; target?: string; children?: { title: string; url: string; target?: string }[] }) => {
             const href = item.url || '#';
             const isDomestic = href.includes('domestic');
             const isFestival = href.includes('festival');
+            const parentTarget: '_self' | '_blank' = item.target === '_blank' ? '_blank' : '_self';
             return {
               label: item.title,
               href,
+              target: parentTarget,
               megaMenu: href.includes('international'),
               // For domestic menu, use a minimal placeholder submenu so the dropdown arrow shows
               // The actual rendering will use domesticCities data
@@ -206,9 +209,10 @@ export default function Header() {
                 : isFestival && festivalSubs.length > 0
                   ? festivalSubs
                   : (item.children && item.children.length > 0
-                      ? item.children.map((child: { title: string; url: string }) => ({
+                      ? item.children.map((child: { title: string; url: string; target?: string }) => ({
                           label: child.title,
                           href: child.url || '#',
+                          target: (child.target === '_blank' ? '_blank' : '_self') as '_self' | '_blank',
                         }))
                       : undefined),
             };
@@ -406,6 +410,8 @@ export default function Header() {
               >
                 <Link
                   href={item.href}
+                  target={item.target || '_self'}
+                  rel={item.target === '_blank' ? 'noopener noreferrer' : undefined}
                   className={`
                     flex items-center gap-1 px-3 py-2 rounded-lg font-medium text-sm whitespace-nowrap
                     transition-colors duration-200
@@ -455,6 +461,8 @@ export default function Header() {
                           <Link
                             key={subItem.href}
                             href={subItem.href}
+                            target={subItem.target || '_self'}
+                            rel={subItem.target === '_blank' ? 'noopener noreferrer' : undefined}
                             className="flex items-center justify-between px-4 py-2.5 text-sm text-[var(--color-gray-700)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-50)] transition-colors"
                           >
                             <span>{subItem.label}</span>
@@ -812,6 +820,8 @@ export default function Header() {
                               <Link
                                 key={subItem.href}
                                 href={subItem.href}
+                                target={subItem.target || '_self'}
+                                rel={subItem.target === '_blank' ? 'noopener noreferrer' : undefined}
                                 onClick={() => setIsMobileMenuOpen(false)}
                                 className="flex items-center justify-between px-4 py-2.5 text-sm text-[var(--color-gray-600)] hover:text-[var(--color-primary)] transition-colors"
                               >
@@ -828,6 +838,8 @@ export default function Header() {
                   ) : (
                     <Link
                       href={item.href}
+                      target={item.target || '_self'}
+                      rel={item.target === '_blank' ? 'noopener noreferrer' : undefined}
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="flex items-center justify-between px-4 py-3 rounded-lg text-[var(--color-gray-700)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-50)] font-medium transition-colors"
                     >

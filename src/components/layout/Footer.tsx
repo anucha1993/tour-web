@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { 
-  Phone, 
-  Mail, 
-  MapPin, 
-  Facebook, 
-  Instagram, 
+import {
+  Phone,
+  Mail,
+  MapPin,
+  Facebook,
+  Instagram,
   Youtube,
   Clock,
   Shield,
@@ -16,7 +16,12 @@ import {
   Headphones,
   MessageCircle,
   AlertTriangle,
-  Send
+  Send,
+  Star,
+  Heart,
+  Award,
+  CheckCircle,
+  Globe,
 } from 'lucide-react';
 import { API_URL } from '@/lib/config';
 
@@ -30,6 +35,8 @@ const TikTokIcon = ({ className }: { className?: string }) => (
 interface FooterLink {
   label: string;
   href: string;
+  target?: '_self' | '_blank';
+  icon?: string;
 }
 
 interface ContactItem {
@@ -93,9 +100,11 @@ const features = [
   { icon: Headphones, label: 'บริการ 24 ชม.' },
 ];
 
-// Icon name to component map for dynamic features
+// Icon name to component map for dynamic features + menu link icons
+// MUST stay in sync with ICON_OPTIONS in /dashboard/website/menus admin page
 const ICON_MAP: Record<string, React.ElementType> = {
   Shield, CreditCard, Headphones, Phone, Mail, MapPin, Clock, MessageCircle,
+  Star, Heart, Award, CheckCircle, Globe,
 };
 
 // Default footer config
@@ -153,8 +162,13 @@ export default function Footer() {
 
         // Process footer menus
         if (menusRes?.success && menusRes.data) {
-          const toLinks = (items: { title: string; url: string }[]): FooterLink[] =>
-            items.map((item) => ({ label: item.title, href: item.url || '#' }));
+          const toLinks = (items: { title: string; url: string; target?: string; icon?: string | null }[]): FooterLink[] =>
+            items.map((item) => ({
+              label: item.title,
+              href: item.url || '#',
+              target: item.target === '_blank' ? '_blank' : '_self',
+              icon: item.icon || undefined,
+            }));
           if (menusRes.data.footer_col1?.length > 0) setTourLinks(filterFestival(toLinks(menusRes.data.footer_col1)));
           if (menusRes.data.footer_col2?.length > 0) setCompanyLinks(toLinks(menusRes.data.footer_col2));
           if (menusRes.data.footer_col3?.length > 0) setSupportLinks(toLinks(menusRes.data.footer_col3));
@@ -468,16 +482,22 @@ export default function Footer() {
                   <li key={i}><div className="h-4 bg-gray-700 rounded animate-pulse" style={{ width: `${60 + i * 12}px` }} /></li>
                 ))
               ) : (
-                tourLinks.map((link) => (
-                  <li key={link.href}>
-                    <Link 
-                      href={link.href}
-                      className="text-gray-400 hover:text-[var(--color-primary)] transition-colors text-sm"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))
+                tourLinks.map((link) => {
+                  const IconComp = link.icon ? ICON_MAP[link.icon] : null;
+                  return (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        target={link.target || '_self'}
+                        rel={link.target === '_blank' ? 'noopener noreferrer' : undefined}
+                        className="text-gray-400 hover:text-[var(--color-primary)] transition-colors text-sm flex items-center gap-1.5"
+                      >
+                        {IconComp && <IconComp className="w-3.5 h-3.5 shrink-0" />}
+                        <span>{link.label}</span>
+                      </Link>
+                    </li>
+                  );
+                })
               )}
             </ul>
           </div>
@@ -491,16 +511,22 @@ export default function Footer() {
                   <li key={i}><div className="h-4 bg-gray-700 rounded animate-pulse" style={{ width: `${55 + i * 10}px` }} /></li>
                 ))
               ) : (
-                companyLinks.map((link) => (
-                  <li key={link.href}>
-                    <Link 
-                      href={link.href}
-                      className="text-gray-400 hover:text-[var(--color-primary)] transition-colors text-sm"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))
+                companyLinks.map((link) => {
+                  const IconComp = link.icon ? ICON_MAP[link.icon] : null;
+                  return (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        target={link.target || '_self'}
+                        rel={link.target === '_blank' ? 'noopener noreferrer' : undefined}
+                        className="text-gray-400 hover:text-[var(--color-primary)] transition-colors text-sm flex items-center gap-1.5"
+                      >
+                        {IconComp && <IconComp className="w-3.5 h-3.5 shrink-0" />}
+                        <span>{link.label}</span>
+                      </Link>
+                    </li>
+                  );
+                })
               )}
             </ul>
           </div>
@@ -514,16 +540,22 @@ export default function Footer() {
                   <li key={i}><div className="h-4 bg-gray-700 rounded animate-pulse" style={{ width: `${50 + i * 11}px` }} /></li>
                 ))
               ) : (
-                supportLinks.map((link) => (
-                  <li key={link.href}>
-                    <Link 
-                      href={link.href}
-                      className="text-gray-400 hover:text-[var(--color-primary)] transition-colors text-sm"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))
+                supportLinks.map((link) => {
+                  const IconComp = link.icon ? ICON_MAP[link.icon] : null;
+                  return (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        target={link.target || '_self'}
+                        rel={link.target === '_blank' ? 'noopener noreferrer' : undefined}
+                        className="text-gray-400 hover:text-[var(--color-primary)] transition-colors text-sm flex items-center gap-1.5"
+                      >
+                        {IconComp && <IconComp className="w-3.5 h-3.5 shrink-0" />}
+                        <span>{link.label}</span>
+                      </Link>
+                    </li>
+                  );
+                })
               )}
             </ul>
           </div>
