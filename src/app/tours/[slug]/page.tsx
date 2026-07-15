@@ -460,8 +460,14 @@ function VideoReviewSection({ videos }: { videos: TourDetailVideo[] }) {
           const isPortrait = video.orientation === 'portrait';
 
           return (
-            <div key={video.id} className={`rounded-xl overflow-hidden bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow ${isPortrait ? 'max-w-[240px] mx-auto w-full' : ''}`}>
-              <div className={`relative bg-gray-900 ${isPortrait ? 'aspect-[9/16]' : 'aspect-video'}`}>
+            <div
+              key={video.id}
+              className={`rounded-xl overflow-hidden bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow ${isPortrait ? 'max-w-[240px] mx-auto w-full' : ''}`}
+            >
+              <div
+                className="relative bg-gray-900"
+                style={{ aspectRatio: isPortrait ? '9 / 16' : '16 / 9' }}
+              >
                 {isPlaying && embedUrl ? (
                   <iframe
                     src={`${embedUrl}?autoplay=1`}
