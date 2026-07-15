@@ -451,16 +451,17 @@ function VideoReviewSection({ videos }: { videos: TourDetailVideo[] }) {
         <Video className="w-5 h-5 text-orange-500" />
         วิดีโอรีวิว
       </h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
         {videos.map((video) => {
           const embedUrl = getEmbedUrl(video.video_url);
           const ytId = getYouTubeId(video.video_url);
           const thumbnail = video.thumbnail_url || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null);
           const isPlaying = playingId === video.id;
+          const isPortrait = video.orientation === 'portrait';
 
           return (
-            <div key={video.id} className="rounded-xl overflow-hidden bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-              <div className="relative aspect-video bg-gray-900">
+            <div key={video.id} className={`rounded-xl overflow-hidden bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow ${isPortrait ? 'max-w-[240px] mx-auto w-full' : ''}`}>
+              <div className={`relative bg-gray-900 ${isPortrait ? 'aspect-[9/16]' : 'aspect-video'}`}>
                 {isPlaying && embedUrl ? (
                   <iframe
                     src={`${embedUrl}?autoplay=1`}
@@ -474,11 +475,17 @@ function VideoReviewSection({ videos }: { videos: TourDetailVideo[] }) {
                     className="relative w-full h-full group cursor-pointer"
                   >
                     {thumbnail ? (
-                      <Image src={thumbnail} alt={video.title} fill className="object-cover" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
+                      <Image src={thumbnail} alt={video.title} fill className={isPortrait ? 'object-cover' : 'object-cover'} sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
                         <Video className="w-12 h-12 text-gray-500" />
                       </div>
+                    )}
+                    {/* Shorts badge */}
+                    {isPortrait && (
+                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-500 text-white shadow z-10">
+                        📱 Shorts
+                      </span>
                     )}
                     {/* Play button overlay */}
                     <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">

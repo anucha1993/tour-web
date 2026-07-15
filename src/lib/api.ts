@@ -458,6 +458,7 @@ export interface TourDetailGallery {
 export interface TourDetailVideo {
   id: number;
   video_url: string;
+  orientation?: 'landscape' | 'portrait';
   thumbnail_url: string | null;
   title: string;
   description: string | null;
