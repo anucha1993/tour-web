@@ -27,6 +27,7 @@ import {
 } from '@/lib/api';
 import TourTabBadges from '@/components/shared/TourTabBadges';
 import TourSearchForm, { SearchParams } from '@/components/shared/TourSearchForm';
+import CopyTourTextButton from '@/components/shared/CopyTourTextButton';
 import { useTourBadges } from '@/contexts/TourBadgesContext';
 
 // Reusable helpers
@@ -118,6 +119,7 @@ const PERIODS_STEP = 5;
 function TourCard({ tour, settings, festivalBadge }: { tour: FestivalTourItem; settings: FestivalTourSettings; festivalBadge?: { text: string; color: string; icon?: string } }) {
   const { getPeriodBadges } = useTourBadges();
   const [visibleCount, setVisibleCount] = useState(PERIODS_STEP);
+
   const visiblePeriods = (tour.periods || []).slice(0, visibleCount);
   const hasDiscount = tour.discount_amount && tour.discount_amount > 0;
   const hasMorePeriods = (tour.periods?.length || 0) > visibleCount;
@@ -234,7 +236,8 @@ function TourCard({ tour, settings, festivalBadge }: { tour: FestivalTourItem; s
 
       {/* Share buttons */}
       <div className="flex items-center gap-1 justify-end px-2 lg:px-4 pt-1 mt-0 lg:mt-[-20px]">
-        <span className="text-xs text-gray-500 mr-0.5">แชร์</span>
+        <CopyTourTextButton tour={tour} />
+        <span className="text-xs text-gray-500 mr-0.5 ml-1">แชร์</span>
         <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/tours/${tour.slug}`)}`} target="_blank" rel="noopener noreferrer" className="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors" title="แชร์ Facebook">
           <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
         </a>

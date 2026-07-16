@@ -28,6 +28,7 @@ import {
 import FavoriteButton from '@/components/home/FavoriteButton';
 import BookingModal from '@/components/tours/BookingModal';
 import TourTabBadges from '@/components/shared/TourTabBadges';
+import CopyTourTextButton from '@/components/shared/CopyTourTextButton';
 import ReviewSection from '@/components/tours/ReviewSection';
 import RelatedToursCarousel from '@/components/tours/RelatedToursCarousel';
 import ToursCountrySidebar from '@/components/tours/ToursCountrySidebar';
@@ -1416,6 +1417,7 @@ export default function TourDetailPage() {
                 >
                   ✍️ เขียนรีวิว
                 </button>
+                <CopyTourTextButton tour={tour} size="md" />
                 <FavoriteButton tour={favTourData} size="md" />
                 <button
                   onClick={() => {

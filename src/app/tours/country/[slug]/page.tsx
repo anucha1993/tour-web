@@ -14,8 +14,6 @@ import {
   Loader2,
   ArrowLeft,
   Sparkles,
-  Copy,
-  Check,
   BookOpen,
   Phone,
   MessageCircle,
@@ -32,6 +30,7 @@ import {
 } from '@/lib/api';
 import TourTabBadges from '@/components/shared/TourTabBadges';
 import TourSearchForm, { SearchParams } from '@/components/shared/TourSearchForm';
+import CopyTourTextButton from '@/components/shared/CopyTourTextButton';
 import { useTourBadges } from '@/contexts/TourBadgesContext';
 
 // Reusable helpers
@@ -132,20 +131,7 @@ const PERIODS_STEP = 5;
 function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: InternationalTourSettings }) {
   const { getPeriodBadges } = useTourBadges();
   const [visibleCount, setVisibleCount] = useState(PERIODS_STEP);
-  const [copied, setCopied] = useState(false);
 
-  const handleCopyShortText = () => {
-    const airlineNames = tour.transports?.map(t => t.airline?.name).filter(Boolean).join(', ') || '-';
-    const periodLines = (tour.periods || []).map(p => {
-      const price = p.offer?.net_price_adult ? formatPrice(p.offer.net_price_adult) : 'ติดต่อฝ่ายขาย';
-      return `${formatDateRange(p.start_date, p.end_date)} | ราคา ${price} | เหลือ ${p.available} ที่นั่ง`;
-    }).join('\n');
-    const url = `${window.location.origin}/tours/${tour.slug}`;
-    const text = `รหัสทัวร์: ${tour.tour_code}\n${tour.title}\nสายการบิน: ${airlineNames}\n\nรอบเดินทาง:\n${periodLines}\n\nราคาเริ่มต้น: ${formatPrice(tour.min_price || tour.display_price) || 'ติดต่อฝ่ายขาย'} บาท\n\nดูรายละเอียด: ${url}`;
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
   const visiblePeriods = (tour.periods || []).slice(0, visibleCount);
   const hasDiscount = tour.discount_amount && tour.discount_amount > 0;
   const hasMorePeriods = (tour.periods?.length || 0) > visibleCount;
@@ -281,16 +267,7 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
 
       {/* Share & Copy buttons */}
       <div className="flex items-center gap-1 justify-end px-2 lg:px-4 pt-1 mt-0 lg:mt-[-20px]">
-        <button
-          onClick={handleCopyShortText}
-          className={`cursor-pointer flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-            copied ? 'bg-green-100 text-green-700' : 'bg-purple-50 hover:bg-purple-100 text-purple-600'
-          }`}
-          title="คัดลอกข้อความสั้น"
-        >
-          {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-          {copied ? 'คัดลอกแล้ว!' : 'Copy ข้อความ'}
-        </button>
+        <CopyTourTextButton tour={tour} />
         <span className="text-xs text-gray-500 mr-0.5 ml-1">แชร์</span>
         <a
           href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/tours/${tour.slug}`)}`}

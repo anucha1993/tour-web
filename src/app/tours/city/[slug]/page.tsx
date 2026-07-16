@@ -24,6 +24,7 @@ import {
 } from '@/lib/api';
 import TourTabBadges from '@/components/shared/TourTabBadges';
 import TourSearchForm, { SearchParams } from '@/components/shared/TourSearchForm';
+import CopyTourTextButton from '@/components/shared/CopyTourTextButton';
 import { useTourBadges } from '@/contexts/TourBadgesContext';
 
 // Reusable helpers
@@ -114,6 +115,7 @@ const PERIODS_STEP = 5;
 function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: InternationalTourSettings }) {
   const { getPeriodBadges } = useTourBadges();
   const [visibleCount, setVisibleCount] = useState(PERIODS_STEP);
+
   const visiblePeriods = (tour.periods || []).slice(0, visibleCount);
   const hasDiscount = tour.discount_amount && tour.discount_amount > 0;
   const hasMorePeriods = (tour.periods?.length || 0) > visibleCount;
@@ -249,7 +251,8 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
 
       {/* Share buttons */}
       <div className="flex items-center gap-1 justify-end px-2 lg:px-4 pt-1 mt-0 lg:mt-[-20px]">
-        <span className="text-xs text-gray-500 mr-0.5">แชร์</span>
+        <CopyTourTextButton tour={tour} />
+        <span className="text-xs text-gray-500 mr-0.5 ml-1">แชร์</span>
         <a
           href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/tours/${tour.slug}`)}`}
           target="_blank"
