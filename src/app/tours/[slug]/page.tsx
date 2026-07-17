@@ -466,7 +466,7 @@ function VideoReviewSection({ videos }: { videos: TourDetailVideo[] }) {
               className={`rounded-xl overflow-hidden bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow ${isPortrait ? 'max-w-[240px] mx-auto w-full' : ''}`}
             >
               <div
-                className="relative bg-gray-900"
+                className="relative bg-gray-900 overflow-hidden flex"
                 style={{ aspectRatio: isPortrait ? '9 / 16' : '16 / 9' }}
               >
                 {isPlaying && embedUrl ? (
@@ -479,7 +479,7 @@ function VideoReviewSection({ videos }: { videos: TourDetailVideo[] }) {
                 ) : (
                   <button
                     onClick={() => embedUrl ? setPlayingId(video.id) : window.open(video.video_url, '_blank')}
-                    className="relative w-full h-full group cursor-pointer"
+                    className="relative block w-full h-full group cursor-pointer"
                   >
                     {thumbnail ? (
                       <Image src={thumbnail} alt={video.title} fill className={isPortrait ? 'object-cover' : 'object-cover'} sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" />
