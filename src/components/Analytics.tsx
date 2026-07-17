@@ -7,8 +7,9 @@
  *  - GA4 / GTM  → requires `analytics` consent
  *  - Meta Pixel / TikTok → requires `marketing` consent
  *
- * IDs come from env (see lib/config.ts). If an ID is empty the tracker is
- * skipped entirely, so this is safe to ship before the client provides IDs.
+ * IDs come from the `tracking` prop (fetched server-side from tour-api at
+ * runtime). If not provided, falls back to env vars from lib/config.ts.
+ * When an ID is empty the tracker is skipped entirely.
  */
 
 import Script from 'next/script';
@@ -19,7 +20,13 @@ import { config } from '@/lib/config';
 import { useConsent } from '@/contexts/ConsentContext';
 import { trackPageView } from '@/lib/analytics';
 
-const { ga4Id, gtmId, fbPixelId, tiktokPixelId } = config.analytics;
+export interface AnalyticsTracking {
+  gtm_id?: string;
+  ga4_id?: string;
+  fb_pixel_id?: string;
+  tiktok_pixel_id?: string;
+  enabled?: boolean;
+}
 
 /** Fires a PageView on client-side route changes (SPA navigation). */
 function PageViewTracker({ enabled }: { enabled: boolean }) {
@@ -42,8 +49,15 @@ function PageViewTracker({ enabled }: { enabled: boolean }) {
   return null;
 }
 
-export default function Analytics() {
+export default function Analytics({ tracking }: { tracking?: AnalyticsTracking }) {
   const { analyticsAllowed, marketingAllowed } = useConsent();
+
+  // Runtime API values take precedence; env vars are the fallback.
+  const enabled = tracking?.enabled ?? true;
+  const ga4Id       = enabled ? (tracking?.ga4_id       ?? config.analytics.ga4Id)       : '';
+  const gtmId       = enabled ? (tracking?.gtm_id       ?? config.analytics.gtmId)       : '';
+  const fbPixelId   = enabled ? (tracking?.fb_pixel_id  ?? config.analytics.fbPixelId)   : '';
+  const tiktokPixelId = enabled ? (tracking?.tiktok_pixel_id ?? config.analytics.tiktokPixelId) : '';
 
   const loadGa4 = analyticsAllowed && !!ga4Id;
   const loadGtm = analyticsAllowed && !!gtmId;

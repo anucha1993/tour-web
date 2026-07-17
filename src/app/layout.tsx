@@ -13,6 +13,24 @@ import CookieConsent from "@/components/CookieConsent";
 import Analytics from "@/components/Analytics";
 import OrganizationJsonLd from "@/components/OrganizationJsonLd";
 import { buildMetadata } from "@/lib/seo";
+import { getTrackingConfig } from "@/lib/tracking";
+
+/**
+ * Extract JS from inline <script>...</script> tags in a raw HTML snippet.
+ * Concatenates ALL inline scripts into one blob so they run in <head> at SSR.
+ * HTML comments (<!-- ... -->) and other markup are stripped.
+ */
+function extractInlineScripts(html: string): string {
+  const out: string[] = [];
+  // Match <script> ... </script> where script has no `src` attribute
+  const re = /<script\b(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) {
+    const body = m[1].trim();
+    if (body) out.push(body);
+  }
+  return out.join('\n');
+}
 
 const notoSansThai = localFont({
   src: "./fonts/NotoSansThai-VariableFont.woff2",
@@ -40,11 +58,12 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const tracking = await getTrackingConfig();
   return (
     <html lang="th">
       <head>
@@ -52,8 +71,36 @@ export default function RootLayout({
         <link rel="preconnect" href="https://imagedelivery.net" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://api.nexttripholiday.com" />
         <link rel="dns-prefetch" href="https://imagedelivery.net" />
+        {/* Admin-supplied raw HTML snippet for <head> (GTM main script, GA4 gtag, etc.).
+            Server-rendered — runs before hydration, no consent gating. */}
+        {tracking.enabled && tracking.custom_head_html && (
+          <script
+            dangerouslySetInnerHTML={{ __html: extractInlineScripts(tracking.custom_head_html) }}
+          />
+        )}
       </head>
       <body className={`${notoSansThai.variable} antialiased`}>
+        {/* Admin-supplied raw HTML for post-<body> position (GTM <noscript> iframe, etc.). */}
+        {tracking.enabled && tracking.custom_body_html && (
+          <div
+            aria-hidden="true"
+            style={{ display: 'contents' }}
+            dangerouslySetInnerHTML={{ __html: tracking.custom_body_html }}
+          />
+        )}
+        {/* GTM noscript fallback (renders only when GTM ID is configured).
+            Server-rendered outside ConsentProvider — users without JS cannot
+            interact with the consent banner anyway. */}
+        {tracking.enabled && tracking.gtm_id && (
+          <noscript>
+            <iframe
+              src={`https://www.googletagmanager.com/ns.html?id=${tracking.gtm_id}`}
+              height="0"
+              width="0"
+              style={{ display: 'none', visibility: 'hidden' }}
+            />
+          </noscript>
+        )}
         <OrganizationJsonLd />
         <ConsentProvider>
           <AuthProvider>
@@ -70,7 +117,7 @@ export default function RootLayout({
             </FavoritesProvider>
           </AuthProvider>
           <CookieConsent />
-          <Analytics />
+          <Analytics tracking={tracking} />
         </ConsentProvider>
       </body>
     </html>
