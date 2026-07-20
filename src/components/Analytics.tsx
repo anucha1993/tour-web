@@ -49,7 +49,7 @@ function PageViewTracker({ enabled }: { enabled: boolean }) {
   return null;
 }
 
-export default function Analytics({ tracking }: { tracking?: AnalyticsTracking }) {
+export default function Analytics({ tracking, gtmInCustomHtml = false }: { tracking?: AnalyticsTracking; gtmInCustomHtml?: boolean }) {
   const { analyticsAllowed, marketingAllowed } = useConsent();
 
   // Runtime API values take precedence; env vars are the fallback.
@@ -60,7 +60,9 @@ export default function Analytics({ tracking }: { tracking?: AnalyticsTracking }
   const tiktokPixelId = enabled ? (tracking?.tiktok_pixel_id ?? config.analytics.tiktokPixelId) : '';
 
   const loadGa4 = analyticsAllowed && !!ga4Id;
-  const loadGtm = analyticsAllowed && !!gtmId;
+  // Skip the structured GTM loader when the admin already injected GTM through
+  // the custom head/body HTML (prevents a duplicate gtm.js / double pageviews).
+  const loadGtm = analyticsAllowed && !!gtmId && !gtmInCustomHtml;
   const loadPixel = marketingAllowed && !!fbPixelId;
   const loadTiktok = marketingAllowed && !!tiktokPixelId;
 

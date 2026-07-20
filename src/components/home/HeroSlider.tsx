@@ -183,9 +183,9 @@ export default function HeroSlider({ initialSlides, initialCountries }: HeroSlid
             </div>
           ) : hasSlides && slides[currentSlide]?.title ? (
             <>
-              <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 leading-tight drop-shadow-lg">
+              <h2 className="text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 leading-tight drop-shadow-lg">
                 {slides[currentSlide].title}
-              </h1>
+              </h2>
               {slides[currentSlide].subtitle && (
                 <p className="text-xl lg:text-2xl text-white/90 mb-6 drop-shadow-md">
                   {slides[currentSlide].subtitle}
@@ -202,11 +202,11 @@ export default function HeroSlider({ initialSlides, initialCountries }: HeroSlid
             </>
           ) : (
             <>
-              <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold mb-6 leading-tight drop-shadow-lg">
+              <h2 className="text-4xl lg:text-5xl xl:text-6xl font-bold mb-6 leading-tight drop-shadow-lg">
                 ค้นหาทริปในฝัน
                 <br />
                 <span className="text-[var(--color-secondary-100)]">ท่องเที่ยวทั่วโลก</span>
-              </h1>
+              </h2>
               <p className="text-lg lg:text-xl text-orange-100 mb-8 max-w-xl drop-shadow-md">
                 มากกว่า 500 ทัวร์จากบริษัทชั้นนำ พร้อมราคาพิเศษและทีมงานดูแลตลอดการเดินทาง
               </p>

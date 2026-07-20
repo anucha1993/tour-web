@@ -64,6 +64,12 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const tracking = await getTrackingConfig();
+  // Detect whether the admin already pasted a GTM/GA snippet into the custom
+  // head/body HTML. If so, skip the structured GTM injection (noscript below +
+  // the consent-gated gtm.js in <Analytics>) so GTM is not loaded twice, which
+  // would double-count pageviews.
+  const customTrackingHtml = `${tracking.custom_head_html || ''}\n${tracking.custom_body_html || ''}`;
+  const customHasGtm = /googletagmanager\.com\/(ns|gtm)\.|GTM-[A-Z0-9]{4,}/i.test(customTrackingHtml);
   return (
     <html lang="th">
       <head>
@@ -88,10 +94,11 @@ export default async function RootLayout({
             dangerouslySetInnerHTML={{ __html: tracking.custom_body_html }}
           />
         )}
-        {/* GTM noscript fallback (renders only when GTM ID is configured).
+        {/* GTM noscript fallback (renders only when GTM ID is configured AND the
+            admin has not already injected GTM via custom HTML — avoids a duplicate).
             Server-rendered outside ConsentProvider — users without JS cannot
             interact with the consent banner anyway. */}
-        {tracking.enabled && tracking.gtm_id && (
+        {tracking.enabled && tracking.gtm_id && !customHasGtm && (
           <noscript>
             <iframe
               src={`https://www.googletagmanager.com/ns.html?id=${tracking.gtm_id}`}
@@ -117,7 +124,7 @@ export default async function RootLayout({
             </FavoritesProvider>
           </AuthProvider>
           <CookieConsent />
-          <Analytics tracking={tracking} />
+          <Analytics tracking={tracking} gtmInCustomHtml={customHasGtm} />
         </ConsentProvider>
       </body>
     </html>

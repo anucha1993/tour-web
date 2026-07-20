@@ -8,6 +8,7 @@ import {
   BookOpen, Share2, Loader2, Facebook, Twitter,
 } from 'lucide-react';
 import { blogApi, BlogPost, BlogPageSettings, BlogSidebarTour } from '@/lib/api';
+import { displayTourCode } from '@/lib/tour-code';
 import CustomerReviews from '@/components/home/CustomerReviews';
 
 export default function BlogDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -338,7 +339,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                           )}
                           {t.tour_code && (
                             <div className="absolute top-2 left-2 bg-white/90 text-gray-700 text-[10px] font-medium px-2 py-0.5 rounded">
-                              {t.tour_code}
+                              {displayTourCode(t.tour_code)}
                             </div>
                           )}
                         </div>

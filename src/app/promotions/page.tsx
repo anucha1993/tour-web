@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { tourTabsApi, festivalToursApi, internationalToursApi, FestivalHolidayPublic, FestivalBadge, TourTabData, TourTabTour, InternationalTourFilters } from '@/lib/api';
 import FlashSale from '@/components/home/FlashSale';
+import { displayTourCode } from '@/lib/tour-code';
 import FavoriteButton from '@/components/home/FavoriteButton';
 import TourTabBadges from '@/components/shared/TourTabBadges';
 import TourSearchForm, { SearchParams } from '@/components/shared/TourSearchForm';
@@ -116,7 +117,7 @@ function PromotionTourCard({ tour, tabBadge }: { tour: TourTabTour; tabBadge?: {
       <div className="p-3">
         {/* Tour code + badges row */}
         <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-          <span className="text-xs font-mono text-[var(--color-gray-400)]">{tour.tour_code}</span>
+          <span className="text-xs font-mono text-[var(--color-gray-400)]">{displayTourCode(tour.tour_code)}</span>
           {tour.badge && !isSoldOut && (
             <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">
               {tour.badge}

@@ -36,6 +36,7 @@ import CustomerReviews from '@/components/home/CustomerReviews';
 import { useTourBadges } from '@/contexts/TourBadgesContext';
 import { config } from '@/lib/config';
 import { trackViewContent } from '@/lib/analytics';
+import { displayTourCode } from '@/lib/tour-code';
 
 // ===== Related Blog Posts Component =====
 function RelatedBlogPosts({ cities, countryName }: {
@@ -1343,7 +1344,7 @@ export default function TourDetailPage() {
           {/* ---- Title Section ---- */}
           <div className="p-4 sm:p-5">
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <span className="text-xs font-mono text-gray-500 bg-gray-50 px-2 py-0.5 rounded">{tour.tour_code}</span>
+              <span className="text-xs font-mono text-gray-500 bg-gray-50 px-2 py-0.5 rounded">{displayTourCode(tour.tour_code)}</span>
               {badgeInfo && <Badge color={badgeInfo.color}>{badgeInfo.text}</Badge>}
               {discountPercent > 0 && <Badge color="red">ลด {discountPercent}%</Badge>}
               {tour.discount_label && (
@@ -1728,7 +1729,7 @@ export default function TourDetailPage() {
           <div className="px-4 sm:px-5 py-3 border-t border-gray-100 bg-gray-50">
             <div className="flex items-center gap-4 sm:gap-6 text-sm text-gray-600 flex-wrap">
               <span className="flex items-center gap-2 font-mono bg-gray-200 px-2 py-1 rounded text-xs">
-                🏷️ {tour.tour_code}
+                🏷️ {displayTourCode(tour.tour_code)}
               </span>
               <span className="flex items-center gap-1.5">
                 <Clock className="w-4 h-4" />

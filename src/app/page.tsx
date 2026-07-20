@@ -117,6 +117,10 @@ export default async function HomePage() {
       {/* Popup Modal */}
       <PopupModal />
 
+      {/* Single semantic H1 describing the site (visually hidden). The hero shows
+          rotating slide headlines as H2, so this gives crawlers one stable topic. */}
+      <h1 className="sr-only">ทัวร์ต่างประเทศ ทัวร์ทั่วโลก แพ็กเกจทัวร์คุณภาพ ราคาคุ้ม จองง่ายกับ Next Trip Holiday</h1>
+
       {/* Hero Section with Slider */}
       <HeroSlider initialSlides={heroSlides} initialCountries={countries} />
 

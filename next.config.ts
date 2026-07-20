@@ -15,6 +15,19 @@ const nextConfig: NextConfig = {
       fallback: [],
     };
   },
+  // 301/308 redirects from the previous website's URL scheme so old Google
+  // results and inbound links land on current pages instead of 404ing.
+  async redirects() {
+    return [
+      // Old per-country landing pages: /oversea/china -> /tours/country/china
+      { source: '/oversea/:slug', destination: '/tours/country/:slug', permanent: true },
+      { source: '/oversea', destination: '/tours/international', permanent: true },
+      // Old tour detail used a numeric id with no slug map -> land on the listing.
+      { source: '/around-detail/:id*', destination: '/tours/international', permanent: true },
+      // Old reviews pages: /clients-review/0/0 -> /reviews
+      { source: '/clients-review/:path*', destination: '/reviews', permanent: true },
+    ];
+  },
   // Security headers applied to every response.
   // NOTE: A strict Content-Security-Policy is intentionally omitted here because
   // it needs careful testing against GA4 / Meta Pixel / inline styles. Add it

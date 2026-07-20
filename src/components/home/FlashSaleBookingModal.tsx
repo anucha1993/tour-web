@@ -6,6 +6,7 @@ import {
   Loader2, CheckCircle2, AlertCircle, Zap, Calendar,
 } from 'lucide-react';
 import { bookingApi, FlashSalePublicItem, BookingSubmitResult } from '@/lib/api';
+import { displayTourCode } from '@/lib/tour-code';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface FlashSaleBookingModalProps {
@@ -303,7 +304,7 @@ export default function FlashSaleBookingModal({ item, allItems = [], isOpen, onC
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-gray-800 truncate">{activeItem.title}</p>
               <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
-                <span className="font-mono">{activeItem.tour_code}</span>
+                <span className="font-mono">{displayTourCode(activeItem.tour_code)}</span>
                 {activeItem.days > 0 && <span>• {activeItem.days}D{activeItem.nights}N</span>}
               </div>
             </div>

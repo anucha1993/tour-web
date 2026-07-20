@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import Image from "next/image";
+import { displayTourCode } from "@/lib/tour-code";
 import {
   ArrowLeftIcon,
   CalendarIcon,
@@ -265,7 +266,7 @@ export default function BookingDetailPage() {
         <Row label="จุดหมาย" value={booking.tour?.destination || "ไม่ระบุ"} />
         <Row label="วันเดินทาง" value={booking.period ? `${formatDate(booking.period.start_date)} — ${formatDate(booking.period.end_date)}` : "ไม่ระบุ"} />
         {booking.period && <Row label="ระยะเวลา" value={getDuration(booking.period.start_date, booking.period.end_date)} />}
-        {booking.tour?.tour_code && <Row label="รหัสทัวร์" value={<span className="font-mono">{booking.tour.tour_code}</span>} />}
+        {booking.tour?.tour_code && <Row label="รหัสทัวร์" value={<span className="font-mono">{displayTourCode(booking.tour.tour_code)}</span>} />}
         <Row label="วันที่จอง" value={formatDate(booking.created_at)} />
         {isFlashSale && <Row label="แหล่งที่มา" value={<span className="inline-flex items-center gap-1 text-orange-600 font-medium"><BoltIcon className="w-3.5 h-3.5" />Flash Sale</span>} />}
         {booking.sale_code && <Row label="รหัสพนักงานขาย" value={booking.sale_code} />}

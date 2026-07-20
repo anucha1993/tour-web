@@ -7,6 +7,7 @@ import {
   Calendar, ChevronLeft, ChevronRight, ImageIcon, Quote, Share2, X,
 } from 'lucide-react';
 import { reviewApi, TourReview } from '@/lib/api';
+import { displayTourCode } from '@/lib/tour-code';
 import { API_URL } from '@/lib/config';
 
 // ── Helpers ──
@@ -482,7 +483,7 @@ export default function ReviewDetailPage({ params }: { params: Promise<{ id: str
                     {review.tour.title}
                   </h3>
                   {review.tour.tour_code && (
-                    <p className="text-xs text-gray-500 mb-3">รหัส: {review.tour.tour_code}</p>
+                    <p className="text-xs text-gray-500 mb-3">รหัส: {displayTourCode(review.tour.tour_code)}</p>
                   )}
                   <Link
                     href={`/tours/${review.tour.slug}`}

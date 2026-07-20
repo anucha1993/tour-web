@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { displayTourCode } from '@/lib/tour-code';
 import {
   Search,
   MapPin,
@@ -143,7 +144,7 @@ function TourCard({ tour, settings, festivalBadge }: { tour: FestivalTourItem; s
           <div className="mb-2">
             <Link href={`/tours/${tour.slug}`} className="text-lg lg:text-xl font-bold text-gray-900 hover:text-orange-600 transition-colors line-clamp-2">{tour.title}</Link>
             <div className="flex flex-wrap items-center gap-1.5 lg:gap-2 mt-1.5 text-xs lg:text-sm text-gray-500">
-              <span className="bg-gray-100 px-2.5 py-0.5 rounded font-mono">รหัสทัวร์ {tour.tour_code}</span>
+              <span className="bg-gray-100 px-2.5 py-0.5 rounded font-mono">รหัสทัวร์ {displayTourCode(tour.tour_code)}</span>
               <span>{tour.duration_days} วัน {tour.duration_nights} คืน</span>
               {tour.country && (
                 <span className="inline-flex items-center gap-1">

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { API_URL, SITE_URL } from "@/lib/config";
-import { DEFAULT_OG_IMAGE } from "@/lib/seo";
+import { DEFAULT_OG_IMAGE, stripBrandSuffix } from "@/lib/seo";
 import TourJsonLd from "@/components/TourJsonLd";
 
 const SITE_NAME = "Next Trip Holiday";
@@ -47,7 +47,7 @@ export async function generateMetadata({
     };
   }
 
-  const title = tour.meta_title || tour.title || "ทัวร์";
+  const title = stripBrandSuffix(tour.meta_title || tour.title || "ทัวร์");
   const durationText =
     tour.duration_days && tour.duration_nights
       ? ` ${tour.duration_days} วัน ${tour.duration_nights} คืน`

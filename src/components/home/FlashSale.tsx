@@ -13,6 +13,7 @@ import {
   ShoppingCart,
 } from 'lucide-react';
 import { flashSaleApi, FlashSalePublic, FlashSalePublicItem } from '@/lib/api';
+import { displayTourCode } from '@/lib/tour-code';
 import { useAuth } from '@/contexts/AuthContext';
 import FlashSaleBookingModal from './FlashSaleBookingModal';
 
@@ -167,7 +168,7 @@ function FlashRow({ item, index, onBook }: { item: FlashSalePublicItem; index: n
               {item.title}
             </p>
             <div className="flex items-center gap-2 text-[11px] text-gray-500 mt-0.5">
-              <span className="font-mono">{item.tour_code}</span>
+              <span className="font-mono">{displayTourCode(item.tour_code)}</span>
               <span className="flex items-center gap-0.5">
                 <Calendar className="w-3 h-3" />
                 {item.days}D{item.nights}N
@@ -293,11 +294,11 @@ function MobileFlashRow({ item, index, onBook }: { item: FlashSalePublicItem; in
 
       {/* Info */}
       <Link href={`/tours/${item.slug}`} className="flex-1 min-w-0">
+        <p className="font-mono text-[11px] font-bold text-orange-600 leading-tight">{displayTourCode(item.tour_code)}</p>
         <p className="text-sm font-semibold text-gray-800 line-clamp-1">{item.title}</p>
-        <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-gray-500">
-          <span className="font-mono">{item.tour_code}</span>
-          <span>·</span>
-          <span>{formatDateThai(item.period_start_date)}</span>
+        <div className="flex items-center gap-1 mt-0.5 text-[11px] text-gray-500">
+          <Calendar className="w-3 h-3 flex-shrink-0" />
+          <span>{formatDateThai(item.period_start_date)} - {formatDateThai(item.period_end_date)}</span>
         </div>
         {item.flash_end_date && !item.is_sold_out && (
           <div className="flex items-center gap-1 mt-0.5 text-[10px] text-red-500">

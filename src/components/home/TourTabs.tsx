@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { displayTourCode } from '@/lib/tour-code';
 import { 
   ArrowRight,
   MapPin,
@@ -94,7 +95,7 @@ function TourCard({ tour }: { tour: TourTabTour }) {
       <div className="p-3">
         {/* Tour code + badges row */}
         <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-          <span className="text-xs font-mono text-[var(--color-gray-400)]">{tour.tour_code}</span>
+          <span className="text-xs font-mono text-[var(--color-gray-400)]">{displayTourCode(tour.tour_code)}</span>
           {discountPercent > 0 && !isSoldOut && (
             <span className="text-[10px] font-bold text-white bg-[var(--color-primary)] px-1.5 py-0.5 rounded">
               ลด {discountPercent}%

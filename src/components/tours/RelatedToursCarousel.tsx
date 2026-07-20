@@ -8,6 +8,7 @@ import {
   Eye, Hotel, Clock, Sparkles,
 } from 'lucide-react';
 import { tourDetailApi, TourTabTour } from '@/lib/api';
+import { displayTourCode } from '@/lib/tour-code';
 import FavoriteButton from '@/components/home/FavoriteButton';
 import TourTabBadges from '@/components/shared/TourTabBadges';
 
@@ -104,7 +105,7 @@ function RelatedTourCard({ tour }: { tour: TourTabTour }) {
       <div className="p-3 flex flex-col flex-1">
         {/* Badges row */}
         <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-          <span className="text-[10px] font-mono text-[var(--color-gray-400)] bg-gray-50 px-1.5 py-0.5 rounded">{tour.tour_code}</span>
+          <span className="text-[10px] font-mono text-[var(--color-gray-400)] bg-gray-50 px-1.5 py-0.5 rounded">{displayTourCode(tour.tour_code)}</span>
           {tour.badge && !isSoldOut && (
             <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">
               {tour.badge}

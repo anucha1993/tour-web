@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { reviewApi, TourReview, ReviewTag } from "@/lib/api";
+import { displayTourCode } from "@/lib/tour-code";
 import { API_URL } from "@/lib/config";
 import {
   StarIcon,
@@ -273,7 +274,7 @@ export default function MemberReviews() {
                   <div className="flex-1">
                     <div className="text-sm text-blue-800 font-medium">{selectedTour.tour_name}</div>
                     <div className="text-xs text-blue-500 mt-0.5 flex flex-wrap gap-2">
-                      {selectedTour.tour_code && <span>รหัส: {selectedTour.tour_code}</span>}
+                      {selectedTour.tour_code && <span>รหัส: {displayTourCode(selectedTour.tour_code)}</span>}
                       {selectedTour.booking_code && <span>การจอง: {selectedTour.booking_code}</span>}
                       {selectedTour.period_start && (
                         <span>เดินทาง: {selectedTour.period_start}{selectedTour.period_end ? ` – ${selectedTour.period_end}` : ''}</span>
@@ -310,7 +311,7 @@ export default function MemberReviews() {
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-gray-900 truncate">{t.tour_name}</div>
                           <div className="text-xs text-gray-500 mt-0.5 flex flex-wrap gap-2">
-                            {t.tour_code && <span>รหัส: {t.tour_code}</span>}
+                            {t.tour_code && <span>รหัส: {displayTourCode(t.tour_code)}</span>}
                             {t.booking_code && <span>การจอง: {t.booking_code}</span>}
                             {t.period_start && (
                               <span>เดินทาง: {t.period_start}{t.period_end ? ` – ${t.period_end}` : ''}</span>

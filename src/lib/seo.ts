@@ -11,6 +11,19 @@ const SITE_NAME = "Next Trip Holiday";
 export const DEFAULT_OG_IMAGE =
   "https://imagedelivery.net/OGiukopN6pbQwdTofcZnpg/seo-og-global/public";
 
+/**
+ * Remove a trailing brand suffix (e.g. " | Next Trip Holiday") from a title so
+ * the root layout's title template can append the brand exactly once. Without
+ * this, an admin meta_title that already ends with the brand renders as
+ * "... | Next Trip Holiday | Next Trip Holiday".
+ */
+export function stripBrandSuffix(title: string): string {
+  let t = (title ?? "").trim();
+  const re = /\s*[|\-–—]\s*Next Trip Holiday\s*$/i;
+  while (re.test(t)) t = t.replace(re, "").trim();
+  return t;
+}
+
 export interface SeoData {
   meta_title: string | null;
   meta_description: string | null;
@@ -68,9 +81,12 @@ export async function buildMetadata(
 
   const path = fallback.path ?? "";
   const canonical = seo?.canonical_url || `${SITE_URL}${path}`;
-  const title = seo?.meta_title || fallback.title || SITE_NAME;
+  const rawTitle = seo?.meta_title || fallback.title || SITE_NAME;
+  // Strip any brand already present so the root layout's title template
+  // ("%s | Next Trip Holiday") appends it exactly once (avoids duplicate suffix).
+  const title = stripBrandSuffix(rawTitle);
   const description = seo?.meta_description || fallback.description || "";
-  const ogTitle = seo?.og_title || title;
+  const ogTitle = seo?.og_title || rawTitle;
   const ogDescription = seo?.og_description || description;
   const ogImage = fallback.image || seo?.og_image || DEFAULT_OG_IMAGE;
 
