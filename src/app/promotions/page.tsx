@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -15,7 +15,7 @@ import {
   Sparkles,
   Search,
 } from 'lucide-react';
-import { tourTabsApi, festivalToursApi, internationalToursApi, FestivalHolidayPublic, FestivalBadge, TourTabData, TourTabTour, InternationalTourFilters } from '@/lib/api';
+import { tourTabsApi, festivalToursApi, internationalToursApi, FestivalHolidayPublic, FestivalBadge, TourTabData, TourTabTour, InternationalTourFilters, InternationalTourItem } from '@/lib/api';
 import FlashSale from '@/components/home/FlashSale';
 import { displayTourCode } from '@/lib/tour-code';
 import FavoriteButton from '@/components/home/FavoriteButton';
@@ -346,6 +346,44 @@ function buildFiltersFromTours(tabs: TourTabData[]): InternationalTourFilters {
   };
 }
 
+/** Map an international-catalog tour item to the TourTabTour shape used by PromotionTourCard */
+function mapIntlToTabTour(t: InternationalTourItem): TourTabTour {
+  const airlineName = t.transports?.find(tr => tr.airline?.name)?.airline?.name
+    ?? t.departure_airports?.[0]
+    ?? undefined;
+  return {
+    id: t.id,
+    title: t.title,
+    slug: t.slug,
+    tour_code: t.tour_code,
+    country: {
+      id: t.country?.id ?? 0,
+      name: t.country?.name_th ?? '',
+      iso2: t.country?.iso2,
+    },
+    days: t.duration_days,
+    nights: t.duration_nights,
+    price: t.min_price ?? t.display_price ?? t.price_adult ?? null,
+    original_price: t.price_adult ?? null,
+    discount_adult: t.discount_adult ?? null,
+    discount_percent: t.max_discount_percent ?? null,
+    departure_date: t.next_departure_date ?? null,
+    max_departure_date: t.next_departure_date ?? null,
+    airline: airlineName,
+    image_url: t.cover_image_url ?? null,
+    badge: t.badge ?? undefined,
+    available_seats: t.available_seats,
+    hotel_star: t.hotel_star ?? null,
+    active_promotions: t.active_promotions ?? [],
+    city_ids: (t.cities ?? []).map(c => c.id),
+  };
+}
+
+/** True when the user has entered any search/filter criteria */
+function hasActiveSearch(p: SearchParams): boolean {
+  return Object.values(p).some(v => Array.isArray(v) ? v.length > 0 : Boolean(v));
+}
+
 export default function PromotionsPage() {
   const [promotionTabs, setPromotionTabs] = useState<TourTabData[]>([]);
   const [festivals, setFestivals] = useState<FestivalHolidayPublic[]>([]);
@@ -357,6 +395,52 @@ export default function PromotionsPage() {
   const [activeSearchParams, setActiveSearchParams] = useState<SearchParams>({});
   const [sortBy, setSortBy] = useState<SortOption>('default');
   const resultsRef = useRef<HTMLDivElement>(null);
+
+  // ── Catalog search mode ──────────────────────────────────────────────
+  // When the user enters any filter (e.g. a promotion chip), search the FULL
+  // international tour catalog instead of only the curated promotion tabs, so
+  // every promotion/filter returns real results.
+  const searchMode = hasActiveSearch(activeSearchParams);
+  const [catalogTours, setCatalogTours] = useState<TourTabTour[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(false);
+  const [catalogTotal, setCatalogTotal] = useState(0);
+  const catalogAbortRef = useRef<AbortController | null>(null);
+
+  const fetchCatalog = useCallback(async (params: SearchParams) => {
+    if (catalogAbortRef.current) catalogAbortRef.current.abort();
+    const controller = new AbortController();
+    catalogAbortRef.current = controller;
+    setCatalogLoading(true);
+    try {
+      const { promotions, ...rest } = params;
+      const apiParams: Record<string, string | number | undefined> = {
+        page: 1,
+        per_page: 60,
+        ...rest,
+        ...(promotions && promotions.length > 0 && { promotions: promotions.join('|') }),
+      };
+      const res = await internationalToursApi.list(apiParams, { signal: controller.signal });
+      if (controller.signal.aborted) return;
+      setCatalogTours((res?.data ?? []).map(mapIntlToTabTour));
+      setCatalogTotal(res?.meta?.total ?? (res?.data?.length ?? 0));
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      console.error('Failed to search catalog:', error);
+      setCatalogTours([]);
+      setCatalogTotal(0);
+    } finally {
+      if (!controller.signal.aborted) setCatalogLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (searchMode) {
+      fetchCatalog(activeSearchParams);
+    } else {
+      setCatalogTours([]);
+      setCatalogTotal(0);
+    }
+  }, [activeSearchParams, searchMode, fetchCatalog]);
 
   useEffect(() => {
     async function fetchPromotions() {
@@ -411,7 +495,8 @@ export default function PromotionsPage() {
         start_date: f.start_date,
         end_date: f.end_date,
       })),
-      // Same promotion list as the country page (offer-level promotions from the international tours API)
+      // Full catalog promotion list — clicking any chip triggers a catalog-wide search
+      // (see catalog search mode below), so every promotion is browsable.
       promotions: intlPromotions,
     };
   }, [promotionTabs, festivals, allCities, intlPromotions]);
@@ -635,10 +720,10 @@ export default function PromotionsPage() {
         {/* Results header + Sort */}
         <div ref={resultsRef} className="flex items-center justify-between mb-4">
           <span className="text-base text-gray-600">
-            {loading ? (
+            {loading || (searchMode && catalogLoading) ? (
               <span className="flex items-center gap-1"><Loader2 className="w-4 h-4 animate-spin" /> กำลังค้นหา...</span>
             ) : (
-              <><strong className="text-gray-900">{totalFilteredTours}</strong> รายการ</>
+              <><strong className="text-gray-900">{searchMode ? catalogTotal : totalFilteredTours}</strong> รายการ</>
             )}
           </span>
           <select
@@ -653,7 +738,7 @@ export default function PromotionsPage() {
         </div>
 
         {/* Tab Pills */}
-        {!loading && promotionTabs.length > 1 && (
+        {!loading && !searchMode && promotionTabs.length > 1 && (
           <div className="flex overflow-x-auto gap-1 mb-6 pb-1 scrollbar-hide">
             {promotionTabs.map((tab) => {
               const filteredCount = getFilteredTours(tab.tours).length;
@@ -721,6 +806,35 @@ export default function PromotionsPage() {
               </div>
             ))}
           </div>
+        ) : searchMode ? (
+          catalogLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                <div key={i} className="bg-white rounded-xl overflow-hidden shadow-sm animate-pulse">
+                  <div className="aspect-square bg-gray-200" />
+                  <div className="p-4 space-y-2.5">
+                    <div className="h-4 bg-gray-200 rounded w-16" />
+                    <div className="h-5 bg-gray-200 rounded w-full" />
+                    <div className="h-4 bg-gray-100 rounded w-3/4" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : catalogTours.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {sortTours(catalogTours, sortBy).map((tour) => (
+                <PromotionTourCard key={tour.id} tour={tour} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16 bg-white rounded-xl">
+              <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500 mb-3">ไม่พบทัวร์ที่ตรงกับเงื่อนไขการค้นหา</p>
+              <button onClick={clearFilters} className="text-sm text-orange-600 hover:underline">
+                ล้างตัวกรองทั้งหมด
+              </button>
+            </div>
+          )
         ) : promotionTabs.length === 0 ? (
           <div className="text-center py-20">
             <Tag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
