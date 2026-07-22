@@ -225,11 +225,11 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
     const qs = params.toString();
 
     if (selectedCountry) {
-      router.push(`/tours/country/${selectedCountry.slug}${qs ? `?${qs}` : ""}`);
+      router.push(`/tours/${selectedCountry.slug}${qs ? `?${qs}` : ""}`);
     } else if (keyword.trim()) {
       router.push(`/search?q=${encodeURIComponent(keyword.trim())}${departureDateFrom ? `&departure_date_from=${departureDateFrom}` : ""}${departureDateTo ? `&departure_date_to=${departureDateTo}` : ""}${priceMin ? `&price_min=${priceMin}` : ""}${priceMax ? `&price_max=${priceMax}` : ""}`);
     } else {
-      router.push(`/tours/country/all${qs ? `?${qs}` : ""}`);
+      router.push(`/tours/all${qs ? `?${qs}` : ""}`);
     }
     onSearch?.();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -247,7 +247,7 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
     if (priceMin) params.set("price_min", priceMin);
     if (priceMax) params.set("price_max", priceMax);
     if (selectedCountry) {
-      router.push(`/tours/country/${selectedCountry.slug}?${params.toString()}`);
+      router.push(`/tours/${selectedCountry.slug}?${params.toString()}`);
     } else {
       router.push(`/search?q=${encodeURIComponent(kw)}${departureDateFrom ? `&departure_date_from=${departureDateFrom}` : ""}${departureDateTo ? `&departure_date_to=${departureDateTo}` : ""}${priceMin ? `&price_min=${priceMin}` : ""}${priceMax ? `&price_max=${priceMax}` : ""}`);
     }
@@ -590,7 +590,7 @@ export default function SearchForm({ initialKeyword = "", variant = "page", onSe
         <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap gap-2">
           <span className="text-sm text-gray-500">ยอดนิยม:</span>
           {countries.slice(0, 6).map((c) => (
-            <Link key={c.id} href={`/tours/country/${c.slug}`}
+            <Link key={c.id} href={`/tours/${c.slug}`}
               className="text-sm text-[var(--color-primary)] hover:text-[var(--color-secondary)] transition-colors">
               {c.name_th}
             </Link>

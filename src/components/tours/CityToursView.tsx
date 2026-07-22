@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { displayTourCode } from '@/lib/tour-code';
-import { tourUrl } from '@/lib/tour-url';
+import { tourUrl, cityUrl } from '@/lib/tour-url';
 import {
   Search,
   MapPin,
@@ -18,10 +18,10 @@ import {
   Sparkles,
 } from 'lucide-react';
 import {
-  domesticToursApi,
-  DomesticTourItem,
-  DomesticTourFilters,
-  DomesticTourSettings,
+  internationalToursApi,
+  InternationalTourItem,
+  InternationalTourFilters,
+  InternationalTourSettings,
   InternationalTourPeriod,
 } from '@/lib/api';
 import TourTabBadges from '@/components/shared/TourTabBadges';
@@ -81,7 +81,7 @@ const TourBadge = ({ badge }: { badge: string }) => {
   return <span className={`${colors[badge] || 'bg-gray-500'} text-white text-xs font-bold px-2.5 py-1 rounded-sm uppercase`}>{labels[badge] || badge}</span>;
 };
 
-const PromotionBadges = ({ tour }: { tour: DomesticTourItem }) => {
+const PromotionBadges = ({ tour }: { tour: InternationalTourItem }) => {
   const isSoldOut = tour.available_seats === 0;
   if (isSoldOut) return null;
   return (
@@ -93,19 +93,9 @@ const PromotionBadges = ({ tour }: { tour: DomesticTourItem }) => {
         </span>
       )}
       {tour.active_promotions?.map((promo, i) => (
-        <span key={`promo-${i}`} className="inline-flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded">
+        <span key={i} className="inline-flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded">
           <Sparkles className="w-3 h-3" />
           {promo.name}
-        </span>
-      ))}
-      {tour.themes?.map((theme, i) => (
-        <span key={`theme-${i}`} className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
-          {theme}
-        </span>
-      ))}
-      {tour.special_highlights?.map((sh, i) => (
-        <span key={`sh-${i}`} className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
-          {sh}
         </span>
       ))}
     </div>
@@ -122,14 +112,16 @@ const BADGE_BG_CLASSES: Record<string, string> = {
   pink: 'bg-gradient-to-r from-pink-500 to-rose-400',
 };
 
-function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: DomesticTourSettings }) {
-  const { getPeriodBadges } = useTourBadges();
-  const [showAllPeriods, setShowAllPeriods] = useState(false);
+const PERIODS_STEP = 5;
 
-  const maxDisplay = settings.max_periods_display || 6;
-  const visiblePeriods = (tour.periods || []).slice(0, showAllPeriods ? undefined : maxDisplay);
+function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: InternationalTourSettings }) {
+  const { getPeriodBadges } = useTourBadges();
+  const [visibleCount, setVisibleCount] = useState(PERIODS_STEP);
+
+  const visiblePeriods = (tour.periods || []).slice(0, visibleCount);
   const hasDiscount = tour.discount_amount && tour.discount_amount > 0;
-  const hasMorePeriods = (tour.periods?.length || 0) > maxDisplay;
+  const hasMorePeriods = (tour.periods?.length || 0) > visibleCount;
+  const hasLessPeriods = visibleCount > PERIODS_STEP;
 
   return (
     <div className="bg-white shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow p-3 lg:p-4">
@@ -142,7 +134,7 @@ function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: Domest
           )}
           {tour.badge && <div className="absolute top-2 left-2"><TourBadge badge={tour.badge} /></div>}
           {hasDiscount && tour.max_discount_percent && tour.max_discount_percent > 0 && (
-            <div className="absolute top-2 right-2 bg-orange-500 text-white text-sm font-bold px-2.5 py-1">ลด {Math.round(tour.max_discount_percent)}%</div>
+            <div className="absolute top-2 right-2 bg-orange-500 text-white text-sm font-bold px-2.5 py-1 ">ลด {Math.round(tour.max_discount_percent)}%</div>
           )}
         </div>
         <div className="flex-1 pt-3 lg:p-5">
@@ -174,7 +166,7 @@ function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: Domest
           {tour.cities.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-2">
               {tour.cities.map(city => (
-                <Link key={city.id} href={`/tours/city/${city.slug}`} className="inline-flex items-center gap-0.5 lg:gap-1 text-xs lg:text-sm text-orange-600 bg-orange-50 border border-orange-100 hover:bg-orange-100 rounded-full px-2 lg:px-3 py-0.5 lg:py-1 transition-colors">
+                <Link key={city.id} href={tour.country_slug ? cityUrl(tour.country_slug, city.slug) : `/tours/city/${city.slug}`} className="inline-flex items-center gap-0.5 lg:gap-1 text-xs lg:text-sm text-orange-600 bg-orange-50 border border-orange-100 hover:bg-orange-100 rounded-full px-2 lg:px-3 py-0.5 lg:py-1 transition-colors">
                   <MapPin className="w-3 lg:w-3.5 h-3 lg:h-3.5" />{city.name_th}
                 </Link>
               ))}
@@ -219,7 +211,7 @@ function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: Domest
             </div>
           )}
           <div className="flex flex-col-reverse gap-2 lg:flex-row lg:items-end lg:justify-between mt-2">
-            <div className="flex items-center gap-2">
+             <div className="flex items-center gap-2">
               {tour.pdf_url && (
                 <a
                   href={tour.pdf_url}
@@ -244,6 +236,7 @@ function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: Domest
                 ดูรายละเอียดทัวร์
               </Link>
             </div>
+            
             <div className="text-right">
               <div className="text-xs lg:text-sm text-gray-500">ราคาเริ่มต้น</div>
               {hasDiscount && tour.price_adult && <div className="text-sm lg:text-base text-gray-500 line-through">{formatPrice(tour.price_adult)}</div>}
@@ -258,7 +251,7 @@ function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: Domest
         </div>
       </div>
 
-      {/* Share & Copy buttons */}
+      {/* Share buttons */}
       <div className="flex items-center gap-1 justify-end px-2 lg:px-4 pt-1 mt-0 lg:mt-[-20px]">
         <CopyTourTextButton tour={tour} />
         <span className="text-xs text-gray-500 mr-0.5 ml-1">แชร์</span>
@@ -266,7 +259,7 @@ function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: Domest
           href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}${tourUrl(tour)}`)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors"
+          className=" cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors"
           title="แชร์ Facebook"
         >
           <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
@@ -311,11 +304,11 @@ function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: Domest
             <table className="w-full text-xs lg:text-base text-center">
               <thead>
                 <tr className="text-white font-semibold bg-orange-400">
-                  <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium rounded-tl-lg whitespace-nowrap">วันเดินทาง</th>
-                  <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium whitespace-nowrap">ราคาผู้ใหญ่</th>
-                  <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium whitespace-nowrap">ราคาเด็ก</th>
+                  <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium rounded-tl-lg whitespace-nowrap">เดินทาง</th>
+                  <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium whitespace-nowrap">ผู้ใหญ่ </th>
                   <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium whitespace-nowrap">พักเดี่ยว</th>
                   <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium">ที่นั่ง</th>
+                  <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium">จอง</th>
                   <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium rounded-tr-lg">รับได้</th>
                   {settings.show_commission && <th className="px-2 lg:px-4 py-2 lg:py-2.5 text-center font-medium rounded-tr-lg">คอมมิชชั่น</th>}
                 </tr>
@@ -339,7 +332,7 @@ function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: Domest
                           })()}
                         </div>
                       </td>
-                      {/* ราคาผู้ใหญ่ */}
+                      {/* ผู้ใหญ่ (พัก2-3ท่าน) */}
                       <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center whitespace-nowrap">
                         {period.offer ? (
                           period.offer.net_price_adult ? (
@@ -350,13 +343,7 @@ function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: Domest
                           ) : <span className="text-xs text-orange-500 font-medium">ติดต่อฝ่ายขาย</span>
                         ) : <span className="text-xs text-orange-500 font-medium">ติดต่อฝ่ายขาย</span>}
                       </td>
-                      {/* ราคาเด็ก */}
-                      <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center whitespace-nowrap">
-                        {period.offer?.price_child ? (
-                          <span className={`font-bold ${isClosed ? '' : 'text-gray-500'}`}>{formatPrice(period.offer.price_child)}</span>
-                        ) : <span className="text-xs text-orange-500 font-medium">ติดต่อฝ่ายขาย</span>}
-                      </td>
-                      {/* พักเดี่ยว */}
+                       {/* ผู้ใหญ่ (พักเดี่ยว) */}
                       <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center whitespace-nowrap">
                         {period.offer ? (
                           (period.offer.net_price_single ?? period.offer.price_single) ? (
@@ -367,49 +354,60 @@ function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: Domest
                           ) : <span className="text-xs text-orange-500 font-medium">ติดต่อฝ่ายขาย</span>
                         ) : <span className="text-xs text-orange-500 font-medium">ติดต่อฝ่ายขาย</span>}
                       </td>
-                      {/* ที่นั่ง (capacity) */}
                       <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center">{period.capacity}</td>
-                      {/* รับได้ (ที่นั่งคงเหลือ) */}
+                      <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center">{period.booked}</td>
                       <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center"><PeriodStatusBadge period={period} /></td>
                       {settings.show_commission && <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center text-green-600">{period.offer?.commission_agent || '-'}</td>}
+                     
                     </tr>
                   );
                 })}
               </tbody>
             </table>
           </div>
-          {hasMorePeriods && (
-            <button onClick={() => setShowAllPeriods(!showAllPeriods)} className="w-full py-2.5 text-sm text-orange-600 hover:bg-orange-50 border-t border-gray-100 flex items-center justify-center gap-1 transition-colors">
-              <ChevronDown className={`w-4 h-4 transition-transform ${showAllPeriods ? 'rotate-180' : ''}`} />
-              {showAllPeriods ? 'แสดงน้อยลง' : `ดูทั้งหมด ${tour.periods!.length} รอบ`}
+          {hasMorePeriods ? (
+            <button
+              onClick={() => setVisibleCount(c => c + PERIODS_STEP)}
+              className="w-full py-2.5 text-sm text-white bg-orange-400 hover:bg-orange-500 flex items-center justify-center gap-1 transition-colors font-medium"
+            >
+              <ChevronDown className="w-4 h-4" />
+              เดินทางเพิ่ม ({Math.min(PERIODS_STEP, tour.periods!.length - visibleCount)} รอบ จากทั้งหมด {tour.periods!.length} รอบ)
             </button>
-          )}
+          ) : hasLessPeriods ? (
+            <button
+              onClick={() => setVisibleCount(PERIODS_STEP)}
+              className="w-full py-2.5 text-sm text-gray-500 hover:bg-gray-50 border-t border-gray-100 flex items-center justify-center gap-1 transition-colors"
+            >
+              <ChevronDown className="w-4 h-4 rotate-180" />
+              ย่อรอบเดินทาง
+            </button>
+          ) : null}
         </div>
       )}
     </div>
   );
 }
 
-// ===== Domestic Tours Page Content =====
-function DomesticToursContent() {
+// ===== City Tours View =====
+export default function CityToursView({ countrySlug, citySlug }: { countrySlug: string; citySlug: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [tours, setTours] = useState<DomesticTourItem[]>([]);
-  const [filters, setFilters] = useState<DomesticTourFilters>({});
-  const [settings, setSettings] = useState<DomesticTourSettings>({
+  const [tours, setTours] = useState<InternationalTourItem[]>([]);
+  const [filters, setFilters] = useState<InternationalTourFilters>({});
+  const [settings, setSettings] = useState<InternationalTourSettings>({
     show_periods: true, max_periods_display: 6, show_transport: true, show_hotel_star: true,
-    show_meal_count: true, show_commission: false, filter_city: true,
+    show_meal_count: true, show_commission: false, filter_country: true, filter_city: true,
     filter_search: true, filter_airline: true, filter_departure_month: true, filter_price_range: true,
     filter_festival: true, filter_promotion: true, filter_theme: true, filter_special_highlight: true, filter_advanced: true, sort_options: {},
   });
   const [meta, setMeta] = useState({ current_page: 1, last_page: 1, per_page: 10, total: 0 });
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [cityInfo, setCityInfo] = useState<{ name_th: string; name_en: string; country_name?: string } | null>(null);
 
   const [activeSearchParams, setActiveSearchParams] = useState<SearchParams>({
     search: searchParams.get('search') || undefined,
-    city_id: searchParams.get('city_id') || undefined,
     airline_id: searchParams.get('airline_id') || undefined,
     departure_date_from: searchParams.get('departure_date_from') || undefined,
     departure_date_to: searchParams.get('departure_date_to') || undefined,
@@ -418,10 +416,7 @@ function DomesticToursContent() {
     price_min: searchParams.get('price_min') || undefined,
     price_max: searchParams.get('price_max') || undefined,
     min_seats: searchParams.get('min_seats') || undefined,
-    festival_id: searchParams.get('festival_id') || undefined,
-    promotions: searchParams.get('promotions')?.split('|').filter(Boolean) || undefined,
-    theme: searchParams.get('theme') || undefined,
-    special_highlight: searchParams.get('special_highlight') || undefined,
+    country_id: searchParams.get('country_id') || undefined,
   });
   const [sortBy, setSortBy] = useState(searchParams.get('sort_by') || '');
   const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);
@@ -445,12 +440,14 @@ function DomesticToursContent() {
       const apiParams: Record<string, string | number | undefined> = {
         page,
         per_page: 10,
+        // ถ้าผู้ใช้เลือกประเทศอื่น ไม่ล็อค city_slug เพื่อให้ค้นหาข้ามประเทศได้
+        ...(restParams.country_id ? {} : { city_slug: citySlug }),
         ...restParams,
         ...(promotions && promotions.length > 0 && { promotions: promotions.join('|') }),
         ...(sortBy && { sort_by: sortBy }),
         ...(append && { skip_filters: 1 }),
       };
-      const response = await domesticToursApi.list(apiParams, { signal: controller.signal });
+      const response = await internationalToursApi.list(apiParams, { signal: controller.signal });
       if (controller.signal.aborted) return;
       if (response) {
         if (append) {
@@ -466,6 +463,13 @@ function DomesticToursContent() {
         if (!append) {
           setFilters(response.filters || {});
           setSettings(response.settings || settings);
+          if (response.active_filters?.city) {
+            setCityInfo({
+              name_th: response.active_filters.city.name_th,
+              name_en: response.active_filters.city.name_en,
+              country_name: response.active_filters.country?.name_th,
+            });
+          }
         }
       }
     } catch (error) {
@@ -478,7 +482,7 @@ function DomesticToursContent() {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSearchParams, sortBy]);
+  }, [citySlug, activeSearchParams, sortBy]);
 
   useEffect(() => {
     loadMorePageRef.current = 1;
@@ -498,14 +502,14 @@ function DomesticToursContent() {
     });
     if (sortBy) p.set('sort_by', sortBy);
     const qs = p.toString();
-    router.push(`/tours/domestic${qs ? `?${qs}` : ''}`, { scroll: false });
+    router.push(`/tours/${countrySlug}/${citySlug}${qs ? `?${qs}` : ''}`, { scroll: false });
   };
 
   const clearFilters = () => {
     setActiveSearchParams({});
     setSortBy('');
     setCurrentPage(1);
-    router.push('/tours/domestic', { scroll: false });
+    router.push(`/tours/${countrySlug}/${citySlug}`, { scroll: false });
   };
 
   const handleLoadMore = () => {
@@ -515,8 +519,7 @@ function DomesticToursContent() {
   };
 
   const isLoadMoreMode = settings.pagination_mode === 'load_more';
-
-  const isInitialLoad = loading && tours.length === 0;
+  const isInitialLoad = loading && tours.length === 0 && !cityInfo;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -536,29 +539,33 @@ function DomesticToursContent() {
             <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/20" />
           </>
         )}
-        <div className={`container-custom relative z-10 ${settings.cover_image_url ? 'pt-14 pb-28 lg:pt-30 lg:pb-40' : 'pt-8 pb-28 lg:pt-12 lg:pb-36'}`}>
+        <div className={`container-custom relative z-10  ${settings.cover_image_url ? 'pt-14 pb-28 lg:pt-30 lg:pb-40' : 'pt-8 pb-28 lg:pt-12 lg:pb-36'}`}>
           {isInitialLoad ? (
             <div className="animate-pulse">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-5 h-5 bg-white/30 rounded" />
-                <div className="w-8 h-6 bg-white/30 rounded" />
                 <div className="h-9 lg:h-10 bg-white/30 rounded-lg w-48 lg:w-64" />
               </div>
-              <div className="ml-8 h-5 bg-white/20 rounded w-60 lg:w-80" />
+              <div className="ml-8 mt-1 h-4 bg-white/20 rounded w-24" />
+              <div className="ml-8 mt-2 h-5 bg-white/20 rounded w-60 lg:w-80" />
             </div>
           ) : (
             <>
               <div className="flex items-center gap-3 mb-2">
-                <Link href="/" className="text-white/70 hover:text-white transition-colors">
+                <Link href="/tours/international" className="text-white/70 hover:text-white transition-colors">
                   <ArrowLeft className="w-5 h-5" />
                 </Link>
-                <img src="https://flagcdn.com/32x24/th.png" width={32} height={24} alt="Thailand" className="rounded shadow" />
-                <h1 className="text-3xl lg:text-4xl font-bold">
-                  ทัวร์ในประเทศ
-                </h1>
+                <div>
+                  <h1 className="text-3xl lg:text-4xl font-bold">
+                    ทัวร์ {cityInfo?.name_th || citySlug}
+                  </h1>
+                  {cityInfo?.country_name && (
+                    <p className="text-white/80 text-base mt-0.5">{cityInfo.country_name}</p>
+                  )}
+                </div>
               </div>
               <p className="text-white/80 text-base lg:text-lg ml-8">
-                {settings.hero_text || 'รวมโปรแกรมทัวร์ในประเทศไทย เที่ยวทั่วไทย ราคาพิเศษ พร้อมเดินทาง'}
+                {settings.hero_text || `รวมโปรแกรมทัวร์${cityInfo?.name_th || ''} ราคาพิเศษ พร้อมเดินทาง`}
               </p>
             </>
           )}
@@ -599,7 +606,7 @@ function DomesticToursContent() {
               initialValues={activeSearchParams}
               showFilters={{
                 search: settings.filter_search,
-                country: false,
+                country: settings.filter_country,
                 city: settings.filter_city,
                 airline: settings.filter_airline,
                 departureMonth: settings.filter_departure_month,
@@ -630,7 +637,7 @@ function DomesticToursContent() {
           <div className="space-y-4">
             {[1, 2, 3].map(i => (
               <div key={i} className="bg-white rounded-xl border border-gray-100 overflow-hidden animate-pulse">
-                <div className="flex flex-col lg:flex-row"><div className="w-full h-56 lg:w-56 lg:h-56 bg-gray-200" /><div className="flex-1 p-5 space-y-3"><div className="h-5 bg-gray-200 rounded w-3/4" /><div className="h-4 bg-gray-200 rounded w-1/2" /><div className="h-4 bg-gray-200 rounded w-full" /></div></div>
+                <div className="flex flex-col lg:flex-row"><div className="w-full h-56 lg:w-56 lg:h-56 bg-gray-200" /><div className="flex-1 p-5 space-y-3"><div className="h-5 bg-gray-200 rounded w-3/4" /><div className="h-4 bg-gray-200 rounded w-1/2" /></div></div>
               </div>
             ))}
           </div>
@@ -679,18 +686,5 @@ function DomesticToursContent() {
         )}
       </div>
     </div>
-  );
-}
-
-// ===== Domestic Tours Page =====
-export default function DomesticToursPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="w-10 h-10 text-orange-500 animate-spin" />
-      </div>
-    }>
-      <DomesticToursContent />
-    </Suspense>
   );
 }

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { displayTourCode } from '@/lib/tour-code';
+import { tourUrl } from '@/lib/tour-url';
 import {
   ArrowRight,
   MapPin,
@@ -32,7 +33,7 @@ function RecommendedTourCard({ tour, index }: { tour: TourTabTour; index: number
 
   return (
     <Link
-      href={`/tours/${tour.slug}`}
+      href={tourUrl(tour)}
       className={`cursor-pointer group relative flex flex-col sm:flex-row bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-amber-200 shadow-sm hover:shadow-lg transition-all duration-300 ${isSoldOut ? 'opacity-75' : ''}`}
     >
       {/* Favorite button */}

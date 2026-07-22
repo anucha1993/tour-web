@@ -475,6 +475,8 @@ export interface TourDetailCountry {
 export interface TourDetail {
   id: number;
   slug: string;
+  country_slug: string | null;
+  city_slug: string | null;
   tour_code: string;
   title: string;
   tour_type: string;
@@ -1024,6 +1026,8 @@ export interface InternationalTourTransport {
 export interface InternationalTourItem {
   id: number;
   slug: string;
+  country_slug: string | null;
+  city_slug: string | null;
   tour_code: string;
   title: string;
   tour_type: string;

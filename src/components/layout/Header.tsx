@@ -637,7 +637,7 @@ export default function Header() {
                   {intlCountries.map((country) => (
                     <div key={country.id}>
                       <Link
-                        href={`/tours/country/${country.slug}`}
+                        href={`/tours/${country.slug}`}
                         className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-[var(--color-primary-50)] transition-colors group/country"
                       >
                         {country.iso2 && <img src={`https://flagcdn.com/20x15/${country.iso2}.png`} width={20} height={15} alt={country.name_th} className="inline-block shrink-0" />}
@@ -654,7 +654,7 @@ export default function Header() {
                           {country.cities.map((city) => (
                             <Link
                               key={city.id}
-                              href={`/tours/city/${city.slug}`}
+                              href={`/tours/${country.slug}/${city.slug}`}
                               className="inline-flex items-center gap-1 text-xs text-orange-600 bg-orange-50 border border-orange-200 hover:bg-orange-100 hover:border-orange-400 rounded-full px-2 py-0.5 transition-colors"
                             >
                               <MapPin className="w-3 h-3" />
@@ -738,7 +738,7 @@ export default function Header() {
                               {intlCountries.map((country) => (
                                 <div key={country.id}>
                                   <Link
-                                    href={`/tours/country/${country.slug}`}
+                                    href={`/tours/${country.slug}`}
                                     onClick={() => setIsMobileMenuOpen(false)}
                                     className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-50)] transition-colors"
                                   >
@@ -752,7 +752,7 @@ export default function Header() {
                                       {country.cities.map((city) => (
                                         <Link
                                           key={city.id}
-                                          href={`/tours/city/${city.slug}`}
+                                          href={`/tours/${country.slug}/${city.slug}`}
                                           onClick={() => setIsMobileMenuOpen(false)}
                                           className="inline-flex items-center gap-1 text-[11px] text-orange-600 bg-orange-50 border border-orange-200 hover:bg-orange-100 hover:border-orange-400 rounded-full px-2 py-0.5 transition-colors"
                                         >

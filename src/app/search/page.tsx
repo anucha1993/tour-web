@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { displayTourCode } from '@/lib/tour-code';
+import { tourUrl } from '@/lib/tour-url';
 import {
   Search,
   MapPin,
@@ -139,7 +140,7 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
         </div>
         <div className="flex-1 pt-3 lg:p-5">
           <div className="mb-2">
-            <Link href={`/tours/${tour.slug}`} className="text-lg lg:text-xl font-bold text-gray-900 hover:text-orange-600 transition-colors line-clamp-2">{tour.title}</Link>
+            <Link href={tourUrl(tour)} className="text-lg lg:text-xl font-bold text-gray-900 hover:text-orange-600 transition-colors line-clamp-2">{tour.title}</Link>
             <div className="flex flex-wrap items-center gap-1.5 lg:gap-2 mt-1.5 text-xs lg:text-sm text-gray-500">
               <span className="bg-gray-100 px-2.5 py-0.5 rounded font-mono">รหัสทัวร์ {displayTourCode(tour.tour_code)}</span>
               {tour.is_pinned && (
@@ -214,7 +215,7 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
                   PDF
                 </a>
               )}
-              <Link href={`/tours/${tour.slug}`} className="inline-flex items-center gap-1.5 text-xs lg:text-sm text-white bg-orange-500 hover:bg-orange-600 rounded-lg px-2.5 lg:px-3 py-1.5 font-medium transition-colors">ดูรายละเอียดทัวร์</Link>
+              <Link href={tourUrl(tour)} className="inline-flex items-center gap-1.5 text-xs lg:text-sm text-white bg-orange-500 hover:bg-orange-600 rounded-lg px-2.5 lg:px-3 py-1.5 font-medium transition-colors">ดูรายละเอียดทัวร์</Link>
             </div>
             <div className="text-right">
               <div className="text-xs lg:text-sm text-gray-500">ราคาเริ่มต้น</div>
@@ -234,16 +235,16 @@ function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: I
       <div className="flex items-center gap-1 justify-end px-2 lg:px-4 pt-1 mt-0 lg:mt-[-20px]">
         <CopyTourTextButton tour={tour} />
         <span className="text-xs text-gray-500 mr-0.5 ml-1">แชร์</span>
-        <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/tours/${tour.slug}`)}`} target="_blank" rel="noopener noreferrer" className="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors" title="แชร์ Facebook">
+        <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}${tourUrl(tour)}`)}`} target="_blank" rel="noopener noreferrer" className="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors" title="แชร์ Facebook">
           <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
         </a>
-        <a href={`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/tours/${tour.slug}`)}`} target="_blank" rel="noopener noreferrer" className="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-green-50 hover:bg-green-100 text-green-600 transition-colors" title="แชร์ LINE">
+        <a href={`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}${tourUrl(tour)}`)}`} target="_blank" rel="noopener noreferrer" className="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-green-50 hover:bg-green-100 text-green-600 transition-colors" title="แชร์ LINE">
           <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
         </a>
-        <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/tours/${tour.slug}`)}&text=${encodeURIComponent(tour.title)}`} target="_blank" rel="noopener noreferrer" className="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-100 text-gray-700 transition-colors" title="แชร์ X">
+        <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}${tourUrl(tour)}`)}&text=${encodeURIComponent(tour.title)}`} target="_blank" rel="noopener noreferrer" className="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-100 text-gray-700 transition-colors" title="แชร์ X">
           <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
         </a>
-        <button onClick={(e) => { e.preventDefault(); navigator.clipboard.writeText(`${window.location.origin}/tours/${tour.slug}`); const btn = e.currentTarget; btn.title = 'คัดลอกแล้ว!'; setTimeout(() => { btn.title = 'คัดลอกลิงก์'; }, 2000); }} className="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-100 text-gray-500 transition-colors" title="คัดลอกลิงก์">
+        <button onClick={(e) => { e.preventDefault(); navigator.clipboard.writeText(`${window.location.origin}${tourUrl(tour)}`); const btn = e.currentTarget; btn.title = 'คัดลอกแล้ว!'; setTimeout(() => { btn.title = 'คัดลอกลิงก์'; }, 2000); }} className="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-100 text-gray-500 transition-colors" title="คัดลอกลิงก์">
           <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
         </button>
       </div>

@@ -328,7 +328,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                   <h3 className="text-lg font-bold text-gray-900 mb-4">{settings.sidebar_recommended_tours_title || 'โปรแกรมทัวร์แนะนำ'}</h3>
                   <div className="space-y-3">
                     {recommendedTours.map(t => (
-                      <Link key={t.id} href={t.country_slug ? `/tours/country/${t.country_slug}` : `/tours/${t.slug}`} className="block group">
+                      <Link key={t.id} href={t.country_slug ? `/tours/${t.country_slug}` : `/tours/${t.slug}`} className="block group">
                         <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-gray-200 mb-2">
                           {t.cover_image_url ? (
                             <Image src={t.cover_image_url} alt={t.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />

@@ -9,7 +9,7 @@ function InternationalRedirectContent() {
 
   useEffect(() => {
     const qs = searchParams.toString();
-    router.replace(`/tours/country/all${qs ? `?${qs}` : ''}`);
+    router.replace(`/tours/all${qs ? `?${qs}` : ''}`);
   }, [router, searchParams]);
 
   return (

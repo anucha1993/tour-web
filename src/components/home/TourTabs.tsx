@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { displayTourCode } from '@/lib/tour-code';
+import { tourUrl } from '@/lib/tour-url';
 import { 
   ArrowRight,
   MapPin,
@@ -46,7 +47,7 @@ function TourCard({ tour }: { tour: TourTabTour }) {
 
   return (
     <Link
-      href={`/tours/${tour.slug}`}
+      href={tourUrl(tour)}
       className={`cursor-pointer group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 ${isSoldOut ? 'opacity-75' : ''}`}
     >
       {/* Image */}

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { tourDetailApi, TourTabTour } from '@/lib/api';
 import { displayTourCode } from '@/lib/tour-code';
+import { tourUrl } from '@/lib/tour-url';
 import FavoriteButton from '@/components/home/FavoriteButton';
 import TourTabBadges from '@/components/shared/TourTabBadges';
 
@@ -26,7 +27,7 @@ function RelatedTourCard({ tour }: { tour: TourTabTour }) {
 
   return (
     <Link
-      href={`/tours/${tour.slug}`}
+      href={tourUrl(tour)}
       className={`cursor-pointer group relative bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-[var(--color-primary)]/30 shadow-sm hover:shadow-lg transition-all duration-300 flex-shrink-0 flex flex-col ${isSoldOut ? 'opacity-70' : ''}`}
     >
       {/* Image Section */}

@@ -7,6 +7,7 @@
  */
 
 import { config, SITE_URL } from "./config";
+import { tourUrl } from "./tour-url";
 
 const SITE_NAME = "Next Trip Holiday";
 const base = SITE_URL.replace(/\/$/, "");
@@ -20,6 +21,8 @@ export function jsonLdString(data: unknown): string {
 export interface TourForSchema {
   id: number;
   slug: string;
+  country_slug?: string | null;
+  city_slug?: string | null;
   tour_code?: string | null;
   title: string;
   description?: string | null;
@@ -55,7 +58,7 @@ export function buildTourProductJsonLd(
   tour: TourForSchema,
   rating?: RatingForSchema | null
 ): Record<string, unknown> {
-  const url = `${base}/tours/${tour.slug}`;
+  const url = `${base}${tourUrl(tour)}`;
   const price = tour.display_price ?? tour.min_price ?? tour.price_adult ?? null;
 
   const durationText =
@@ -118,7 +121,7 @@ export function buildTourBreadcrumbJsonLd(tour: TourForSchema): Record<string, u
     isDomestic
       ? { name: "ทัวร์ในประเทศ", item: `${base}/tours/domestic` }
       : { name: "ทัวร์ต่างประเทศ", item: `${base}/tours/international` },
-    { name: tour.title, item: `${base}/tours/${tour.slug}` },
+    { name: tour.title, item: `${base}${tourUrl(tour)}` },
   ];
 
   return {

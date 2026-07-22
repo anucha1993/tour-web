@@ -16,6 +16,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
+import { tourUrl } from "@/lib/tour-url";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { formatThaiDate } from "@/lib/date-utils";
@@ -155,7 +156,7 @@ export default function MemberDashboard() {
             {favorites.slice(0, 3).map((tour) => (
               <Link
                 key={tour.id}
-                href={`/tours/${tour.slug}`}
+                href={tourUrl(tour)}
                 className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group border border-gray-100"
               >
                 <div className="relative aspect-square">

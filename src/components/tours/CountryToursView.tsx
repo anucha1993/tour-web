@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { displayTourCode } from '@/lib/tour-code';
-import { tourUrl } from '@/lib/tour-url';
+import { tourUrl, cityUrl } from '@/lib/tour-url';
 import {
   Search,
   MapPin,
@@ -16,13 +16,19 @@ import {
   Loader2,
   ArrowLeft,
   Sparkles,
+  BookOpen,
+  Phone,
+  MessageCircle,
+  TrendingUp,
+  Clock,
 } from 'lucide-react';
 import {
-  domesticToursApi,
-  DomesticTourItem,
-  DomesticTourFilters,
-  DomesticTourSettings,
+  internationalToursApi,
+  InternationalTourItem,
+  InternationalTourFilters,
+  InternationalTourSettings,
   InternationalTourPeriod,
+  InternationalTourSidebar,
 } from '@/lib/api';
 import TourTabBadges from '@/components/shared/TourTabBadges';
 import TourSearchForm, { SearchParams } from '@/components/shared/TourSearchForm';
@@ -81,7 +87,7 @@ const TourBadge = ({ badge }: { badge: string }) => {
   return <span className={`${colors[badge] || 'bg-gray-500'} text-white text-xs font-bold px-2.5 py-1 rounded-sm uppercase`}>{labels[badge] || badge}</span>;
 };
 
-const PromotionBadges = ({ tour }: { tour: DomesticTourItem }) => {
+const PromotionBadges = ({ tour }: { tour: InternationalTourItem }) => {
   const isSoldOut = tour.available_seats === 0;
   if (isSoldOut) return null;
   return (
@@ -122,14 +128,16 @@ const BADGE_BG_CLASSES: Record<string, string> = {
   pink: 'bg-gradient-to-r from-pink-500 to-rose-400',
 };
 
-function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: DomesticTourSettings }) {
-  const { getPeriodBadges } = useTourBadges();
-  const [showAllPeriods, setShowAllPeriods] = useState(false);
+const PERIODS_STEP = 5;
 
-  const maxDisplay = settings.max_periods_display || 6;
-  const visiblePeriods = (tour.periods || []).slice(0, showAllPeriods ? undefined : maxDisplay);
+function TourCard({ tour, settings }: { tour: InternationalTourItem; settings: InternationalTourSettings }) {
+  const { getPeriodBadges } = useTourBadges();
+  const [visibleCount, setVisibleCount] = useState(PERIODS_STEP);
+
+  const visiblePeriods = (tour.periods || []).slice(0, visibleCount);
   const hasDiscount = tour.discount_amount && tour.discount_amount > 0;
-  const hasMorePeriods = (tour.periods?.length || 0) > maxDisplay;
+  const hasMorePeriods = (tour.periods?.length || 0) > visibleCount;
+  const hasLessPeriods = visibleCount > PERIODS_STEP;
 
   return (
     <div className="bg-white shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow p-3 lg:p-4">
@@ -142,7 +150,7 @@ function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: Domest
           )}
           {tour.badge && <div className="absolute top-2 left-2"><TourBadge badge={tour.badge} /></div>}
           {hasDiscount && tour.max_discount_percent && tour.max_discount_percent > 0 && (
-            <div className="absolute top-2 right-2 bg-orange-500 text-white text-sm font-bold px-2.5 py-1">ลด {Math.round(tour.max_discount_percent)}%</div>
+            <div className="absolute top-2 right-2 bg-orange-500 text-white text-sm font-bold px-2.5 py-1 ">ลด {Math.round(tour.max_discount_percent)}%</div>
           )}
         </div>
         <div className="flex-1 pt-3 lg:p-5">
@@ -174,7 +182,7 @@ function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: Domest
           {tour.cities.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-2">
               {tour.cities.map(city => (
-                <Link key={city.id} href={`/tours/city/${city.slug}`} className="inline-flex items-center gap-0.5 lg:gap-1 text-xs lg:text-sm text-orange-600 bg-orange-50 border border-orange-100 hover:bg-orange-100 rounded-full px-2 lg:px-3 py-0.5 lg:py-1 transition-colors">
+                <Link key={city.id} href={tour.country_slug ? cityUrl(tour.country_slug, city.slug) : `/tours/city/${city.slug}`} className="inline-flex items-center gap-0.5 lg:gap-1 text-xs lg:text-sm text-orange-600 bg-orange-50 border border-orange-100 hover:bg-orange-100 rounded-full px-2 lg:px-3 py-0.5 lg:py-1 transition-colors">
                   <MapPin className="w-3 lg:w-3.5 h-3 lg:h-3.5" />{city.name_th}
                 </Link>
               ))}
@@ -219,7 +227,7 @@ function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: Domest
             </div>
           )}
           <div className="flex flex-col-reverse gap-2 lg:flex-row lg:items-end lg:justify-between mt-2">
-            <div className="flex items-center gap-2">
+             <div className="flex items-center gap-2">
               {tour.pdf_url && (
                 <a
                   href={tour.pdf_url}
@@ -244,6 +252,7 @@ function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: Domest
                 ดูรายละเอียดทัวร์
               </Link>
             </div>
+            
             <div className="text-right">
               <div className="text-xs lg:text-sm text-gray-500">ราคาเริ่มต้น</div>
               {hasDiscount && tour.price_adult && <div className="text-sm lg:text-base text-gray-500 line-through">{formatPrice(tour.price_adult)}</div>}
@@ -266,7 +275,7 @@ function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: Domest
           href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}${tourUrl(tour)}`)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors"
+          className=" cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors"
           title="แชร์ Facebook"
         >
           <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
@@ -367,45 +376,59 @@ function TourCard({ tour, settings }: { tour: DomesticTourItem; settings: Domest
                           ) : <span className="text-xs text-orange-500 font-medium">ติดต่อฝ่ายขาย</span>
                         ) : <span className="text-xs text-orange-500 font-medium">ติดต่อฝ่ายขาย</span>}
                       </td>
-                      {/* ที่นั่ง (capacity) */}
+                      {/* ที่นั่ง (size group = capacity) */}
                       <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center">{period.capacity}</td>
                       {/* รับได้ (ที่นั่งคงเหลือ) */}
                       <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center"><PeriodStatusBadge period={period} /></td>
                       {settings.show_commission && <td className="px-2 lg:px-4 py-2 lg:py-2.5 text-center text-green-600">{period.offer?.commission_agent || '-'}</td>}
+                     
                     </tr>
                   );
                 })}
               </tbody>
             </table>
           </div>
-          {hasMorePeriods && (
-            <button onClick={() => setShowAllPeriods(!showAllPeriods)} className="w-full py-2.5 text-sm text-orange-600 hover:bg-orange-50 border-t border-gray-100 flex items-center justify-center gap-1 transition-colors">
-              <ChevronDown className={`w-4 h-4 transition-transform ${showAllPeriods ? 'rotate-180' : ''}`} />
-              {showAllPeriods ? 'แสดงน้อยลง' : `ดูทั้งหมด ${tour.periods!.length} รอบ`}
+          {hasMorePeriods ? (
+            <button
+              onClick={() => setVisibleCount(c => c + PERIODS_STEP)}
+              className="w-full py-2.5 text-sm text-white bg-orange-400 hover:bg-orange-500 flex items-center justify-center gap-1 transition-colors font-medium"
+            >
+              <ChevronDown className="w-4 h-4" />
+              เดินทางเพิ่ม ({Math.min(PERIODS_STEP, tour.periods!.length - visibleCount)} รอบ จากทั้งหมด {tour.periods!.length} รอบ)
             </button>
-          )}
+          ) : hasLessPeriods ? (
+            <button
+              onClick={() => setVisibleCount(PERIODS_STEP)}
+              className="w-full py-2.5 text-sm text-gray-500 hover:bg-gray-50 border-t border-gray-100 flex items-center justify-center gap-1 transition-colors"
+            >
+              <ChevronDown className="w-4 h-4 rotate-180" />
+              ย่อรอบเดินทาง
+            </button>
+          ) : null}
         </div>
       )}
     </div>
   );
 }
 
-// ===== Domestic Tours Page Content =====
-function DomesticToursContent() {
+// ===== Country Tours View =====
+export default function CountryToursView({ countrySlug }: { countrySlug: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [tours, setTours] = useState<DomesticTourItem[]>([]);
-  const [filters, setFilters] = useState<DomesticTourFilters>({});
-  const [settings, setSettings] = useState<DomesticTourSettings>({
+  const [tours, setTours] = useState<InternationalTourItem[]>([]);
+  const [filters, setFilters] = useState<InternationalTourFilters>({});
+  const [settings, setSettings] = useState<InternationalTourSettings>({
     show_periods: true, max_periods_display: 6, show_transport: true, show_hotel_star: true,
-    show_meal_count: true, show_commission: false, filter_city: true,
+    show_meal_count: true, show_commission: false, filter_country: true, filter_city: true,
     filter_search: true, filter_airline: true, filter_departure_month: true, filter_price_range: true,
     filter_festival: true, filter_promotion: true, filter_theme: true, filter_special_highlight: true, filter_advanced: true, sort_options: {},
   });
   const [meta, setMeta] = useState({ current_page: 1, last_page: 1, per_page: 10, total: 0 });
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [countryInfo, setCountryInfo] = useState<{ id: number; name_th: string; name_en: string; iso2: string } | null>(null);
+  const [sidebar, setSidebar] = useState<InternationalTourSidebar | null>(null);
 
   const [activeSearchParams, setActiveSearchParams] = useState<SearchParams>({
     search: searchParams.get('search') || undefined,
@@ -429,6 +452,7 @@ function DomesticToursContent() {
   const loadMorePageRef = useRef(1);
 
   const fetchTours = useCallback(async (page: number = 1, append: boolean = false) => {
+    // สำหรับ load more ไม่ต้อง abort request เดิม
     if (!append) {
       if (abortRef.current) abortRef.current.abort();
     }
@@ -445,12 +469,13 @@ function DomesticToursContent() {
       const apiParams: Record<string, string | number | undefined> = {
         page,
         per_page: 10,
+        country_slug: countrySlug,
         ...restParams,
         ...(promotions && promotions.length > 0 && { promotions: promotions.join('|') }),
         ...(sortBy && { sort_by: sortBy }),
         ...(append && { skip_filters: 1 }),
       };
-      const response = await domesticToursApi.list(apiParams, { signal: controller.signal });
+      const response = await internationalToursApi.list(apiParams, { signal: controller.signal });
       if (controller.signal.aborted) return;
       if (response) {
         if (append) {
@@ -466,6 +491,10 @@ function DomesticToursContent() {
         if (!append) {
           setFilters(response.filters || {});
           setSettings(response.settings || settings);
+          if (response.active_filters?.country) {
+            setCountryInfo(response.active_filters.country);
+          }
+          setSidebar(response.sidebar ?? null);
         }
       }
     } catch (error) {
@@ -478,7 +507,7 @@ function DomesticToursContent() {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSearchParams, sortBy]);
+  }, [countrySlug, activeSearchParams, sortBy]);
 
   useEffect(() => {
     loadMorePageRef.current = 1;
@@ -498,14 +527,14 @@ function DomesticToursContent() {
     });
     if (sortBy) p.set('sort_by', sortBy);
     const qs = p.toString();
-    router.push(`/tours/domestic${qs ? `?${qs}` : ''}`, { scroll: false });
+    router.push(`/tours/${countrySlug}${qs ? `?${qs}` : ''}`, { scroll: false });
   };
 
   const clearFilters = () => {
     setActiveSearchParams({});
     setSortBy('');
     setCurrentPage(1);
-    router.push('/tours/domestic', { scroll: false });
+    router.push(`/tours/${countrySlug}`, { scroll: false });
   };
 
   const handleLoadMore = () => {
@@ -515,8 +544,7 @@ function DomesticToursContent() {
   };
 
   const isLoadMoreMode = settings.pagination_mode === 'load_more';
-
-  const isInitialLoad = loading && tours.length === 0;
+  const isInitialLoad = loading && tours.length === 0 && !countryInfo;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -536,7 +564,7 @@ function DomesticToursContent() {
             <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/20" />
           </>
         )}
-        <div className={`container-custom relative z-10 ${settings.cover_image_url ? 'pt-14 pb-28 lg:pt-30 lg:pb-40' : 'pt-8 pb-28 lg:pt-12 lg:pb-36'}`}>
+        <div className={`container-custom relative z-10  ${settings.cover_image_url ? 'pt-14 pb-28 lg:pt-30 lg:pb-40' : 'pt-8 pb-28 lg:pt-12 lg:pb-36'}`}>
           {isInitialLoad ? (
             <div className="animate-pulse">
               <div className="flex items-center gap-3 mb-2">
@@ -549,16 +577,18 @@ function DomesticToursContent() {
           ) : (
             <>
               <div className="flex items-center gap-3 mb-2">
-                <Link href="/" className="text-white/70 hover:text-white transition-colors">
+                <Link href="/tours/international" className="text-white/70 hover:text-white transition-colors">
                   <ArrowLeft className="w-5 h-5" />
                 </Link>
-                <img src="https://flagcdn.com/32x24/th.png" width={32} height={24} alt="Thailand" className="rounded shadow" />
+                {countryInfo?.iso2 && (
+                  <img src={`https://flagcdn.com/32x24/${countryInfo.iso2.toLowerCase()}.png`} width={32} height={24} alt="" className="rounded shadow" />
+                )}
                 <h1 className="text-3xl lg:text-4xl font-bold">
-                  ทัวร์ในประเทศ
+                  {countrySlug === 'all' ? 'ทัวร์ต่างประเทศ' : `ทัวร์${countryInfo?.name_th || countrySlug}`}
                 </h1>
               </div>
               <p className="text-white/80 text-base lg:text-lg ml-8">
-                {settings.hero_text || 'รวมโปรแกรมทัวร์ในประเทศไทย เที่ยวทั่วไทย ราคาพิเศษ พร้อมเดินทาง'}
+                {settings.hero_text || (countrySlug === 'all' ? 'รวมโปรแกรมทัวร์ต่างประเทศ ราคาพิเศษ พร้อมเดินทาง' : `รวมโปรแกรมทัวร์${countryInfo?.name_th || ''} ราคาพิเศษ พร้อมเดินทาง`)}
               </p>
             </>
           )}
@@ -596,10 +626,13 @@ function DomesticToursContent() {
               filters={filters}
               onSearch={handleSearch}
               onClear={clearFilters}
-              initialValues={activeSearchParams}
+              initialValues={{
+                ...activeSearchParams,
+                ...(countryInfo?.id ? { country_id: String(countryInfo.id) } : {}),
+              }}
               showFilters={{
                 search: settings.filter_search,
-                country: false,
+                country: settings.filter_country,
                 city: settings.filter_city,
                 airline: settings.filter_airline,
                 departureMonth: settings.filter_departure_month,
@@ -614,83 +647,234 @@ function DomesticToursContent() {
           )}
         </div>
 
-        {/* Results header */}
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-base text-gray-600">
-            {loading ? <span className="flex items-center gap-1"><Loader2 className="w-4 h-4 animate-spin" /> กำลังค้นหา...</span> : <><strong className="text-gray-900">{meta.total}</strong> รายการ</>}
-          </span>
-          <select className="border border-gray-200 rounded-lg px-3 py-2 text-base" value={sortBy} onChange={e => setSortBy(e.target.value)}>
-            <option value="">ค่าเริ่มต้น</option>
-            {Object.entries(settings.sort_options || {}).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
-        </div>
+        {/* Results + Sidebar grid */}
+        {(() => {
+          const hasSidebar = settings.show_sidebar !== false && (
+            (settings.sidebar_show_blog_posts !== false && (sidebar?.blog_posts?.length ?? 0) > 0) ||
+            (settings.sidebar_show_popular_tours !== false && (sidebar?.popular_tours?.length ?? 0) > 0) ||
+            (settings.sidebar_show_portfolios && (sidebar?.portfolios?.length ?? 0) > 0) ||
+            (settings.sidebar_show_contact !== false && !!sidebar?.contact)
+          );
+          return (
+            <div className={hasSidebar ? 'grid grid-cols-1 lg:grid-cols-4 gap-6' : ''}>
+              <div className={hasSidebar ? 'lg:col-span-3' : ''}>
+                {/* Results header */}
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-base text-gray-600">
+                    {loading ? <span className="flex items-center gap-1"><Loader2 className="w-4 h-4 animate-spin" /> กำลังค้นหา...</span> : <><strong className="text-gray-900">{meta.total}</strong> รายการ</>}
+                  </span>
+                  <select className="border border-gray-200 rounded-lg px-3 py-2 text-base" value={sortBy} onChange={e => setSortBy(e.target.value)}>
+                    <option value="">ค่าเริ่มต้น</option>
+                    {Object.entries(settings.sort_options || {}).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                  </select>
+                </div>
 
-        {/* Tour List */}
-        {loading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="bg-white rounded-xl border border-gray-100 overflow-hidden animate-pulse">
-                <div className="flex flex-col lg:flex-row"><div className="w-full h-56 lg:w-56 lg:h-56 bg-gray-200" /><div className="flex-1 p-5 space-y-3"><div className="h-5 bg-gray-200 rounded w-3/4" /><div className="h-4 bg-gray-200 rounded w-1/2" /><div className="h-4 bg-gray-200 rounded w-full" /></div></div>
-              </div>
-            ))}
-          </div>
-        ) : tours.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
-            <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <h3 className="text-xl font-semibold text-gray-700 mb-1">ไม่พบรายการทัวร์</h3>
-            <p className="text-base text-gray-500 mb-4">ลองเปลี่ยนเงื่อนไขการค้นหาดูนะครับ</p>
-            <button onClick={clearFilters} className="text-base text-orange-600 hover:underline">ล้างตัวกรองทั้งหมด</button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {tours.map(tour => <TourCard key={tour.id} tour={tour} settings={settings} />)}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {isLoadMoreMode ? (
-          tours.length < meta.total && (
-            <div className="flex justify-center mt-8">
-              <button
-                onClick={handleLoadMore}
-                disabled={loadingMore}
-                className="px-8 py-3 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {loadingMore ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> กำลังโหลด...</>
+                {/* Tour List */}
+                {loading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="bg-white rounded-xl border border-gray-100 overflow-hidden animate-pulse">
+                        <div className="flex flex-col lg:flex-row"><div className="w-full h-56 lg:w-56 lg:h-56 bg-gray-200" /><div className="flex-1 p-5 space-y-3"><div className="h-5 bg-gray-200 rounded w-3/4" /><div className="h-4 bg-gray-200 rounded w-1/2" /><div className="h-4 bg-gray-200 rounded w-full" /></div></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : tours.length === 0 ? (
+                  <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
+                    <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <h3 className="text-xl font-semibold text-gray-700 mb-1">ไม่พบรายการทัวร์</h3>
+                    <p className="text-base text-gray-500 mb-4">ลองเปลี่ยนเงื่อนไขการค้นหาดูนะครับ</p>
+                    <button onClick={clearFilters} className="text-base text-orange-600 hover:underline">ล้างตัวกรองทั้งหมด</button>
+                  </div>
                 ) : (
-                  <>โหลดเพิ่มเติม ({Math.min(10, meta.total - tours.length)} จาก {meta.total - tours.length} รายการ)</>
+                  <div className="space-y-4">
+                    {tours.map(tour => <TourCard key={tour.id} tour={tour} settings={settings} />)}
+                  </div>
                 )}
-              </button>
-            </div>
-          )
-        ) : meta.last_page > 1 && (
-          <div className="flex items-center justify-center gap-2 mt-8">
-            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage <= 1} className="p-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"><ChevronLeft className="w-5 h-5" /></button>
-            {Array.from({ length: meta.last_page }, (_, i) => i + 1)
-              .filter(page => { if (meta.last_page <= 7) return true; if (page === 1 || page === meta.last_page) return true; return Math.abs(page - currentPage) <= 2; })
-              .reduce((acc: (number | string)[], page, i, arr) => { if (i > 0 && typeof arr[i - 1] === 'number' && (page as number) - (arr[i - 1] as number) > 1) acc.push('...'); acc.push(page); return acc; }, [])
-              .map((page, i) => typeof page === 'string'
-                ? <span key={`e-${i}`} className="px-2 text-gray-500">...</span>
-                : <button key={page} onClick={() => setCurrentPage(page as number)} className={`w-11 h-11 rounded-lg text-base font-medium ${currentPage === page ? 'bg-orange-500 text-white' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}>{page}</button>
+
+                {/* Pagination */}
+                {isLoadMoreMode ? (
+                  tours.length < meta.total && (
+                    <div className="flex justify-center mt-8">
+                      <button
+                        onClick={handleLoadMore}
+                        disabled={loadingMore}
+                        className="px-8 py-3 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        {loadingMore ? (
+                          <><Loader2 className="w-4 h-4 animate-spin" /> กำลังโหลด...</>
+                        ) : (
+                          <>โหลดเพิ่มเติม ({Math.min(10, meta.total - tours.length)} จาก {meta.total - tours.length} รายการ)</>
+                        )}
+                      </button>
+                    </div>
+                  )
+                ) : meta.last_page > 1 && (
+                  <div className="flex items-center justify-center gap-2 mt-8">
+                    <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage <= 1} className="p-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"><ChevronLeft className="w-5 h-5" /></button>
+                    {Array.from({ length: meta.last_page }, (_, i) => i + 1)
+                      .filter(page => { if (meta.last_page <= 7) return true; if (page === 1 || page === meta.last_page) return true; return Math.abs(page - currentPage) <= 2; })
+                      .reduce((acc: (number | string)[], page, i, arr) => { if (i > 0 && typeof arr[i - 1] === 'number' && (page as number) - (arr[i - 1] as number) > 1) acc.push('...'); acc.push(page); return acc; }, [])
+                      .map((page, i) => typeof page === 'string'
+                        ? <span key={`e-${i}`} className="px-2 text-gray-500">...</span>
+                        : <button key={page} onClick={() => setCurrentPage(page as number)} className={`w-11 h-11 rounded-lg text-base font-medium ${currentPage === page ? 'bg-orange-500 text-white' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}>{page}</button>
+                      )}
+                    <button onClick={() => setCurrentPage(p => Math.min(meta.last_page, p + 1))} disabled={currentPage >= meta.last_page} className="p-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"><ChevronRight className="w-5 h-5" /></button>
+                  </div>
+                )}
+              </div>
+
+              {hasSidebar && (
+                <aside className="lg:col-span-1 space-y-4">
+                  {settings.sidebar_show_popular_tours !== false && (sidebar?.popular_tours?.length ?? 0) > 0 && (
+                    <div className="bg-white rounded-xl border border-gray-100 p-4">
+                      <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900 mb-3">
+                        <TrendingUp className="w-4 h-4 text-orange-500" />
+                        {settings.sidebar_popular_tours_title || 'ทัวร์ยอดนิยม'}
+                      </h3>
+                      <ul className="space-y-3">
+                        {sidebar!.popular_tours!.map(t => (
+                          <li key={t.id}>
+                            <Link href={tourUrl(t)} className="group flex gap-3">
+                              <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                                {t.cover_image_url ? (
+                                  <Image src={t.cover_image_url} alt={t.title} fill className="object-cover group-hover:scale-105 transition-transform" sizes="80px" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-gray-300"><MapPin className="w-6 h-6" /></div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 line-clamp-2 group-hover:text-orange-600 transition-colors">{t.title}</p>
+                                {t.duration_days != null && (
+                                  <p className="text-xs text-gray-500 mt-0.5">{t.duration_days} วัน {t.duration_nights ?? 0} คืน</p>
+                                )}
+                                {(t.display_price ?? t.min_price) != null && (
+                                  <p className="text-sm font-semibold text-orange-600 mt-0.5">{formatPrice(t.display_price ?? t.min_price)} บาท</p>
+                                )}
+                              </div>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {settings.sidebar_show_blog_posts !== false && (sidebar?.blog_posts?.length ?? 0) > 0 && (
+                    <div className="bg-white rounded-xl border border-gray-100 p-4">
+                      <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900 mb-3">
+                        <BookOpen className="w-4 h-4 text-orange-500" />
+                        {settings.sidebar_blog_posts_title || 'บทความท่องเที่ยว'}
+                      </h3>
+                      <ul className="space-y-3">
+                        {sidebar!.blog_posts!.map(p => (
+                          <li key={p.id}>
+                            <Link href={`/blog/${p.slug}`} className="group flex gap-3">
+                              <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                                {p.cover_image_url ? (
+                                  <Image src={p.cover_image_url} alt={p.title} fill className="object-cover group-hover:scale-105 transition-transform" sizes="64px" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-gray-300"><BookOpen className="w-5 h-5" /></div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 line-clamp-2 group-hover:text-orange-600 transition-colors">{p.title}</p>
+                                {p.reading_time_min != null && (
+                                  <p className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                                    <Clock className="w-3 h-3" />
+                                    อ่าน {p.reading_time_min} นาที
+                                  </p>
+                                )}
+                              </div>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {settings.sidebar_show_portfolios && (sidebar?.portfolios?.length ?? 0) > 0 && (
+                    <div className="bg-white rounded-xl border border-gray-100 p-4">
+                      <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900 mb-3">
+                        <Sparkles className="w-4 h-4 text-orange-500" />
+                        {settings.sidebar_portfolios_title || 'ผลงานที่ผ่านมา'}
+                      </h3>
+                      <ul className="space-y-3">
+                        {sidebar!.portfolios!.map(item => (
+                          <li key={item.id} className="group rounded-lg overflow-hidden border border-gray-100 hover:border-orange-200 transition-colors">
+                            <Link href="/tours/group" className="block">
+                              <div className="relative aspect-video bg-gray-100">
+                                {item.image_url ? (
+                                  <Image src={item.image_url} alt={item.title} fill className="object-cover group-hover:scale-105 transition-transform" sizes="320px" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-gray-300"><Sparkles className="w-6 h-6" /></div>
+                                )}
+                                {item.group_size && (
+                                  <span className="absolute top-2 right-2 px-2 py-0.5 bg-orange-600/80 text-white text-xs rounded-full backdrop-blur-sm">
+                                    {item.group_size} ท่าน
+                                  </span>
+                                )}
+                              </div>
+                              <div className="p-2">
+                                <p className="text-sm font-semibold text-gray-900 line-clamp-1 group-hover:text-orange-600 transition-colors">{item.title}</p>
+                                {item.destination && (
+                                  <p className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
+                                    <MapPin className="w-3 h-3" />
+                                    {item.destination}
+                                  </p>
+                                )}
+                              </div>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                      <Link href="/tours/group" className="mt-3 inline-flex items-center gap-1 text-sm text-orange-600 hover:text-orange-700 font-medium">
+                        ดูผลงานทั้งหมด <ChevronRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+                  )}
+
+                  {settings.sidebar_show_contact !== false && sidebar?.contact && (sidebar.contact.phone || sidebar.contact.line || sidebar.contact.text) && (
+                    <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl border border-orange-100 p-4">
+                      <h3 className="text-base font-semibold text-gray-900 mb-2">
+                        {sidebar.contact.title || 'ติดต่อสอบถาม'}
+                      </h3>
+                      {sidebar.contact.text && (
+                        <p className="text-sm text-gray-700 mb-3">{sidebar.contact.text}</p>
+                      )}
+                      <div className="space-y-2">
+                        {sidebar.contact.phone && (
+                          <a href={`tel:${sidebar.contact.phone}`} className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg text-sm font-medium text-gray-800 hover:bg-orange-100 transition-colors">
+                            <Phone className="w-4 h-4 text-orange-500" />
+                            {sidebar.contact.phone}
+                          </a>
+                        )}
+                        {sidebar.contact.line && (
+                          <a href={sidebar.contact.line.startsWith('http') ? sidebar.contact.line : `https://line.me/ti/p/~${sidebar.contact.line}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg text-sm font-medium text-gray-800 hover:bg-green-50 transition-colors">
+                            <MessageCircle className="w-4 h-4 text-green-500" />
+                            LINE: {sidebar.contact.line.replace(/^https?:\/\/[^/]+\/?/, '')}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </aside>
               )}
-            <button onClick={() => setCurrentPage(p => Math.min(meta.last_page, p + 1))} disabled={currentPage >= meta.last_page} className="p-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"><ChevronRight className="w-5 h-5" /></button>
-          </div>
+            </div>
+          );
+        })()}
+
+        {/* Country SEO description (per-country, thin-content fix) */}
+        {countrySlug !== 'all' && settings.country_intro && (
+          <section className="mt-8 bg-white rounded-2xl border border-gray-100 p-6 lg:p-8">
+            <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-4">
+              เกี่ยวกับทัวร์{countryInfo?.name_th || countrySlug}
+            </h2>
+            <div
+              className="text-gray-700 leading-relaxed text-[15px] lg:text-base [&_p]:mb-3 [&_p:last-child]:mb-0"
+              dangerouslySetInnerHTML={{ __html: settings.country_intro }}
+            />
+          </section>
         )}
       </div>
     </div>
-  );
-}
-
-// ===== Domestic Tours Page =====
-export default function DomesticToursPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="w-10 h-10 text-orange-500 animate-spin" />
-      </div>
-    }>
-      <DomesticToursContent />
-    </Suspense>
   );
 }

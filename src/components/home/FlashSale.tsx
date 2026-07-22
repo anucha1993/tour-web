@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { flashSaleApi, FlashSalePublic, FlashSalePublicItem } from '@/lib/api';
 import { displayTourCode } from '@/lib/tour-code';
+import { tourUrl } from '@/lib/tour-url';
 import { useAuth } from '@/contexts/AuthContext';
 import FlashSaleBookingModal from './FlashSaleBookingModal';
 
@@ -141,7 +142,7 @@ function FlashRow({ item, index, onBook }: { item: FlashSalePublicItem; index: n
       </td>
 
       {/* Tour: Image + Title + Code — clickable to tour detail */}
-      <td className="px-2 py-2.5 border-b border-gray-100 group-hover:bg-orange-50/50 transition-colors cursor-pointer" onClick={() => router.push(`/tours/${item.slug}`)}>
+      <td className="px-2 py-2.5 border-b border-gray-100 group-hover:bg-orange-50/50 transition-colors cursor-pointer" onClick={() => router.push(tourUrl(item))}>
         <div className="flex items-center gap-2.5">
           <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
             {item.image_url ? (
@@ -277,7 +278,7 @@ function MobileFlashRow({ item, index, onBook }: { item: FlashSalePublicItem; in
       <span className="text-xs text-gray-500 w-5 text-center flex-shrink-0">{index + 1}</span>
 
       {/* Thumbnail — link to tour */}
-      <Link href={`/tours/${item.slug}`} className="relative w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+      <Link href={tourUrl(item)} className="relative w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
         {item.image_url ? (
           <Image src={item.image_url} alt={item.title} fill className="object-cover" sizes="56px" />
         ) : (
@@ -293,7 +294,7 @@ function MobileFlashRow({ item, index, onBook }: { item: FlashSalePublicItem; in
       </Link>
 
       {/* Info */}
-      <Link href={`/tours/${item.slug}`} className="flex-1 min-w-0">
+      <Link href={tourUrl(item)} className="flex-1 min-w-0">
         <p className="font-mono text-[11px] font-bold text-orange-600 leading-tight">{displayTourCode(item.tour_code)}</p>
         <p className="text-sm font-semibold text-gray-800 line-clamp-1">{item.title}</p>
         <div className="flex items-center gap-1 mt-0.5 text-[11px] text-gray-500">

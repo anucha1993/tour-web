@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { tourUrl } from "@/lib/tour-url";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { wishlistApi } from "@/lib/api";
@@ -195,7 +196,7 @@ export default function MemberWishlist() {
                     )}
                     
                     <Link
-                      href={`/tours/${item.tour?.slug || item.tour_id}`}
+                      href={item.tour?.slug ? tourUrl({ slug: item.tour.slug }) : `/tours/${item.tour_id}`}
                       className="px-4 py-2 text-sm font-medium text-orange-600 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
                     >
                       ดูรายละเอียด

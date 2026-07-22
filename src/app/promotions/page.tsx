@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { tourUrl } from '@/lib/tour-url';
 import Image from 'next/image';
 import {
   MapPin,
@@ -47,7 +48,7 @@ function PromotionTourCard({ tour, tabBadge }: { tour: TourTabTour; tabBadge?: {
 
   return (
     <Link
-      href={`/tours/${tour.slug}`}
+      href={tourUrl(tour)}
       className={`cursor-pointer group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 ${isSoldOut ? 'opacity-75' : ''}`}
     >
       {/* Image */}

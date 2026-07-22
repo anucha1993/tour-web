@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import Image from "next/image";
 import { displayTourCode } from "@/lib/tour-code";
+import { tourUrl } from "@/lib/tour-url";
 import {
   ArrowLeftIcon,
   CalendarIcon,
@@ -252,7 +253,7 @@ export default function BookingDetailPage() {
         <div className="flex-1 min-w-0">
           <p className="font-bold text-gray-900 text-sm leading-snug line-clamp-2">{booking.tour?.title || "ไม่ระบุชื่อทัวร์"}</p>
           {booking.tour?.slug && (
-            <Link href={`/tours/${booking.tour.slug}`} className="inline-flex items-center gap-1 text-xs text-[var(--color-primary)] hover:underline mt-0.5">
+            <Link href={tourUrl(booking.tour)} className="inline-flex items-center gap-1 text-xs text-[var(--color-primary)] hover:underline mt-0.5">
               <DocumentTextIcon className="w-3 h-3" /> ดูรายละเอียดทัวร์
             </Link>
           )}

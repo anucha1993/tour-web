@@ -19,8 +19,8 @@ const nextConfig: NextConfig = {
   // results and inbound links land on current pages instead of 404ing.
   async redirects() {
     return [
-      // Old per-country landing pages: /oversea/china -> /tours/country/china
-      { source: '/oversea/:slug', destination: '/tours/country/:slug', permanent: true },
+      // Old per-country landing pages: /oversea/china -> /tours/china
+      { source: '/oversea/:slug', destination: '/tours/:slug', permanent: true },
       { source: '/oversea', destination: '/tours/international', permanent: true },
       // Old tour detail used a numeric id with no slug map -> land on the listing.
       { source: '/around-detail/:id*', destination: '/tours/international', permanent: true },

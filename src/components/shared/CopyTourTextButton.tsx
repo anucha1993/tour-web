@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
+import { tourUrl } from '@/lib/tour-url';
 
 /**
  * Shared "Copy ข้อความ" button used on tour cards (list pages) and the tour
@@ -16,6 +17,8 @@ import { Copy, Check } from 'lucide-react';
 
 export interface CopyTourLike {
   slug: string;
+  country_slug?: string | null;
+  city_slug?: string | null;
   tour_code: string;
   title: string;
   transports?: Array<{ airline?: { name?: string | null } | null } | null> | null;
@@ -84,7 +87,7 @@ export default function CopyTourTextButton({ tour, className, size = 'sm' }: Pro
   const [copied, setCopied] = useState(false);
 
   const handleClick = () => {
-    const url = `${window.location.origin}/tours/${tour.slug}`;
+    const url = `${window.location.origin}${tourUrl(tour)}`;
     const text = buildTourShortText(tour, url);
     navigator.clipboard.writeText(text);
     setCopied(true);

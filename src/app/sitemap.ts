@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { API_URL, SITE_URL } from "@/lib/config";
+import { tourUrl } from "@/lib/tour-url";
 
 /**
  * Dynamic sitemap.xml generated from the API.
@@ -12,6 +13,8 @@ export const revalidate = 3600; // 1 hour
 
 interface SlugRow {
   slug: string;
+  country_slug?: string | null;
+  city_slug?: string | null;
   updated_at?: string | null;
 }
 
@@ -70,14 +73,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { tours, blogs, countries } = await fetchSitemapData();
 
   const tourRoutes: MetadataRoute.Sitemap = tours.map((t) => ({
-    url: `${base}/tours/${t.slug}`,
+    url: `${base}${tourUrl(t)}`,
     lastModified: toDate(t.updated_at),
     changeFrequency: "weekly",
     priority: 0.8,
   }));
 
   const countryRoutes: MetadataRoute.Sitemap = countries.map((c) => ({
-    url: `${base}/tours/country/${c.slug}`,
+    url: `${base}/tours/${c.slug}`,
     lastModified: toDate(c.updated_at),
     changeFrequency: "weekly",
     priority: 0.7,

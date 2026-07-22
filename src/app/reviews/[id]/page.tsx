@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { reviewApi, TourReview } from '@/lib/api';
 import { displayTourCode } from '@/lib/tour-code';
+import { tourUrl } from '@/lib/tour-url';
 import { API_URL } from '@/lib/config';
 
 // ── Helpers ──
@@ -486,7 +487,7 @@ export default function ReviewDetailPage({ params }: { params: Promise<{ id: str
                     <p className="text-xs text-gray-500 mb-3">รหัส: {displayTourCode(review.tour.tour_code)}</p>
                   )}
                   <Link
-                    href={`/tours/${review.tour.slug}`}
+                    href={tourUrl(review.tour)}
                     className="block text-center text-sm bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                   >
                     ดูรายละเอียดทัวร์

@@ -5,12 +5,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { X, Heart, MapPin, Calendar, Trash2, ShoppingBag } from 'lucide-react';
 import { useFavorites, FavoriteTourData } from '@/contexts/FavoritesContext';
+import { tourUrl } from '@/lib/tour-url';
 
 function FavoriteItem({ tour, onRemove }: { tour: FavoriteTourData; onRemove: (id: number) => void }) {
   return (
     <div className="flex gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors group">
       {/* Thumbnail */}
-      <Link href={`/tours/${tour.slug}`} className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden">
+      <Link href={tourUrl(tour)} className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden">
         {tour.image_url ? (
           <Image
             src={tour.image_url}
@@ -28,7 +29,7 @@ function FavoriteItem({ tour, onRemove }: { tour: FavoriteTourData; onRemove: (i
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <Link href={`/tours/${tour.slug}`} className="block">
+        <Link href={tourUrl(tour)} className="block">
           <h4 className="text-sm font-semibold text-gray-900 line-clamp-2 group-hover:text-[var(--color-primary)] transition-colors leading-tight">
             {tour.title}
           </h4>

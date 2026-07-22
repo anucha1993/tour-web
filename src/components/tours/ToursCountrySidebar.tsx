@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { MapPin, Clock, Calendar, Plane, ArrowRight, Loader2 } from 'lucide-react';
 import { internationalToursApi, InternationalTourItem } from '@/lib/api';
+import { tourUrl } from '@/lib/tour-url';
 
 interface ToursCountrySidebarProps {
   countryId: number | null;
@@ -27,7 +28,7 @@ function SidebarTourCard({ tour }: { tour: InternationalTourItem }) {
 
   return (
     <Link
-      href={`/tours/${tour.slug}`}
+      href={tourUrl(tour)}
       className="group block rounded-xl overflow-hidden hover:bg-orange-50/60 transition-colors"
     >
       {/* Image on top */}

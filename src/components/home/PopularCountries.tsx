@@ -117,7 +117,7 @@ export default function PopularCountries({ slug = "homepage" }: PopularCountries
                 href={
                   country.link_url ||
                   (country.slug
-                    ? `/tours/country/${country.slug}`
+                    ? `/tours/${country.slug}`
                     : `/tours?country=${country.iso2.toLowerCase()}`)
                 }
                 className="group relative aspect-[3/3] rounded-xl overflow-hidden bg-[var(--color-gray-200)]"

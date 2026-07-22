@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { displayTourCode } from '@/lib/tour-code';
+import { tourUrl } from '@/lib/tour-url';
 import {
   ArrowLeft,
   Package,
@@ -408,7 +409,7 @@ export default function TourPackageDetailPage() {
                 {pkg.countries.map((c) => (
                   <Link
                     key={c.id}
-                    href={`/tours/country/${c.slug}`}
+                    href={`/tours/${c.slug}`}
                     className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-xl text-sm text-gray-700 hover:text-blue-700 transition-colors"
                   >
                     {c.iso2 && (
@@ -464,7 +465,7 @@ export default function TourPackageDetailPage() {
                       return (
                         <Link
                           key={tour.id}
-                          href={`/tours/${tour.slug}`}
+                          href={tourUrl(tour)}
                           className={`group flex-shrink-0 w-[calc(33.333%-11px)] bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg hover:border-amber-200 transition-all duration-300 ${isSoldOut ? 'opacity-70' : ''}`}
                         >
                           <div className="relative aspect-square overflow-hidden">
