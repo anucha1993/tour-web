@@ -108,6 +108,10 @@ const fallbackMenuItems: NavMenuItem[] = [
     label: 'รอบรู้เรื่องเที่ยว', 
     href: '/blog' 
   },
+  { 
+    label: 'คำถามที่พบบ่อย', 
+    href: '/faq' 
+  },
 ];
 
 export default function Header() {
