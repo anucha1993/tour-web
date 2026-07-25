@@ -874,6 +874,56 @@ export default function CountryToursView({ countrySlug }: { countrySlug: string 
             />
           </section>
         )}
+
+        {/* Country FAQ (AEO/GEO) + FAQPage JSON-LD */}
+        {countrySlug !== 'all' && Array.isArray(settings.country_faq) && settings.country_faq.length > 0 && (
+          <section className="mt-6 bg-white rounded-2xl border border-gray-100 p-6 lg:p-8">
+            <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-4">
+              คำถามที่พบบ่อยเกี่ยวกับทัวร์{countryInfo?.name_th || countrySlug}
+            </h2>
+            <div className="divide-y divide-gray-100">
+              {settings.country_faq.map((item, idx) => (
+                <details
+                  key={idx}
+                  className="group py-3 [&_summary::-webkit-details-marker]:hidden"
+                  {...(idx === 0 ? { open: true } : {})}
+                >
+                  <summary className="flex items-start justify-between gap-3 cursor-pointer list-none">
+                    <h3 className="text-[15px] lg:text-base font-semibold text-gray-900 flex-1">
+                      {item.q}
+                    </h3>
+                    <span className="text-gray-400 text-lg leading-none mt-0.5 transition-transform group-open:rotate-45 select-none">
+                      +
+                    </span>
+                  </summary>
+                  <div className="mt-2 text-gray-700 leading-relaxed text-[15px] whitespace-pre-line">
+                    {item.a}
+                  </div>
+                </details>
+              ))}
+            </div>
+
+            {/* FAQPage JSON-LD for AEO / Google rich results */}
+            <script
+              type="application/ld+json"
+              // eslint-disable-next-line react/no-danger
+              dangerouslySetInnerHTML={{
+                __html: JSON.stringify({
+                  '@context': 'https://schema.org',
+                  '@type': 'FAQPage',
+                  mainEntity: settings.country_faq.map((item) => ({
+                    '@type': 'Question',
+                    name: item.q,
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: item.a,
+                    },
+                  })),
+                }),
+              }}
+            />
+          </section>
+        )}
       </div>
     </div>
   );

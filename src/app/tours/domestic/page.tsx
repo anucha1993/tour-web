@@ -677,6 +677,78 @@ function DomesticToursContent() {
             <button onClick={() => setCurrentPage(p => Math.min(meta.last_page, p + 1))} disabled={currentPage >= meta.last_page} className="p-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"><ChevronRight className="w-5 h-5" /></button>
           </div>
         )}
+
+        {/* City SEO description (per-city, thin-content fix) */}
+        {activeSearchParams.city_id && settings.city_intro && (() => {
+          const cityInfo = filters.cities?.find(c => String(c.id) === String(activeSearchParams.city_id));
+          const cityName = cityInfo?.name_th || '';
+          return (
+            <section className="mt-8 bg-white rounded-2xl border border-gray-100 p-6 lg:p-8">
+              <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-4">
+                เกี่ยวกับทัวร์{cityName}
+              </h2>
+              <div
+                className="text-gray-700 leading-relaxed text-[15px] lg:text-base [&_p]:mb-3 [&_p:last-child]:mb-0"
+                dangerouslySetInnerHTML={{ __html: settings.city_intro }}
+              />
+            </section>
+          );
+        })()}
+
+        {/* City FAQ (AEO/GEO) + FAQPage JSON-LD */}
+        {activeSearchParams.city_id && Array.isArray(settings.city_faq) && settings.city_faq.length > 0 && (() => {
+          const cityInfo = filters.cities?.find(c => String(c.id) === String(activeSearchParams.city_id));
+          const cityName = cityInfo?.name_th || '';
+          const faq = settings.city_faq!;
+          return (
+            <section className="mt-6 bg-white rounded-2xl border border-gray-100 p-6 lg:p-8">
+              <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-4">
+                คำถามที่พบบ่อยเกี่ยวกับทัวร์{cityName}
+              </h2>
+              <div className="divide-y divide-gray-100">
+                {faq.map((item, idx) => (
+                  <details
+                    key={idx}
+                    className="group py-3 [&_summary::-webkit-details-marker]:hidden"
+                    {...(idx === 0 ? { open: true } : {})}
+                  >
+                    <summary className="flex items-start justify-between gap-3 cursor-pointer list-none">
+                      <h3 className="text-[15px] lg:text-base font-semibold text-gray-900 flex-1">
+                        {item.q}
+                      </h3>
+                      <span className="text-gray-400 text-lg leading-none mt-0.5 transition-transform group-open:rotate-45 select-none">
+                        +
+                      </span>
+                    </summary>
+                    <div className="mt-2 text-gray-700 leading-relaxed text-[15px] whitespace-pre-line">
+                      {item.a}
+                    </div>
+                  </details>
+                ))}
+              </div>
+
+              {/* FAQPage JSON-LD for AEO / Google rich results */}
+              <script
+                type="application/ld+json"
+                // eslint-disable-next-line react/no-danger
+                dangerouslySetInnerHTML={{
+                  __html: JSON.stringify({
+                    '@context': 'https://schema.org',
+                    '@type': 'FAQPage',
+                    mainEntity: faq.map((item) => ({
+                      '@type': 'Question',
+                      name: item.q,
+                      acceptedAnswer: {
+                        '@type': 'Answer',
+                        text: item.a,
+                      },
+                    })),
+                  }),
+                }}
+              />
+            </section>
+          );
+        })()}
       </div>
     </div>
   );

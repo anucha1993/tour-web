@@ -1101,6 +1101,7 @@ export interface InternationalTourSettings {
   cover_image_position?: string;
   hero_text?: string | null;
   country_intro?: string | null;
+  country_faq?: Array<{ q: string; a: string }> | null;
   pagination_mode?: string;
   show_sidebar?: boolean;
   sidebar_show_blog_posts?: boolean;
@@ -1238,6 +1239,8 @@ export interface DomesticTourSettings {
   cover_image_url?: string | null;
   cover_image_position?: string;
   hero_text?: string | null;
+  city_intro?: string | null;
+  city_faq?: Array<{ q: string; a: string }> | null;
   pagination_mode?: string;
 }
 
