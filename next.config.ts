@@ -102,7 +102,10 @@ const nextConfig: NextConfig = {
   },
   // Experimental optimizations
   experimental: {
-    optimizeCss: true, // Reduce render-blocking CSS
+    // optimizeCss (Critters) has intermittent CSS-delivery regressions in
+    // Next 15 that can hurt FCP/LCP more than they help. Disable until the
+    // upstream issue is resolved (was pushing LCP to ~6.9s on mobile).
+    // optimizeCss: true,
     optimizePackageImports: ['lucide-react', '@heroicons/react'], // Tree-shake icon libraries
   },
   images: {

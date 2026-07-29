@@ -68,15 +68,21 @@ export default function Analytics({ tracking, gtmInCustomHtml = false }: { track
 
   return (
     <>
-      {/* ---------- Google Analytics 4 ---------- */}
+      {/* ---------- Google Analytics 4 ----------
+         `lazyOnload` waits until after the browser is idle, drastically cutting
+         Total Blocking Time (previously we used `afterInteractive` which parsed
+         gtag.js during the critical path and pushed TBT past 500ms on mobile).
+         The tracker still catches every PageView because the SPA route change
+         handler below (`PageViewTracker`) fires on navigation, and gtag itself
+         queues calls until it loads. */}
       {loadGa4 && (
         <>
           <Script
             id="ga4-src"
             src={`https://www.googletagmanager.com/gtag/js?id=${ga4Id}`}
-            strategy="afterInteractive"
+            strategy="lazyOnload"
           />
-          <Script id="ga4-init" strategy="afterInteractive">
+          <Script id="ga4-init" strategy="lazyOnload">
             {`
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
@@ -89,7 +95,7 @@ export default function Analytics({ tracking, gtmInCustomHtml = false }: { track
 
       {/* ---------- Google Tag Manager (optional) ---------- */}
       {loadGtm && (
-        <Script id="gtm-init" strategy="afterInteractive">
+        <Script id="gtm-init" strategy="lazyOnload">
           {`
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
             new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -102,7 +108,7 @@ export default function Analytics({ tracking, gtmInCustomHtml = false }: { track
 
       {/* ---------- Meta (Facebook) Pixel ---------- */}
       {loadPixel && (
-        <Script id="fb-pixel" strategy="afterInteractive">
+        <Script id="fb-pixel" strategy="lazyOnload">
           {`
             !function(f,b,e,v,n,t,s)
             {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -120,7 +126,7 @@ export default function Analytics({ tracking, gtmInCustomHtml = false }: { track
 
       {/* ---------- TikTok Pixel (optional) ---------- */}
       {loadTiktok && (
-        <Script id="tiktok-pixel" strategy="afterInteractive">
+        <Script id="tiktok-pixel" strategy="lazyOnload">
           {`
             !function (w, d, t) {
               w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];

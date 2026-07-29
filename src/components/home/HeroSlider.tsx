@@ -115,6 +115,13 @@ export default function HeroSlider({ initialSlides, initialCountries }: HeroSlid
                 className="object-cover object-top"
                 sizes="100vw"
                 quality={65}
+                // LCP boost: bypass the Next image optimizer for the LCP slide.
+                // imagedelivery.net / R2 already serve variant-sized, WebP/AVIF
+                // versions; going through /_next/image adds a full round-trip
+                // and was pushing mobile LCP past 6s. Only the first slide is
+                // unoptimized — subsequent slides still benefit from Next's
+                // format negotiation when they scroll into view.
+                unoptimized={index === 0}
               />
 
               {/* Overlay */}
