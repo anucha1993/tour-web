@@ -17,15 +17,31 @@ const nextConfig: NextConfig = {
   },
   // 301/308 redirects from the previous website's URL scheme so old Google
   // results and inbound links land on current pages instead of 404ing.
+  // NOTE: Order matters — more specific patterns must come before catch-alls.
   async redirects() {
     return [
-      // Old per-country landing pages: /oversea/china -> /tours/china
-      { source: '/oversea/:slug', destination: '/tours/:slug', permanent: true },
+      // Old per-country landing pages: /oversea/china -> /tours/country/china
+      // (align with new canonical listing under /tours/country/{slug})
+      { source: '/oversea/:slug', destination: '/tours/country/:slug', permanent: true },
       { source: '/oversea', destination: '/tours/international', permanent: true },
-      // Old tour detail used a numeric id with no slug map -> land on the listing.
-      { source: '/around-detail/:id*', destination: '/tours/international', permanent: true },
+
+      // Old international-tours listing (root + any child path)
+      { source: '/intertours', destination: '/tours/international', permanent: true },
+      { source: '/intertours/:path*', destination: '/tours/international', permanent: true },
+
+      // Old tour detail used a numeric id with no slug map. Per SEO spec,
+      // land on the blog (informational) instead of the international listing.
+      { source: '/around-detail/:id*', destination: '/blog', permanent: true },
+
       // Old reviews pages: /clients-review/0/0 -> /reviews
       { source: '/clients-review/:path*', destination: '/reviews', permanent: true },
+
+      // Old promotions page from the PHP site
+      { source: '/promotion.php', destination: '/promotions', permanent: true },
+
+      // Legacy PHP front controller: /index.php[/anything] -> homepage
+      { source: '/index.php', destination: '/', permanent: true },
+      { source: '/index.php/:path*', destination: '/', permanent: true },
     ];
   },
   // Security headers applied to every response.

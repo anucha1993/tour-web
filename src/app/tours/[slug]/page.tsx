@@ -1,9 +1,11 @@
 import { Suspense } from "react";
 import { permanentRedirect } from "next/navigation";
 import { tourUrl } from "@/lib/tour-url";
-import { fetchTourLocation } from "@/lib/tours-slug";
+import { fetchTourLocation, fetchCountryInfo } from "@/lib/tours-slug";
 import TourDetailView from "@/components/tours/TourDetailView";
 import CountryToursView from "@/components/tours/CountryToursView";
+import JsonLd from "@/components/JsonLd";
+import { breadcrumbJsonLd } from "@/lib/jsonld";
 
 function ListingFallback() {
   return (
@@ -39,9 +41,23 @@ export default async function ToursSlugPage({
     return <TourDetailView />;
   }
 
+  // Country listing: emit BreadcrumbList JSON-LD so search results show a
+  // clear path (Home > ทัวร์ต่างประเทศ > ทัวร์{country}).
+  const country = await fetchCountryInfo(slug);
+  const countryName = country?.name_th || slug.replace(/-/g, " ");
+  const schemas = [
+    breadcrumbJsonLd([
+      { name: "ทัวร์ต่างประเทศ", url: "/tours/international" },
+      { name: `ทัวร์${countryName}`, url: `/tours/${slug}` },
+    ]),
+  ];
+
   return (
-    <Suspense fallback={<ListingFallback />}>
-      <CountryToursView countrySlug={slug} />
-    </Suspense>
+    <>
+      <JsonLd data={schemas} />
+      <Suspense fallback={<ListingFallback />}>
+        <CountryToursView countrySlug={slug} />
+      </Suspense>
+    </>
   );
 }

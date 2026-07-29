@@ -1,31 +1,56 @@
-'use client';
-
-import { useState, useEffect, useRef, useCallback } from 'react';
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
-  Building2, Award, Users, Shield, Star, ChevronLeft, ChevronRight,
+  Building2, Award, Users, Shield, Star,
   CheckCircle, MapPin, Globe, Briefcase,
 } from 'lucide-react';
-import {
-  aboutApi, AboutPageData, AboutAssociation, AboutAward, OurClientPublic,
-} from '@/lib/api';
+import type { AboutPageData } from '@/lib/api';
 import RenderIcon from '@/components/RenderIcon';
+import LicenseLightbox from './LicenseLightbox';
+import { API_URL } from '@/lib/config';
+import { buildMetadata } from '@/lib/seo';
 
-export default function AboutPage() {
-  const [data, setData] = useState<AboutPageData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [showLightbox, setShowLightbox] = useState(false);
+/**
+ * Server-side fetch of the About page content so it is present in the initial
+ * HTML (SEO: Google/AI crawlers see the copy, associations, awards, etc.).
+ * Cached for 5 minutes; fails soft to null so the page still renders a shell.
+ */
+async function getAboutData(): Promise<AboutPageData | null> {
+  try {
+    const res = await fetch(`${API_URL}/about/public`, {
+      next: { revalidate: 300 },
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return (json?.data as AboutPageData) ?? null;
+  } catch {
+    return null;
+  }
+}
 
-  useEffect(() => {
-    aboutApi.getPage().then(res => {
-      const raw = res as unknown as { data: AboutPageData };
-      if (raw?.data) setData(raw.data);
-    }).catch(() => {}).finally(() => setLoading(false));
-  }, []);
+// Per-page SEO from the admin "about" settings (falls back to global).
+// buildMetadata already strips a trailing "| Next Trip Holiday" so the root
+// layout's title template appends the brand exactly once.
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata('about', {
+    path: '/about',
+    title: 'เกี่ยวกับเรา',
+    description:
+      'รู้จัก Next Trip Holiday บริษัททัวร์ต่างประเทศคุณภาพ ประสบการณ์กว่า 10 ปี ใบอนุญาตประกอบธุรกิจนำเที่ยวถูกต้อง มีสมาชิกสมาคมท่องเที่ยวรับรอง',
+  });
+}
 
-  if (loading) return <AboutSkeleton />;
-  if (!data) return <div className="min-h-screen flex items-center justify-center text-gray-500">ไม่สามารถโหลดข้อมูลได้</div>;
+export default async function AboutPage() {
+  const data = await getAboutData();
+
+  if (!data) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-500">
+        ไม่สามารถโหลดข้อมูลได้
+      </div>
+    );
+  }
 
   const { settings, associations, services, customer_groups, awards, clients } = data;
 
@@ -35,7 +60,15 @@ export default function AboutPage() {
       <section className="relative text-white overflow-hidden">
         {settings.hero_image_url ? (
           <>
-            <Image src={settings.hero_image_url} alt="" fill className="object-cover" style={{ objectPosition: settings.hero_image_position || 'center' }} priority />
+            <Image
+              src={settings.hero_image_url}
+              alt=""
+              fill
+              className="object-cover"
+              style={{ objectPosition: settings.hero_image_position || 'center' }}
+              priority
+              sizes="100vw"
+            />
             <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
           </>
         ) : (
@@ -112,78 +145,37 @@ export default function AboutPage() {
       {settings.registration_no && (
         <section className="container-custom py-16 md:py-20">
           <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-1 h-8 bg-orange-500 rounded-full" />
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">ข้อมูลจัดตั้งบริษัท</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              <div>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-1 h-8 bg-orange-500 rounded-full" />
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900">ข้อมูลจัดตั้งบริษัท</h2>
+                </div>
+                <div className="space-y-4">
+                  {settings.company_name && (
+                    <InfoRow icon={<Building2 className="w-5 h-5 text-orange-500" />} label="ชื่อบริษัท" value={settings.company_name} />
+                  )}
+                  <InfoRow icon={<Briefcase className="w-5 h-5 text-orange-500" />} label="ทะเบียนพาณิชย์" value={settings.registration_no} />
+                  {settings.capital && (
+                    <InfoRow icon={<Globe className="w-5 h-5 text-orange-500" />} label="ทุนจดทะเบียน" value={settings.capital} />
+                  )}
+                  {settings.vat_no && (
+                    <InfoRow icon={<MapPin className="w-5 h-5 text-orange-500" />} label="ทะเบียนภาษีมูลค่าเพิ่ม (ภ.พ.20)" value={settings.vat_no} />
+                  )}
+                  {settings.tat_license && (
+                    <InfoRow icon={<Shield className="w-5 h-5 text-orange-500" />} label="ใบอนุญาตประกอบกิจการท่องเที่ยว" value={`TAT License: ${settings.tat_license}`} />
+                  )}
+                </div>
+                {settings.company_info_extra && (
+                  <p className="mt-4 text-gray-600 text-sm whitespace-pre-line">{settings.company_info_extra}</p>
+                )}
               </div>
-              <div className="space-y-4">
-                {settings.company_name && (
-                  <InfoRow icon={<Building2 className="w-5 h-5 text-orange-500" />} label="ชื่อบริษัท" value={settings.company_name} />
-                )}
-                <InfoRow icon={<Briefcase className="w-5 h-5 text-orange-500" />} label="ทะเบียนพาณิชย์" value={settings.registration_no} />
-                {settings.capital && (
-                  <InfoRow icon={<Globe className="w-5 h-5 text-orange-500" />} label="ทุนจดทะเบียน" value={settings.capital} />
-                )}
-                {settings.vat_no && (
-                  <InfoRow icon={<MapPin className="w-5 h-5 text-orange-500" />} label="ทะเบียนภาษีมูลค่าเพิ่ม (ภ.พ.20)" value={settings.vat_no} />
-                )}
-                {settings.tat_license && (
-                  <InfoRow icon={<Shield className="w-5 h-5 text-orange-500" />} label="ใบอนุญาตประกอบกิจการท่องเที่ยว" value={`TAT License: ${settings.tat_license}`} />
-                )}
-              </div>
-              {settings.company_info_extra && (
-                <p className="mt-4 text-gray-600 text-sm whitespace-pre-line">{settings.company_info_extra}</p>
+
+              {/* License Image (interactive lightbox is a small client component) */}
+              {settings.license_image_url && (
+                <LicenseLightbox src={settings.license_image_url} />
               )}
             </div>
-
-            {/* License Image */}
-            {settings.license_image_url && (
-              <div className="relative flex flex-col items-center">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">ใบอนุญาตประกอบกิจการท่องเที่ยว</h3>
-                <div
-                  className="relative rounded-xl overflow-hidden shadow-lg cursor-pointer hover:shadow-xl transition"
-                  onClick={() => setShowLightbox(true)}
-                >
-                  <Image
-                    src={settings.license_image_url}
-                    alt="ใบอนุญาตประกอบกิจการท่องเที่ยว"
-                    width={300}
-                    height={250}
-                    className="object-contain"
-                  />
-                  <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition flex items-center justify-center">
-                    <span className="text-white opacity-0 hover:opacity-100 text-sm font-medium bg-black/50 px-3 py-1 rounded-full">คลิกเพื่อขยาย</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* License Lightbox */}
-            {showLightbox && settings.license_image_url && (
-              <div
-                className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 cursor-pointer"
-                onClick={() => setShowLightbox(false)}
-              >
-                <div className="relative max-w-3xl w-full" onClick={e => e.stopPropagation()}>
-                  <button
-                    onClick={() => setShowLightbox(false)}
-                    className="absolute -top-10 right-0 text-white hover:text-gray-300 text-sm font-medium"
-                  >
-                    ✕ ปิด
-                  </button>
-                  <Image
-                    src={settings.license_image_url}
-                    alt="ใบอนุญาตประกอบกิจการท่องเที่ยว"
-                    width={900}
-                    height={1200}
-                    className="w-full h-auto object-contain rounded-lg"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
           </div>
         </section>
       )}
@@ -260,7 +252,7 @@ export default function AboutPage() {
                 <div key={cg.id} className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition">
                   {cg.image_url ? (
                     <div className="relative aspect-[16/9]">
-                      <Image src={cg.image_url} alt={cg.title} fill className="object-cover" />
+                      <Image src={cg.image_url} alt={cg.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
                     </div>
                   ) : cg.icon ? (
                     <div className="aspect-[16/9] bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center">
@@ -293,21 +285,21 @@ export default function AboutPage() {
           </div>
           <div className="flex flex-wrap justify-center gap-6">
             {awards.map((item) => (
-            <div key={item.id} className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition w-[220px]">
-              {item.image_url ? (
-                <div className="relative h-[280px]">
-                  <Image src={item.image_url} alt={item.title} fill className="object-cover" />
+              <div key={item.id} className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition w-[220px]">
+                {item.image_url ? (
+                  <div className="relative h-[280px]">
+                    <Image src={item.image_url} alt={item.title} fill className="object-cover" sizes="220px" />
+                  </div>
+                ) : (
+                  <div className="h-[280px] bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center">
+                    <Award className="w-16 h-16 text-orange-300" />
+                  </div>
+                )}
+                <div className="p-4 text-center">
+                  <h3 className="font-semibold text-sm text-gray-900">{item.title}</h3>
+                  {item.year && <p className="text-xs text-gray-500 mt-1">ปี {item.year}</p>}
                 </div>
-              ) : (
-                <div className="h-[280px] bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center">
-                  <Award className="w-16 h-16 text-orange-300" />
-                </div>
-              )}
-              <div className="p-4 text-center">
-                <h3 className="font-semibold text-sm text-gray-900">{item.title}</h3>
-                {item.year && <p className="text-xs text-gray-500 mt-1">ปี {item.year}</p>}
               </div>
-            </div>
             ))}
           </div>
         </section>
@@ -375,111 +367,6 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
       <div>
         <p className="text-xs text-gray-500">{label}</p>
         <p className="font-semibold text-gray-800">{value}</p>
-      </div>
-    </div>
-  );
-}
-
-// ===================== Carousel =====================
-function Carousel<T extends { id: number }>({ items, renderItem }: { items: T[]; renderItem: (item: T) => React.ReactNode }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-
-  const checkScroll = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 10);
-    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10);
-  }, []);
-
-  useEffect(() => {
-    checkScroll();
-    const el = scrollRef.current;
-    if (el) el.addEventListener('scroll', checkScroll);
-    return () => { if (el) el.removeEventListener('scroll', checkScroll); };
-  }, [checkScroll, items]);
-
-  const scroll = (dir: 'left' | 'right') => {
-    const el = scrollRef.current;
-    if (!el) return;
-    el.scrollBy({ left: dir === 'left' ? -300 : 300, behavior: 'smooth' });
-  };
-
-  return (
-    <div className="relative group">
-      {canScrollLeft && (
-        <button onClick={() => scroll('left')} className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-10 h-10 bg-white shadow-lg rounded-full flex items-center justify-center hover:bg-gray-50 transition opacity-0 group-hover:opacity-100">
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-      )}
-      <div ref={scrollRef} className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 snap-x">
-        {items.map(item => (
-          <div key={item.id} className="flex-shrink-0 snap-start">
-            {renderItem(item)}
-          </div>
-        ))}
-      </div>
-      {canScrollRight && (
-        <button onClick={() => scroll('right')} className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-10 h-10 bg-white shadow-lg rounded-full flex items-center justify-center hover:bg-gray-50 transition opacity-0 group-hover:opacity-100">
-          <ChevronRight className="w-5 h-5" />
-        </button>
-      )}
-    </div>
-  );
-}
-
-// ===================== Skeleton =====================
-function AboutSkeleton() {
-  return (
-    <div className="min-h-screen bg-gray-50 animate-pulse">
-      {/* Hero skeleton */}
-      <div className="bg-gray-200 py-20 md:py-28">
-        <div className="container-custom">
-          <div className="max-w-2xl">
-            <div className="h-12 w-3/4 bg-gray-300 rounded mb-4" />
-            <div className="h-6 w-1/2 bg-gray-300 rounded" />
-          </div>
-        </div>
-      </div>
-
-      {/* Stats skeleton */}
-      <div className="container-custom -mt-12 relative z-20">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="text-center">
-                <div className="h-10 w-20 bg-gray-200 rounded mx-auto mb-2" />
-                <div className="h-4 w-24 bg-gray-200 rounded mx-auto" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Content skeleton */}
-      <div className="container-custom py-16">
-        <div className="max-w-4xl mx-auto space-y-4">
-          <div className="h-8 w-64 bg-gray-200 rounded" />
-          <div className="h-4 w-full bg-gray-200 rounded" />
-          <div className="h-4 w-full bg-gray-200 rounded" />
-          <div className="h-4 w-3/4 bg-gray-200 rounded" />
-        </div>
-      </div>
-
-      {/* Services skeleton */}
-      <div className="container-custom py-16">
-        <div className="h-8 w-48 bg-gray-200 rounded mx-auto mb-10" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-white rounded-xl p-6 shadow-sm">
-              <div className="h-8 w-8 bg-gray-200 rounded mb-3" />
-              <div className="h-5 w-3/4 bg-gray-200 rounded mb-2" />
-              <div className="h-3 w-full bg-gray-100 rounded mb-1" />
-              <div className="h-3 w-2/3 bg-gray-100 rounded" />
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );

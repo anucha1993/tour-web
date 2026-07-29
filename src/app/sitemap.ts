@@ -16,6 +16,12 @@ interface SlugRow {
   country_slug?: string | null;
   city_slug?: string | null;
   updated_at?: string | null;
+  /**
+   * Optional cover image URL. When present, emitted as an image entry in the
+   * sitemap so Google Images can index tour/blog cover photos and drive image
+   * search traffic. If the backend does not send it we simply omit it.
+   */
+  cover_image_url?: string | null;
 }
 
 interface SitemapData {
@@ -78,6 +84,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: toDate(t.updated_at),
     changeFrequency: "weekly",
     priority: 0.8,
+    // Image sitemap: helps Google Images surface cover photos.
+    ...(t.cover_image_url ? { images: [t.cover_image_url] } : {}),
   }));
 
   const countryRoutes: MetadataRoute.Sitemap = countries.map((c) => ({
@@ -85,6 +93,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: toDate(c.updated_at),
     changeFrequency: "weekly",
     priority: 0.7,
+    ...(c.cover_image_url ? { images: [c.cover_image_url] } : {}),
   }));
 
   const blogRoutes: MetadataRoute.Sitemap = blogs.map((b) => ({
@@ -92,6 +101,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: toDate(b.updated_at),
     changeFrequency: "monthly",
     priority: 0.6,
+    ...(b.cover_image_url ? { images: [b.cover_image_url] } : {}),
   }));
 
   return [...staticRoutes, ...tourRoutes, ...countryRoutes, ...blogRoutes];
