@@ -77,6 +77,10 @@ function ImageCarousel({ images }: { images: TourReview['images'] }) {
       <img
         src={resolveImageUrl(images[current].image_url)}
         alt=""
+        width={640}
+        height={400}
+        loading="lazy"
+        decoding="async"
         className="w-full h-full object-cover transition-opacity duration-300"
       />
 
@@ -144,6 +148,10 @@ function ReviewCard({ review }: { review: TourReview }) {
             <img
               src={resolveImageUrl(review.reviewer_avatar_url)}
               alt={review.reviewer_name}
+              width={44}
+              height={44}
+              loading="lazy"
+              decoding="async"
               className="w-11 h-11 rounded-full object-cover border-2 border-white shadow-sm"
             />
           ) : (
@@ -196,8 +204,14 @@ export default function CustomerReviews({
   const [title, setTitle] = useState(titleProp || 'รีวิวจากลูกค้า');
   const [subtitle, setSubtitle] = useState(subtitleProp || 'เสียงจากลูกค้าที่ไว้วางใจเดินทางกับเรา');
   const scrollRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number | null>(null);
   const [isPaused, setIsPaused] = useState(false);
+  // Only run the rAF auto-scroll loop while the carousel is visible on screen.
+  // Before this fix the loop ran at ~60fps forever even when the section was
+  // scrolled way off-screen, which pinned a CPU/GPU core and made the whole
+  // homepage feel sluggish (user report: "Test Speed web ช้ามากๆ").
+  const [isVisible, setIsVisible] = useState(false);
   const scrollSpeedRef = useRef(0.5);
 
   useEffect(() => {
@@ -238,13 +252,24 @@ export default function CustomerReviews({
     animationRef.current = requestAnimationFrame(animate);
   }, [isPaused]);
 
+  // Observe section visibility — only animate while on-screen.
   useEffect(() => {
-    if (reviews.length === 0) return;
+    const el = sectionRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') { setIsVisible(true); return; }
+    const io = new IntersectionObserver((entries) => {
+      for (const entry of entries) setIsVisible(entry.isIntersecting);
+    }, { rootMargin: '200px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (reviews.length === 0 || !isVisible) return;
     animationRef.current = requestAnimationFrame(animate);
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  }, [reviews, animate]);
+  }, [reviews, animate, isVisible]);
 
   const scrollBy = (direction: 'left' | 'right') => {
     const container = scrollRef.current;
@@ -260,7 +285,7 @@ export default function CustomerReviews({
   const loopReviews = reviews.length > 0 ? [...reviews, ...reviews] : [];
 
   return (
-    <section className="py-12 lg:py-16 bg-gradient-to-b from-gray-50 to-white">
+    <section ref={sectionRef} className="py-12 lg:py-16 bg-gradient-to-b from-gray-50 to-white" style={{ contentVisibility: 'auto', containIntrinsicSize: '640px' }}>
       <div className="container-custom">
         {/* Header */}
         <div className="flex items-start justify-between mb-10">

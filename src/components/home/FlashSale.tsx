@@ -20,13 +20,21 @@ import FlashSaleBookingModal from './FlashSaleBookingModal';
 
 // ─── Countdown Timer Hook ───
 function useCountdown(endDate: string) {
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, expired: false });
+  // IMPORTANT: initial state MUST NOT depend on Date.now() — that would produce
+  // a different number on the server (SSR/prerender) vs the client (hydration)
+  // and cause a React hydration mismatch. We seed with a neutral "expired: null"
+  // placeholder, then compute the real remaining time inside useEffect on mount
+  // (client-only). Renderers should treat expired === null as "not yet computed"
+  // and show a neutral state (or use suppressHydrationWarning where needed).
+  const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number; expired: boolean; ready: boolean }>({
+    days: 0, hours: 0, minutes: 0, seconds: 0, expired: false, ready: false,
+  });
 
   useEffect(() => {
-    const calc = () => {
+    const compute = () => {
       const diff = new Date(endDate).getTime() - Date.now();
-      if (diff <= 0) {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, expired: true });
+      if (isNaN(diff) || diff <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, expired: true, ready: true });
         return;
       }
       setTimeLeft({
@@ -35,10 +43,11 @@ function useCountdown(endDate: string) {
         minutes: Math.floor((diff / (1000 * 60)) % 60),
         seconds: Math.floor((diff / 1000) % 60),
         expired: false,
+        ready: true,
       });
     };
-    calc();
-    const interval = setInterval(calc, 1000);
+    compute();
+    const interval = setInterval(compute, 1000);
     return () => clearInterval(interval);
   }, [endDate]);
 
@@ -47,9 +56,11 @@ function useCountdown(endDate: string) {
 
 // ─── Header Countdown Display ───
 function CountdownDisplay({ endDate }: { endDate: string }) {
-  const { days, hours, minutes, seconds, expired } = useCountdown(endDate);
+  const { days, hours, minutes, seconds, expired, ready } = useCountdown(endDate);
 
-  if (expired) {
+  // Only mark as expired after the client has actually computed the value.
+  // Before ready=true the numbers are still zero placeholders (SSR-safe).
+  if (ready && expired) {
     return <span className="text-sm text-gray-500 font-medium">หมดเวลาแล้ว</span>;
   }
 
@@ -61,11 +72,11 @@ function CountdownDisplay({ endDate }: { endDate: string }) {
   ];
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-1.5" suppressHydrationWarning>
       {blocks.map((b, i) => (
         <div key={b.label} className="flex items-center gap-1.5">
           <div className="bg-gray-900 text-white rounded-lg px-2 py-1 min-w-[40px] text-center">
-            <span className="text-lg font-bold font-mono leading-none">
+            <span className="text-lg font-bold font-mono leading-none" suppressHydrationWarning>
               {String(b.value).padStart(2, '0')}
             </span>
             <p className="text-[9px] text-gray-500 leading-none mt-0.5">{b.label}</p>
@@ -81,14 +92,14 @@ function CountdownDisplay({ endDate }: { endDate: string }) {
 
 // ─── Per-row compact countdown ───
 function RowCountdown({ endDate }: { endDate: string }) {
-  const { days, hours, minutes, seconds, expired } = useCountdown(endDate);
+  const { days, hours, minutes, seconds, expired, ready } = useCountdown(endDate);
 
-  if (expired) {
+  if (ready && expired) {
     return <span className="text-xs text-gray-500">หมดเวลา</span>;
   }
 
   return (
-    <span className="text-xs text-red-500 font-mono font-semibold whitespace-nowrap">
+    <span className="text-xs text-red-500 font-mono font-semibold whitespace-nowrap" suppressHydrationWarning>
       {days > 0 && <span>{days}d </span>}
       {String(hours).padStart(2, '0')}:{String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
     </span>
@@ -341,8 +352,28 @@ export default function FlashSale({ initialFlashSales }: { initialFlashSales?: F
   // all content below it down = CLS). Fails soft: if the server passed nothing
   // (undefined, e.g. the fetch errored) we fall back to the client fetch.
   const hasInitial = Array.isArray(initialFlashSales);
+
+  // Prune expired sales / items so an initially cached SSR payload doesn't leave
+  // stale rows on screen after their per-row/per-campaign end time has passed.
+  const pruneExpired = (list: FlashSalePublic[]): FlashSalePublic[] => {
+    const nowTs = Date.now();
+    return list
+      .map((fs) => ({
+        ...fs,
+        items: fs.items.filter((it) => {
+          const end = it.flash_end_date || fs.end_date;
+          return end ? new Date(end).getTime() > nowTs : true;
+        }),
+      }))
+      .filter((fs) => {
+        if (!fs.is_running || fs.items.length === 0) return false;
+        const endTs = new Date(fs.end_date).getTime();
+        return isNaN(endTs) ? true : endTs > nowTs;
+      });
+  };
+
   const [flashSales, setFlashSales] = useState<FlashSalePublic[]>(
-    () => (initialFlashSales ?? []).filter((fs) => fs.is_running && fs.items.length > 0)
+    () => pruneExpired(initialFlashSales ?? [])
   );
   const [loading, setLoading] = useState(!hasInitial);
   const [bookingItem, setBookingItem] = useState<FlashSalePublicItem | null>(null);
@@ -357,7 +388,7 @@ export default function FlashSale({ initialFlashSales }: { initialFlashSales?: F
       try {
         const res = await flashSaleApi.getActive();
         const data: FlashSalePublic[] = res.data || [];
-        setFlashSales(data.filter((fs: FlashSalePublic) => fs.is_running && fs.items.length > 0));
+        setFlashSales(pruneExpired(data));
       } catch (err) {
         console.error('Error fetching flash sales:', err);
       } finally {
@@ -366,6 +397,33 @@ export default function FlashSale({ initialFlashSales }: { initialFlashSales?: F
     };
     fetchData();
   }, [hasInitial]);
+
+  // ─── Auto-prune expired rows ───
+  // Cached SSR responses (Next.js revalidate 120s) can hand us items whose
+  // countdown is already at 00:00 by the time we render, and long-lived tabs
+  // will see items expire in place. Every 30s: (a) drop rows past their
+  // flash_end_date, (b) drop whole sales whose campaign end_date has passed.
+  // When a whole sale disappears we also do a background refetch so the next
+  // upcoming campaign (if any) can slide into view without a full page reload.
+  useEffect(() => {
+    if (flashSales.length === 0) return;
+    const interval = setInterval(() => {
+      setFlashSales((prev) => {
+        const pruned = pruneExpired(prev);
+        // If a sale fell off entirely, try to fetch replacements in the background
+        if (pruned.length < prev.length) {
+          flashSaleApi.getActive()
+            .then((res) => {
+              const data: FlashSalePublic[] = res.data || [];
+              setFlashSales(pruneExpired(data));
+            })
+            .catch(() => { /* keep the current pruned state on error */ });
+        }
+        return pruned;
+      });
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [flashSales.length]);
 
   // Auth gate: if not logged in → redirect to login with return URL
   const handleBook = (item: FlashSalePublicItem, saleItems: FlashSalePublicItem[]) => {

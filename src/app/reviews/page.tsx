@@ -210,6 +210,7 @@ export default function ReviewsPage() {
   const [sort, setSort] = useState('latest');
   const [ratingFilter, setRatingFilter] = useState<number | null>(null);
   const [tourTypeFilter, setTourTypeFilter] = useState<string | null>(null);
+  const [countryFilter, setCountryFilter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [page, setPage] = useState(1);
@@ -218,6 +219,7 @@ export default function ReviewsPage() {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     rating: true,
     tourType: true,
+    country: true,
     sort: true,
   });
 
@@ -229,7 +231,7 @@ export default function ReviewsPage() {
     }).catch(() => {});
   }, []);
 
-  const fetchReviews = async (pageNum: number, sortBy: string, rating: number | null, tourType: string | null) => {
+  const fetchReviews = async (pageNum: number, sortBy: string, rating: number | null, tourType: string | null, country: string | null) => {
     setIsLoading(true);
     try {
       const params: Record<string, string | number> = {
@@ -239,6 +241,7 @@ export default function ReviewsPage() {
       };
       if (rating) params.rating = rating;
       if (tourType) params.tour_type = tourType;
+      if (country) params.country = country;
 
       const res = await reviewApi.listAll(params);
       if (res.data) {
@@ -257,13 +260,13 @@ export default function ReviewsPage() {
   };
 
   useEffect(() => {
-    fetchReviews(1, sort, ratingFilter, tourTypeFilter);
-  }, [sort, ratingFilter, tourTypeFilter]);
+    fetchReviews(1, sort, ratingFilter, tourTypeFilter, countryFilter);
+  }, [sort, ratingFilter, tourTypeFilter, countryFilter]);
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > lastPage) return;
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    fetchReviews(newPage, sort, ratingFilter, tourTypeFilter);
+    fetchReviews(newPage, sort, ratingFilter, tourTypeFilter, countryFilter);
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -279,6 +282,7 @@ export default function ReviewsPage() {
   const clearAllFilters = () => {
     setRatingFilter(null);
     setTourTypeFilter(null);
+    setCountryFilter(null);
     setSearchQuery('');
     setSearchInput('');
     setSort('latest');
@@ -289,7 +293,7 @@ export default function ReviewsPage() {
   const heroSubtitle = pageSettings?.hero_subtitle || 'เสียงจากลูกค้าที่ไว้วางใจเดินทางกับเรา อ่านประสบการณ์จริงจากผู้เดินทาง';
   const heroImage = pageSettings?.hero_image_url;
   const heroImagePos = pageSettings?.hero_image_position || 'center';
-  const isFiltered = !!(ratingFilter || tourTypeFilter || searchQuery);
+  const isFiltered = !!(ratingFilter || tourTypeFilter || countryFilter || searchQuery);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -382,6 +386,15 @@ export default function ReviewsPage() {
                       <span className="inline-flex items-center gap-1 text-xs bg-white border border-orange-200 text-orange-700 px-2 py-0.5 rounded-full">
                         {{ individual: 'บุคคลทั่วไป/จอยด์ทัวร์', private: 'กรุ๊ปเหมาส่วนตัว', corporate: 'กลุ่มบริษัท' }[tourTypeFilter] || tourTypeFilter}
                         <button onClick={() => { setTourTypeFilter(null); setPage(1); }}><X className="w-3 h-3" /></button>
+                      </span>
+                    )}
+                    {countryFilter && (
+                      <span className="inline-flex items-center gap-1 text-xs bg-white border border-orange-200 text-orange-700 px-2 py-0.5 rounded-full">
+                        {(() => {
+                          const c = summary?.countries?.find(x => x.slug === countryFilter);
+                          return c ? `${c.flag_emoji ? c.flag_emoji + ' ' : ''}${c.name_th || c.name_en}` : countryFilter;
+                        })()}
+                        <button onClick={() => { setCountryFilter(null); setPage(1); }}><X className="w-3 h-3" /></button>
                       </span>
                     )}
                     {searchQuery && (
@@ -493,6 +506,51 @@ export default function ReviewsPage() {
                   </div>
                 )}
               </div>
+
+              {/* Country Filter */}
+              {summary?.countries && summary.countries.length > 0 && (
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                  <button
+                    onClick={() => toggleSection('country')}
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition"
+                  >
+                    <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">ประเทศ</h3>
+                    {openSections.country ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
+                  </button>
+                  {openSections.country && (
+                    <div className="border-t border-gray-100 max-h-72 overflow-y-auto">
+                      {summary.countries.map((c) => {
+                        const isActive = countryFilter === c.slug;
+                        const count = c.review_count;
+                        return (
+                          <button
+                            key={c.id}
+                            onClick={() => {
+                              setCountryFilter(isActive ? null : c.slug);
+                              setPage(1);
+                            }}
+                            className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition hover:bg-gray-50 ${
+                              isActive ? 'text-orange-600 font-semibold bg-orange-50' : 'text-gray-700'
+                            }`}
+                          >
+                            <span className="flex items-center gap-2 min-w-0">
+                              {c.flag_emoji && <span className="text-base leading-none">{c.flag_emoji}</span>}
+                              <span className="truncate">{c.name_th || c.name_en}</span>
+                            </span>
+                            {count > 0 && (
+                              <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${
+                                isActive ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-500'
+                              }`}>
+                                {count}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Sort */}
               <div className="bg-white rounded-xl shadow-sm overflow-hidden">

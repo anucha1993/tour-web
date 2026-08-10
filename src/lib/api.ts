@@ -835,6 +835,8 @@ export interface ReviewSummary {
   rating_distribution: Record<number, number>;
   category_averages: Record<string, number>;
   tour_type_counts?: Record<string, number>;
+  country_counts?: Record<string, number>;
+  countries?: Array<{ id: number; name_th: string | null; name_en: string; slug: string; iso2: string; flag_emoji: string | null; review_count: number }>;
 }
 
 export interface ReviewSchemaOrg {
@@ -902,7 +904,7 @@ export const reviewApi = {
     api.get<{ data: TourReview[] }>(`/reviews/featured${limit ? `?limit=${limit}` : ''}`),
 
   // Public: List all approved reviews with pagination
-  listAll: (params?: { sort?: string; rating?: number; tag?: string; tour_type?: string; page?: number; per_page?: number }) => {
+  listAll: (params?: { sort?: string; rating?: number; tag?: string; tour_type?: string; country?: string; page?: number; per_page?: number }) => {
     const searchParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
