@@ -312,7 +312,6 @@ export default function Footer() {
                     width={90}
                     height={90}
                     className="w-full h-full object-contain"
-                    unoptimized
                   />
                 </div>
                 <div className="text-center">

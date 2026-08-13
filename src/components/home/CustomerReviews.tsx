@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Star, StarHalf, Quote, ChevronLeft, ChevronRight, MessageSquare, ImageIcon, Eye, ArrowRight } from 'lucide-react';
 import { API_URL } from '@/lib/config';
 import { TourReview } from '@/lib/api';
@@ -74,14 +75,13 @@ function ImageCarousel({ images }: { images: TourReview['images'] }) {
   return (
     <div className="relative w-full aspect-[16/10] overflow-hidden bg-gray-100 group/img">
       {/* Current image */}
-      <img
+      <Image
         src={resolveImageUrl(images[current].image_url)}
         alt=""
-        width={640}
-        height={400}
+        fill
         loading="lazy"
-        decoding="async"
-        className="w-full h-full object-cover transition-opacity duration-300"
+        sizes="(max-width: 640px) 78vw, (max-width: 1024px) 50vw, 25vw"
+        className="object-cover transition-opacity duration-300"
       />
 
       {/* Image count badge */}
@@ -145,13 +145,12 @@ function ReviewCard({ review }: { review: TourReview }) {
         <div className="flex items-center gap-3">
           {/* Avatar */}
           {review.reviewer_avatar_url ? (
-            <img
+            <Image
               src={resolveImageUrl(review.reviewer_avatar_url)}
               alt={review.reviewer_name}
               width={44}
               height={44}
               loading="lazy"
-              decoding="async"
               className="w-11 h-11 rounded-full object-cover border-2 border-white shadow-sm"
             />
           ) : (

@@ -197,6 +197,7 @@ export default function ContactPopup() {
               <img
                 src={config.mascot_image}
                 alt=""
+                loading="lazy"
                 style={{ width: size, height: size }}
                 className="object-contain drop-shadow"
               />

@@ -44,7 +44,6 @@ function ClientCard({ client }: { client: OurClient }) {
           fill
           className="object-contain transition-transform duration-300 group-hover:scale-105"
           sizes="120px"
-          unoptimized
         />
       </div>
       {client.name && <span className="sr-only">{client.name}</span>}

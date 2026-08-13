@@ -154,11 +154,17 @@ export default async function HomePage() {
         <WhyChooseUs />
       </div>
 
-      {/* Our Clients */}
-      <OurClients />
+      {/* Our Clients — content-visibility skips style/layout work for this
+          90-node logo marquee until it scrolls near the viewport (reduces
+          main-thread Style & Layout cost on initial load). */}
+      <div className="[content-visibility:auto] [contain-intrinsic-size:auto_450px]">
+        <OurClients />
+      </div>
 
       {/* Latest Blog Posts */}
-      <LatestBlogPosts />
+      <div className="[content-visibility:auto] [contain-intrinsic-size:auto_500px]">
+        <LatestBlogPosts />
+      </div>
 
       {/* CTA Section */}
       <section className="py-16 lg:py-20 gradient-hero text-white">
